@@ -27,6 +27,7 @@ import DirectorNotifications from '../../components/admin/DirectorNotifications'
 import NotificationInbox from '../../components/common/NotificationInbox';
 import DirectorPermissions from '../../components/admin/DirectorPermissions';
 import InventoryManagement from '../../components/admin/InventoryManagement';
+import './DirectorTeachers.css';
 
 const AiMenuIcon = () => (
   <svg

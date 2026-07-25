@@ -409,6 +409,15 @@ const TeacherManagement = () => {
 
   return (
     <div className="teacher-management">
+      <header className="teachers-page-header">
+        <div>
+          <h1>O'qituvchilar</h1>
+          <p>O'qituvchilar ro'yxati, maoshi, holati va shaxsiy ma'lumotlarini boshqaring.</p>
+        </div>
+        <button className="teachers-primary-action" onClick={handleAddTeacher}>
+          Yangi o'qituvchi
+        </button>
+      </header>
 
       {/* Stats Cards */}
       <div className="stats-grid">

@@ -14,6 +14,8 @@ const StudentSchedule = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  // Bu haftadagi almashtirishlar: kalit `${day}-${startTime}-${endTime}`
+  const [subsMap, setSubsMap] = useState({});
 
   const daysEn = useMemo(() => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], []);
   const daysUz = useMemo(() => ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'], []);
@@ -53,6 +55,32 @@ const StudentSchedule = () => {
       setError('Siz hali hech qanday sinfga biriktirilmagansiz');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.classId]);
+
+  // Bu haftadagi almashtirishlarni yuklash (faqat joriy hafta sanalari uchun)
+  useEffect(() => {
+    const loadSubs = async () => {
+      try {
+        const today = new Date();
+        const dow = today.getDay(); // 0=Yakshanba
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+        monday.setHours(0, 0, 0, 0);
+        const saturday = new Date(monday);
+        saturday.setDate(monday.getDate() + 5);
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        const subs = await apiService.getSubstitutionOverlay(fmt(monday), fmt(saturday));
+        const map = {};
+        (subs || []).forEach((s) => {
+          map[`${s.day}-${s.startTime}-${s.endTime}`] = s;
+        });
+        setSubsMap(map);
+      } catch (e) {
+        setSubsMap({});
+      }
+    };
+    if (user?.classId) loadSubs();
   }, [user?.classId]);
 
   // Joriy darsni aniqlash
@@ -126,13 +154,16 @@ const StudentSchedule = () => {
         return;
       }
 
+      // Backend davrlarni vaqt bo'yicha tartiblashini kafolatlamaydi — nusxani tartiblaymiz
+      const periods = [...todaySchedule.periods].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
       let current = null;
       let next = null;
-      for (let i = 0; i < todaySchedule.periods.length; i++) {
-        const period = todaySchedule.periods[i];
+      for (let i = 0; i < periods.length; i++) {
+        const period = periods[i];
         if (currentTime >= period.startTime && currentTime < period.endTime) {
           current = period;
-          if (i + 1 < todaySchedule.periods.length) next = todaySchedule.periods[i + 1];
+          if (i + 1 < periods.length) next = periods[i + 1];
           break;
         } else if (currentTime < period.startTime && !next) {
           next = period;
@@ -228,7 +259,7 @@ const StudentSchedule = () => {
           <div className="error-icon" aria-hidden="true">⚠️</div>
           <h3>Xatolik yuz berdi</h3>
           <p>{error}</p>
-          <button onClick={fetchSchedule} className="retry-btn">Qayta urinib ko'ring</button>
+          <button onClick={() => fetchSchedule(true)} className="retry-btn">Qayta urinib ko'ring</button>
         </div>
       </div>
     );
@@ -260,7 +291,10 @@ const StudentSchedule = () => {
           <h1 className="page-title" id="schedule-title">📅 Haftalik dars jadvali</h1>
           <div className="class-info">
             <span className="class-name">{schedule.className}</span>
-            <span className="class-details">{schedule.grade}-sinf · {schedule.section} bo'lim</span>
+            <span className="class-details">{[
+              (schedule.grade !== null && schedule.grade !== undefined && schedule.grade !== '') ? `${schedule.grade}-sinf` : null,
+              schedule.section ? `${schedule.section} bo'lim` : null
+            ].filter(Boolean).join(' · ')}</span>
             <span className="academic-year">{schedule.academicYear}</span>
             {lastUpdated && (
               <span className="last-updated"><span aria-hidden="true">⏱️</span> {formatLastUpdated()}</span>
@@ -287,13 +321,17 @@ const StudentSchedule = () => {
 
         <div className="schedule-toolbar" role="toolbar" aria-label="Boshqaruv">
           <button
+            type="button"
             className="schedule-tool-btn"
             onClick={() => setTimeFormat(timeFormat === '24' ? '12' : '24')}
             title={`${timeFormat === '24' ? '12' : '24'} soatlik formatga o'tish`}
+            aria-label={`Vaqt formati ${timeFormat} soatlik. ${timeFormat === '24' ? '12' : '24'} soatlik formatga o'tish`}
+            aria-pressed={timeFormat === '12'}
           >
             <span aria-hidden="true">🕐</span> {timeFormat}h
           </button>
           <button
+            type="button"
             className="schedule-tool-btn"
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -337,9 +375,22 @@ const StudentSchedule = () => {
                         {p ? (
                           <>
                             <span className="cell-subject">{p.subject?.name || "Noma'lum"}</span>
-                            {(p.teacher?.firstName || p.teacher?.lastName) && (
-                              <span className="cell-teacher">{p.teacher?.firstName} {p.teacher?.lastName}</span>
-                            )}
+                            {(() => {
+                              const sub = subsMap[`${day}-${p.startTime}-${p.endTime}`];
+                              if (sub && sub.substituteTeacher) {
+                                return (
+                                  <>
+                                    {(p.teacher?.firstName || p.teacher?.lastName) && (
+                                      <span className="cell-teacher cell-teacher-replaced">{p.teacher?.firstName} {p.teacher?.lastName}</span>
+                                    )}
+                                    <span className="cell-substitute" title="O'rniga o'tgan o'qituvchi">🔄 {sub.substituteTeacher.name}</span>
+                                  </>
+                                );
+                              }
+                              return (p.teacher?.firstName || p.teacher?.lastName) && (
+                                <span className="cell-teacher">{p.teacher?.firstName} {p.teacher?.lastName}</span>
+                              );
+                            })()}
                             {cur && <span className="cell-flag cur">Hozir</span>}
                             {up && <span className="cell-flag up">Keyingi</span>}
                           </>

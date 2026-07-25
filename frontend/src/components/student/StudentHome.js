@@ -4,12 +4,20 @@ import apiService from '../../services/apiService';
 import styles from './StudentHome.module.css';
 import StudentAIWidget from './StudentAIWidget';
 
+// Raw grade hujjatini 0–100% ga aylantiradi.
+// Kunlik baho maksimal 0.5; imtihon baho examMaxScore (o'qituvchi belgilaydi) bilan o'lchanadi.
+const gradeToPercent = (g) => {
+  const isExam = g.isExam || g.type === 'exam' || !!g.examMaxScore;
+  const cap = isExam ? (g.examMaxScore || g.maxScore || 100) : 0.5;
+  return cap > 0 ? Math.min(100, Math.round(((g.score || 0) / cap) * 100)) : 0;
+};
+
 const StudentHome = () => {
   const { user } = useAuth();
   const [todaySchedule, setTodaySchedule] = useState([]);
   const [pendingTasks, setPendingTasks] = useState([]);
   const [weeklyGrades, setWeeklyGrades] = useState([]);
-  const [stats, setStats] = useState({ attendance: 0, avgGrade: 0, completedTasks: 0, ranking: '-' });
+  const [stats, setStats] = useState({ attendance: 0, avgGrade: 0, completedTasks: 0, coins: 0 });
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -31,15 +39,17 @@ const StudentHome = () => {
       const today = daysOfWeek[new Date().getDay()];
 
       // Fetch all data in parallel
-      const [scheduleData, assignments, grades, attendance] = await Promise.all([
-        user?.classId ? apiService.getSchedule(user.classId._id || user.classId).catch(() => []) : Promise.resolve([]),
+      const [scheduleData, assignments, grades, attendance, coinsData] = await Promise.all([
+        apiService.getStudentSchedule().catch(() => null),
         apiService.getStudentAssignments().catch(() => []),
-        apiService.getGrades().catch(() => []),
-        apiService.getAttendance({ studentId: user._id }).catch(() => [])
+        apiService.getGrades({ limit: 100 }).catch(() => []),
+        apiService.getAttendance({ studentId: user._id }).catch(() => []),
+        apiService.getMyCoins().catch(() => ({ total: 0 }))
       ]);
 
-      // Process schedule
-      const todayScheduleData = scheduleData.find(s => s.day === today);
+      // Process schedule (Schedule modelidagi haftalik jadval)
+      const weekly = Array.isArray(scheduleData?.weeklySchedule) ? scheduleData.weeklySchedule : [];
+      const todayScheduleData = weekly.find(s => s.day === today);
       if (todayScheduleData?.periods) {
         const formattedSchedule = todayScheduleData.periods.map((period, index) => ({
           id: index + 1,
@@ -93,7 +103,7 @@ const StudentHome = () => {
         .reduce((acc, grade) => {
           const subjectName = grade.subject?.name || 'Noma\'lum';
           if (!acc[subjectName]) acc[subjectName] = [];
-          acc[subjectName].push(grade.score);
+          acc[subjectName].push(gradeToPercent(grade));
           return acc;
         }, {});
 
@@ -109,30 +119,29 @@ const StudentHome = () => {
 
       // Calculate real stats
       const attendanceArray = Array.isArray(attendance) ? attendance : [];
-      const presentCount = attendanceArray.filter(a => a.status === 'present').length;
+      const presentCount = attendanceArray.filter(a => a.status === 'present' || a.status === 'keldi').length;
       const totalAttendance = attendanceArray.length;
       const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
 
-      const allScores = gradesArray.map(g => g.score || 0);
+      const allScores = gradesArray.map(g => gradeToPercent(g));
       const avgGrade = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 0;
 
       const completedTasks = assignmentsArray.filter(a =>
         a.mySubmission?.status === 'submitted' || a.mySubmission?.status === 'graded'
       ).length;
 
-      // Ranking feature - currently not available for students
-      // TODO: Create a student-specific ranking endpoint if needed
-      const ranking = '-';
+      const coins = coinsData?.total || 0;
 
       setStats({
         attendance: attendanceRate,
         avgGrade: avgGrade,
         completedTasks: completedTasks,
-        ranking: ranking
+        coins: coins
       });
 
     } catch (error) {
       if (error.code !== 'ERR_CANCELED' && !error.message?.includes('cancel')) {
+        console.error('Bosh sahifa maʼlumotlarini yuklashda xatolik:', error);
       }
     } finally {
       setLoading(false);
@@ -192,13 +201,13 @@ const StudentHome = () => {
       title: 'Bajarilgan',
       value: stats.completedTasks,
       icon: '📋',
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+      gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)'
     },
     {
-      title: 'Reyting',
-      value: `#${stats.ranking}`,
-      icon: '⭐',
-      gradient: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)'
+      title: 'Coinlar',
+      value: stats.coins,
+      icon: '🪙',
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
     }
   ];
 
@@ -264,13 +273,20 @@ const StudentHome = () => {
                 {currentLesson.room && <span>🏫 {currentLesson.room}-xona</span>}
               </div>
             </div>
-            {currentLesson.status === 'current' && (
-              <div className={styles.lessonProgress}>
-                <div className={styles.progressBar}>
-                  <div className={styles.progressFill} style={{ width: '45%' }}></div>
+            {currentLesson.status === 'current' && (() => {
+              const toMin = (t) => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
+              const startMin = toMin(currentLesson.time);
+              const endMin = toMin(currentLesson.endTime);
+              const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+              const pct = endMin > startMin ? Math.min(100, Math.max(0, ((nowMin - startMin) / (endMin - startMin)) * 100)) : 0;
+              return (
+                <div className={styles.lessonProgress}>
+                  <div className={styles.progressBar}>
+                    <div className={styles.progressFill} style={{ width: `${pct}%` }}></div>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </section>
       )}
@@ -364,7 +380,7 @@ const StudentHome = () => {
           <div className={styles.gradesList}>
             {weeklyGrades.length > 0 ? (
               weeklyGrades.map((item, index) => (
-                <div key={index} className={styles.gradeItem}>
+                <div key={item.subject || index} className={styles.gradeItem}>
                   <div className={styles.gradeInfo}>
                     <h4>{item.subject}</h4>
                     <div className={styles.gradeBar}>

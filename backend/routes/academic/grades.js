@@ -98,7 +98,7 @@ router.get('/',
 // @route   POST /api/grades
 // @desc    Create or update grade (upsert)
 // @access  Private/Teacher
-router.post('/', auth, authorize('teacher', 'admin'), requirePermission('grade.create'), [
+router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermission('grade.create'), [
   body('student').isMongoId(),
   body('subject').isMongoId(),
   body('class').isMongoId(),
@@ -136,6 +136,34 @@ router.post('/', auth, authorize('teacher', 'admin'), requirePermission('grade.c
       }
       // Admin gets a warning but can proceed
       console.warn(`Admin ${req.user._id} creating grade outside schedule validity: ${validation.message}`);
+    }
+
+    // Egalik tekshiruvi: o'qituvchi faqat o'zi dars beradigan yoki almashtirish
+    // (o'rnini bosish) orqali ruxsat olgan sinf+fanga baho qo'ya oladi.
+    // admin/supervisor/director cheklanmaydi.
+    if (req.user.role === 'teacher') {
+      const Class = require('../../models/academic/Class');
+      const cls = await Class.findById(req.body.class).select('subjects').lean();
+      let allowed = !!(cls && (cls.subjects || []).some(s =>
+        s.subject && s.subject.toString() === String(req.body.subject) &&
+        s.teacher && s.teacher.toString() === req.user._id.toString()
+      ));
+      if (!allowed) {
+        const LessonSubstitution = require('../../models/scheduling/LessonSubstitution');
+        const d = new Date(req.body.date); d.setHours(0, 0, 0, 0);
+        const nd = new Date(d); nd.setDate(nd.getDate() + 1);
+        const sub = await LessonSubstitution.findOne({
+          substituteTeacher: req.user._id,
+          classId: req.body.class,
+          subject: req.body.subject,
+          date: { $gte: d, $lt: nd },
+          status: { $ne: 'rejected' }
+        });
+        allowed = !!sub;
+      }
+      if (!allowed) {
+        return res.status(403).json({ message: "Bu sinf/fanga baho qo'yish uchun ruxsatingiz yo'q" });
+      }
     }
 
     const gradeData = {

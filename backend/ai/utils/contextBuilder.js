@@ -19,6 +19,7 @@ const Payment           = require('../../models/financial/Payment');
 const Schedule          = require('../../models/scheduling/Schedule');
 const Announcement      = require('../../models/communication/Announcement');
 const Assignment        = require('../../models/academic/Assignment');
+const Test              = require('../../models/academic/Test');
 const FinancialSummary  = require('../../models/financial/FinancialSummary');
 const BalanceTransaction = require('../../models/financial/BalanceTransaction');
 
@@ -252,11 +253,148 @@ const buildStudentContext = async (userId) => {
   };
 };
 
+// ─── O'qituvchi scope (FAQAT o'ziga biriktirilgan sinflar) ────────────────────
+/**
+ * O'qituvchiga biriktirilgan sinflarni qaytaradi.
+ * MUHIM XAVFSIZLIK: so'rov DB darajasida teacherId bilan cheklangan —
+ * o'qituvchi rahbar bo'lgan (classTeacher) yoki fan o'qitadigan
+ * (subjects.teacher) sinflardan boshqasi hech qachon qaytarilmaydi.
+ * @param {string} teacherId - O'qituvchining ID si (req.user._id)
+ */
+const getTeacherClasses = async (teacherId) => {
+  return Class.find({
+    isActive: true,
+    $or: [
+      { classTeacher: teacherId },
+      { 'subjects.teacher': teacherId }
+    ]
+  })
+    .populate('students', 'firstName lastName studentId isActive')
+    .populate('subjects.subject', 'name')
+    .populate('subjects.teacher', 'firstName lastName')
+    .populate('classTeacher', 'firstName lastName')
+    .lean();
+};
+
+/**
+ * Sinf ichida o'qituvchiga ruxsat etilgan fanlar ro'yxati.
+ * Sinf rahbari sinfning BARCHA fanlari bo'yicha tahlil olishi mumkin,
+ * fan o'qituvchisi esa faqat o'zi o'qitadigan fanlar bo'yicha.
+ */
+const getAllowedSubjectsForClass = (classDoc, teacherId) => {
+  const tid = String(teacherId);
+  const isClassTeacher = String(classDoc.classTeacher?._id || classDoc.classTeacher) === tid;
+  const subjects = (classDoc.subjects || []).filter(s => s.subject);
+  if (isClassTeacher) {
+    return { isClassTeacher, subjects };
+  }
+  return {
+    isClassTeacher,
+    subjects: subjects.filter(s => String(s.teacher?._id || s.teacher) === tid)
+  };
+};
+
+// ─── O'qituvchi uchun kontekst (FAQAT o'z sinflari va o'quvchilari) ───────────
+/**
+ * O'qituvchining O'Z ma'lumotlaridan AI kontekst quradi.
+ * MUHIM XAVFSIZLIK: barcha so'rovlar teacherId / o'qituvchining o'z sinflari
+ * bilan cheklangan. Boshqa o'qituvchilar, boshqa sinflar, moliya, maoshlar
+ * yoki boshqaruv ma'lumotlari BU KONTEKSTGA UMUMAN KIRITILMAYDI — shu sabab
+ * AI ularni xohlasa ham oshkor qila olmaydi.
+ * @param {string} teacherId - O'qituvchining ID si (req.user._id)
+ */
+const buildTeacherContext = async (teacherId) => {
+  const classes = await getTeacherClasses(teacherId);
+  const classIds = classes.map(c => c._id);
+
+  const [grades, tests, schedules] = await Promise.all([
+    Grade.find({ teacher: teacherId })
+      .populate('student', 'firstName lastName')
+      .populate('subject', 'name')
+      .populate('class', 'name grade section')
+      .sort({ date: -1 }).limit(150).lean(),
+    Test.find({ teacher: teacherId })
+      .populate('class', 'name')
+      .populate('subject', 'name')
+      .select('title class subject month year totalPoints results isCompleted')
+      .sort({ year: -1, month: -1 }).limit(15).lean(),
+    classIds.length
+      ? Schedule.find({ classId: { $in: classIds }, isActive: true })
+          .populate('classId', 'name grade section')
+          .populate('schedule.periods.subject', 'name')
+          .populate('schedule.periods.teacher', 'firstName lastName')
+          .sort({ startDate: -1 }).limit(10).lean()
+      : []
+  ]);
+
+  const tid = String(teacherId);
+  const classNameOf = (c) => c?.name || [c?.grade, c?.section].filter(Boolean).join('-') || 'Sinf';
+
+  // Sinflar va o'quvchilar ro'yxati
+  const classLines = [];
+  const studentLines = [];
+  for (const cls of classes) {
+    const { isClassTeacher, subjects } = getAllowedSubjectsForClass(cls, teacherId);
+    const mySubjects = (cls.subjects || [])
+      .filter(s => s.subject && String(s.teacher?._id || s.teacher) === tid)
+      .map(s => s.subject.name);
+    const activeStudents = (cls.students || []).filter(s => s.isActive !== false);
+    classLines.push(
+      `- ${classNameOf(cls)}: ${activeStudents.length} o'quvchi` +
+      (isClassTeacher ? ' | sen sinf rahbarisan' : '') +
+      (mySubjects.length ? ` | sen o'qitadigan fanlar: ${mySubjects.join(', ')}` : '') +
+      (isClassTeacher && subjects.length ? ` | sinf fanlari: ${subjects.map(s => s.subject.name).join(', ')}` : '')
+    );
+    studentLines.push(
+      `${classNameOf(cls)} o'quvchilari:\n` +
+      activeStudents.map(s => `  - ${s.firstName} ${s.lastName}${s.studentId ? ' (ID: ' + s.studentId + ')' : ''}`).join('\n')
+    );
+  }
+
+  // O'qituvchining o'zi qo'ygan so'nggi baholar
+  const recentGradesList = grades.slice(0, 60).map(g => {
+    const student = g.student ? `${g.student.firstName} ${g.student.lastName}` : "O'quvchi";
+    const dateStr = g.date ? new Date(g.date).toLocaleDateString('uz-UZ') : '';
+    return `- ${student} | ${g.subject?.name || 'Fan'} | ${classNameOf(g.class)} | ${g.score} ball${g.isExam ? ' (imtihon, maks: ' + (g.examMaxScore || '-') + ')' : ''}${dateStr ? ' | ' + dateStr : ''}`;
+  }).join('\n');
+
+  // O'qituvchining o'z dars jadvali (faqat o'z darslari)
+  const myScheduleLines = [];
+  for (const sch of schedules) {
+    for (const day of (sch.schedule || [])) {
+      for (const p of (day.periods || [])) {
+        if (String(p.teacher?._id || p.teacher || '') === tid && p.subject) {
+          myScheduleLines.push(`- ${day.day}: ${p.startTime}-${p.endTime} | ${p.subject.name} | ${classNameOf(sch.classId)}${p.topic ? ' | mavzu: ' + p.topic : ''}`);
+        }
+      }
+    }
+  }
+
+  // O'qituvchining o'z testlari
+  const testsList = tests.map(t =>
+    `- ${t.title} | ${t.subject?.name || 'Fan'} | ${t.class?.name || 'Sinf'} | ${t.month}/${t.year} | ${t.totalPoints || 0} ball | topshirganlar: ${(t.results || []).length}`
+  ).join('\n');
+
+  return {
+    classes,
+    classesList: classLines.join('\n'),
+    studentsList: studentLines.join('\n\n'),
+    recentGradesList,
+    myScheduleList: myScheduleLines.slice(0, 60).join('\n'),
+    testsList,
+    totalClasses: classes.length,
+    totalStudents: classes.reduce((sum, c) => sum + (c.students || []).filter(s => s.isActive !== false).length, 0)
+  };
+};
+
 module.exports = {
   buildChatContext,
   buildEducationContext,
   buildFinanceContext,
   buildManagementContext,
   buildCommunicationContext,
-  buildStudentContext
+  buildStudentContext,
+  getTeacherClasses,
+  getAllowedSubjectsForClass,
+  buildTeacherContext
 };

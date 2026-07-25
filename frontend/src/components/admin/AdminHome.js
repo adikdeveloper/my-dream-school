@@ -48,6 +48,30 @@ ChartJS.register(
 // Oy nomlari (o'zbek tilida)
 const MONTH_NAMES = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
 
+const HomeIcon = ({ name, size = 22 }) => {
+  const paths = {
+    students: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" /></>,
+    teachers: <><circle cx="9" cy="7" r="4" /><path d="M2 21v-2a7 7 0 0 1 14 0v2M18 8l4 2-4 2-4-2 4-2Z" /></>,
+    classes: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 8h10M7 12h10M7 16h6" /></>,
+    subjects: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z" /><path d="M8 8h8M8 12h6" /></>,
+    payment: <><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h3" /></>,
+    activity: <path d="M3 12h4l2-6 4 12 2-6h6" />,
+    chart: <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />,
+    empty: <><path d="M4 5h16v14H4zM4 8l8 6 8-6" /></>,
+    plus: <path d="M12 5v14M5 12h14" />
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.chart}
+    </svg>
+  );
+};
+
+const hasChartValues = (chartData) =>
+  chartData?.datasets?.some((dataset) =>
+    Array.isArray(dataset.data) && dataset.data.some((value) => Number(value) > 0)
+  );
+
 const AdminHome = () => {
   const navigate = useNavigate();
   const { setLoading, setError } = useData();
@@ -78,6 +102,7 @@ const AdminHome = () => {
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [isLoadingCharts, setIsLoadingCharts] = useState(true);
+  const [dashboardError, setDashboardError] = useState('');
 
   // Grafik ma'lumotlari
   const [paymentData, setPaymentData] = useState(null);
@@ -108,6 +133,7 @@ const AdminHome = () => {
    */
   const loadDashboardData = async () => {
     try {
+      setDashboardError('');
       setIsLoadingDashboard(true);
       setLoading(true);
 
@@ -119,7 +145,9 @@ const AdminHome = () => {
       loadActivities();
       loadChartData();
     } catch (error) {
-      setError(error.response?.data?.message || 'Dashboard ma\'lumotlarini yuklashda xatolik');
+      const message = error.response?.data?.message || 'Dashboard ma\'lumotlarini yuklashda xatolik';
+      setDashboardError(message);
+      setError(message);
     } finally {
       setLoading(false);
       setIsLoadingDashboard(false);
@@ -188,8 +216,8 @@ const AdminHome = () => {
           fill: true,
           label: 'Tushumlar (So\'m)',
           data: incomeData,
-          borderColor: 'rgb(53, 162, 235)',
-          backgroundColor: 'rgba(53, 162, 235, 0.2)',
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.12)',
           tension: 0.4,
         }],
       });
@@ -201,8 +229,8 @@ const AdminHome = () => {
           fill: true,
           label: 'Tushumlar (So\'m)',
           data: [0],
-          borderColor: 'rgb(53, 162, 235)',
-          backgroundColor: 'rgba(53, 162, 235, 0.2)',
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.12)',
           tension: 0.4,
         }],
       });
@@ -223,16 +251,16 @@ const AdminHome = () => {
           label: 'Baholar soni',
           data: [dist['5'] || 0, dist['4'] || 0, dist['3'] || 0, dist['2'] || 0],
           backgroundColor: [
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
+            '#2563eb',
+            '#16a34a',
+            '#f59e0b',
+            '#ef4444',
           ],
           borderColor: [
-            'rgba(54, 162, 235, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
-            'rgba(255, 99, 132, 1)',
+            '#1d4ed8',
+            '#166534',
+            '#92400e',
+            '#991b1b',
           ],
           borderWidth: 1,
         }],
@@ -248,7 +276,7 @@ const AdminHome = () => {
           datasets: [{
             label: 'O\'rtacha o\'zlashtirish',
             data: classAverages,
-            backgroundColor: classLabels.map((_, i) => `hsla(${(i * 50) % 360}, 70%, 50%, 0.6)`),
+            backgroundColor: '#60a5fa',
             borderColor: 'rgba(0,0,0,0)',
             borderWidth: 1,
             borderRadius: 8,
@@ -264,7 +292,7 @@ const AdminHome = () => {
         datasets: [{
           label: 'Baholar soni',
           data: [0, 0, 0, 0],
-          backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(153, 102, 255, 0.6)', 'rgba(255, 159, 64, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+          backgroundColor: ['#2563eb', '#16a34a', '#f59e0b', '#ef4444'],
           borderWidth: 1,
         }],
       });
@@ -286,14 +314,14 @@ const AdminHome = () => {
         datasets: [{
           data: [present, excused, absent],
           backgroundColor: [
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
+            '#16a34a',
+            '#f59e0b',
+            '#ef4444',
           ],
           borderColor: [
-            'rgba(75, 192, 192, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(255, 99, 132, 1)',
+            '#166534',
+            '#92400e',
+            '#991b1b',
           ],
           borderWidth: 1,
           hoverOffset: 4
@@ -305,7 +333,7 @@ const AdminHome = () => {
         labels: ['Kelgan', 'Sababli', 'Sababsiz'],
         datasets: [{
           data: [0, 0, 0],
-          backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+          backgroundColor: ['#16a34a', '#f59e0b', '#ef4444'],
           borderWidth: 1,
         }],
       });
@@ -314,11 +342,11 @@ const AdminHome = () => {
 
   // ==================== NAVIGATION HANDLERS ====================
 
-  const handleAddUser = () => navigate('/admin/users');
-  const handleCreateClass = () => navigate('/admin/classes');
-  const handleAddSubject = () => navigate('/admin/subjects');
-  const handleAddPayment = () => navigate('/admin/payments');
-  const handleViewAllActivities = () => navigate('/admin/reports');
+  const handleAddUser = () => navigate('/director/users');
+  const handleCreateClass = () => navigate('/director/classes');
+  const handleAddSubject = () => navigate('/director/subjects');
+  const handleAddPayment = () => navigate('/director/payments');
+  const handleViewAllActivities = () => navigate('/director/reports');
 
   // ==================== STATIC DATA ====================
 
@@ -379,8 +407,7 @@ const AdminHome = () => {
       <div className={styles.welcomeSection}>
         <div className={styles.welcomeContent}>
           <h1 className={styles.pageTitle}>
-            <span className={styles.wave}>👋</span>
-            Administrator paneliga xush kelibsiz
+            Direktor boshqaruv paneli
           </h1>
           <p className={styles.pageDescription}>
             Maktab faoliyatini ushbu markaziy paneldan kuzating va boshqaring.
@@ -396,12 +423,24 @@ const AdminHome = () => {
         </div>
       </div>
 
+      {dashboardError && (
+        <div className={styles.errorAlert} role="alert">
+          <div>
+            <strong>Ma'lumotlarni yuklab bo'lmadi</strong>
+            <p>{dashboardError}</p>
+          </div>
+          <button type="button" onClick={loadDashboardData}>Qayta urinish</button>
+        </div>
+      )}
+
       {/* Statistika kartalari */}
       <div className={styles.statsGrid}>
         {statCards.map((stat, index) => (
-          <div key={index} className={styles.statCard} style={{ background: stat.gradient }}>
+          <div key={index} className={`${styles.statCard} ${styles[`statTone${index + 1}`]}`}>
             <div className={styles.statIconWrapper}>
-              <div className={styles.statIcon}>{stat.icon}</div>
+              <div className={styles.statIcon}>
+                <HomeIcon name={['students', 'teachers', 'classes', 'subjects'][index]} />
+              </div>
             </div>
             <div className={styles.statContent}>
               <div className={styles.statNumber}>{stat.value}</div>
@@ -424,7 +463,7 @@ const AdminHome = () => {
         <div className={styles.quickActionsCard}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>⚡</span>
+              <span className={styles.titleIcon}><HomeIcon name="plus" size={18} /></span>
               Tezkor amallar
             </h2>
           </div>
@@ -436,8 +475,8 @@ const AdminHome = () => {
                 onClick={action.handler}
                 aria-label={action.label}
               >
-                <div className={styles.actionIcon} style={{ background: action.color }}>
-                  {action.icon}
+                <div className={styles.actionIcon}>
+                  <HomeIcon name={['students', 'classes', 'subjects', 'payment'][index]} />
                 </div>
                 <span className={styles.actionLabel}>{action.label}</span>
               </button>
@@ -449,7 +488,7 @@ const AdminHome = () => {
         <div className={styles.activitiesCard}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>🕐</span>
+              <span className={styles.titleIcon}><HomeIcon name="activity" size={18} /></span>
               So'nggi harakatlar
             </h2>
             <button
@@ -476,7 +515,7 @@ const AdminHome = () => {
               </>
             ) : recentActivities.length === 0 ? (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>📭</span>
+                <span className={styles.emptyIcon}><HomeIcon name="empty" size={28} /></span>
                 <p className={styles.emptyText}>Hozircha faoliyat yo'q</p>
               </div>
             ) : (
@@ -501,7 +540,7 @@ const AdminHome = () => {
       <div className={styles.chartsSection}>
         <div className={styles.cardHeader}>
           <h2 className={styles.cardTitle}>
-            <span className={styles.titleIcon}>📊</span>
+            <span className={styles.titleIcon}><HomeIcon name="chart" size={18} /></span>
             Statistika
           </h2>
         </div>
@@ -517,11 +556,17 @@ const AdminHome = () => {
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>Moliyaviy ko'rsatkichlar</h3>
               <div className={styles.chartContainer}>
-                {paymentData && <Line data={paymentData} options={{
+                {hasChartValues(paymentData) ? <Line data={paymentData} options={{
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: { legend: { position: 'top' } }
-                }} />}
+                }} /> : (
+                  <div className={styles.chartEmpty}>
+                    <HomeIcon name="payment" size={28} />
+                    <strong>Moliyaviy statistika uchun ma'lumot yo'q</strong>
+                    <span>To'lovlar kiritilgach tushumlar grafigi shu yerda ko'rinadi.</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -529,12 +574,18 @@ const AdminHome = () => {
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>Sinflar o'zlashtirish ko'rsatkichi</h3>
               <div className={styles.chartContainer}>
-                {gradeData && <Bar data={gradeData} options={{
+                {hasChartValues(gradeData) ? <Bar data={gradeData} options={{
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: { legend: { position: 'top' } },
                   scales: { y: { beginAtZero: true, max: 5 } }
-                }} />}
+                }} /> : (
+                  <div className={styles.chartEmpty}>
+                    <HomeIcon name="chart" size={28} />
+                    <strong>Hozircha baholar statistikasi yo'q</strong>
+                    <span>Baholar kiritilgach sinflar ko'rsatkichi shu yerda chiqadi.</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -542,11 +593,17 @@ const AdminHome = () => {
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>Davomat (Bugun)</h3>
               <div className={`${styles.chartContainer} ${styles.pieContainer}`}>
-                {attendanceData && <Pie data={attendanceData} options={{
+                {hasChartValues(attendanceData) ? <Pie data={attendanceData} options={{
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: { legend: { position: 'right' } }
-                }} />}
+                }} /> : (
+                  <div className={styles.chartEmpty}>
+                    <HomeIcon name="students" size={28} />
+                    <strong>Bugungi davomat hali kiritilmagan</strong>
+                    <span>Davomat belgilanishi bilan diagramma avtomatik ko'rinadi.</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -554,11 +611,17 @@ const AdminHome = () => {
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>Baholar taqsimoti</h3>
               <div className={`${styles.chartContainer} ${styles.pieContainer}`}>
-                {gradesDistData && <Doughnut data={gradesDistData} options={{
+                {hasChartValues(gradesDistData) ? <Doughnut data={gradesDistData} options={{
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: { legend: { position: 'right' } }
-                }} />}
+                }} /> : (
+                  <div className={styles.chartEmpty}>
+                    <HomeIcon name="subjects" size={28} />
+                    <strong>Baholar taqsimoti uchun ma'lumot yo'q</strong>
+                    <span>O'quvchilarga baho qo'yilgach diagramma shakllanadi.</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

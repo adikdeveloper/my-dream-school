@@ -56,6 +56,7 @@ const reportsRoutes       = require('./reports/reportsRoutes');
 const keysRoutes          = require('./keys/keysRoutes');
 const sandboxRoutes       = require('./sandbox/sandboxRoutes');
 const studentRoutes       = require('./student/studentRoutes');
+const teacherRoutes       = require('./teacher/teacherRoutes');
 
 // ─── Routerlarni ulash ────────────────────────────────────────────────────────
 router.use('/',              chatRoutes);          // /api/ai/chat, /api/ai/sessions
@@ -68,6 +69,7 @@ router.use('/reports',       reportsRoutes);       // /api/ai/reports/overview
 router.use('/',              keysRoutes);          // /api/ai/keys, /api/ai/usage
 router.use('/',              sandboxRoutes);       // /api/ai/sandbox
 router.use('/student',       studentRoutes);       // /api/ai/student/chat, /sessions (o'quvchi)
+router.use('/teacher',       teacherRoutes);       // /api/ai/teacher/* (o'qituvchi: chat, tahlil, generatorlar)
 
 module.exports = router;
 

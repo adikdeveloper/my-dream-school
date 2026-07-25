@@ -83,6 +83,10 @@ const ClassProfile = ({ classData, isOpen, onClose, onUpdate, mode = 'view' }) =
       if (dataToSend.group === '') {
         delete dataToSend.group;
       }
+      // Sinf darajasi ixtiyoriy - tanlanmagan bo'lsa yubormaymiz
+      if (dataToSend.grade === '' || dataToSend.grade === null) {
+        delete dataToSend.grade;
+      }
 
       if (mode === 'add') {
         await apiService.createClass(dataToSend);
@@ -146,7 +150,9 @@ const ClassProfile = ({ classData, isOpen, onClose, onUpdate, mode = 'view' }) =
                 {mode === 'add' ? 'Yangi sinf qo\'shish' : isEditing ? 'Sinf ma\'lumotlarini tahrirlash' : 'Sinf profili'}
               </h2>
               <p className="modal-subtitle">
-                {!isEditing && classData && `${formData.grade}-${formData.section} sinf`}
+                {!isEditing && classData && (formData.grade !== '' && formData.grade !== null && formData.grade !== undefined
+                  ? `${formData.grade}-${formData.section} sinf`
+                  : `${formData.name}${formData.section ? ` (${formData.section})` : ''}`)}
               </p>
             </div>
           </div>
@@ -184,16 +190,15 @@ const ClassProfile = ({ classData, isOpen, onClose, onUpdate, mode = 'view' }) =
               </div>
 
               <div className="form-group">
-                <label className="form-label">Sinf darajasi <span className="required">*</span></label>
+                <label className="form-label">Sinf darajasi</label>
                 {isEditing ? (
                   <select
                     name="grade"
                     value={formData.grade}
                     onChange={handleChange}
                     className="form-input"
-                    required
                   >
-                    <option value="">Tanlang</option>
+                    <option value="">Tanlang (ixtiyoriy)</option>
                     <option value="0">0-sinf</option>
                     <option value="1">1-sinf</option>
                     <option value="2">2-sinf</option>
@@ -207,7 +212,9 @@ const ClassProfile = ({ classData, isOpen, onClose, onUpdate, mode = 'view' }) =
                   </select>
                 ) : (
                   <div className="form-value">
-                    <span className="badge badge-blue">{formData.grade}-sinf</span>
+                    {formData.grade !== '' && formData.grade !== null && formData.grade !== undefined
+                      ? <span className="badge badge-blue">{formData.grade}-sinf</span>
+                      : <span className="info-text">—</span>}
                   </div>
                 )}
               </div>

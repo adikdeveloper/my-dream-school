@@ -12,7 +12,8 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        value: mongodb+srv://adikdasturchi:em8nuAQzUJLFfORc@cluster0.xn4schh.mongodb.net/mydreamschool?retryWrites=true&w=majority&appName=Cluster0
+        # Maxfiy — Render dashboard'da qo'lda kiritiladi (faylga yozilmaydi, GitHub'ga tushmaydi)
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: RECAPTCHA_ENABLED

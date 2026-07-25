@@ -83,7 +83,7 @@ const PERMISSIONS = [
     label: "O'quvchini o'chirish",
     description: "O'quvchini sistemadan o'chirish",
     category: "O'qituvchi - O'quvchi boshqaruvi",
-    defaults: { admin: true, director: true, teacher: false, student: false, supervisor: false, accountant: false, hr: false, reception: false, callcenter: false }
+    defaults: { admin: true, director: true, teacher: false, student: false, supervisor: false, accountant: false, hr: false, reception: true, callcenter: false }
   },
 
   // ========== BAHOLAR ==========
@@ -168,28 +168,42 @@ const PERMISSIONS = [
     category: "To'lovlar",
     defaults: { admin: true, director: true, teacher: false, student: false, supervisor: false, accountant: true, hr: false, reception: false, callcenter: false }
   },
+  {
+    key: 'fee.set_and_edit',
+    label: "O'qish narxini o'rnatish/tahrirlash",
+    description: "O'quvchi uchun oylik to'lov va chegirmani belgilash, o'zgartirish",
+    category: "To'lovlar - Narxlar",
+    defaults: { admin: true, director: true, teacher: false, student: false, supervisor: false, accountant: true, hr: false, reception: false, callcenter: false }
+  },
+  {
+    key: 'balance.manage_student',
+    label: "O'quvchi hisobini (balans) boshqarish",
+    description: "Balansga pul qo'shish, to'lovga ishlatish, qaytarish va jarima qo'llash",
+    category: "To'lovlar - Balans",
+    defaults: { admin: true, director: true, teacher: false, student: false, supervisor: false, accountant: true, hr: false, reception: false, callcenter: false }
+  },
 
   // ========== TEST/IMTIHON ==========
   {
     key: 'test.create',
     label: "Test/Imtihon yaratish",
-    description: "Yangi test qo'shish",
+    description: "Yangi test qo'shish (faqat o'sha fan/sinf o'qituvchisi — egalik bilan cheklangan)",
     category: "Testlar",
-    defaults: { admin: true, director: true, teacher: true, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
+    defaults: { admin: false, director: false, teacher: true, student: false, supervisor: false, accountant: false, hr: false, reception: false, callcenter: false }
   },
   {
     key: 'test.edit',
     label: "Testni tahrirlash",
-    description: "Mavjud testni o'zgartirish",
+    description: "O'z yaratgan testini o'zgartirish (egalik bilan cheklangan)",
     category: "Testlar",
-    defaults: { admin: true, director: true, teacher: true, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
+    defaults: { admin: false, director: false, teacher: true, student: false, supervisor: false, accountant: false, hr: false, reception: false, callcenter: false }
   },
   {
     key: 'test.delete',
     label: "Testni o'chirish",
-    description: "Testni o'chirish",
+    description: "O'z yaratgan testini o'chirish (egalik bilan cheklangan)",
     category: "Testlar",
-    defaults: { admin: true, director: true, teacher: true, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
+    defaults: { admin: false, director: false, teacher: true, student: false, supervisor: false, accountant: false, hr: false, reception: false, callcenter: false }
   },
 
   // ========== VAZIFA ==========
@@ -203,9 +217,9 @@ const PERMISSIONS = [
   {
     key: 'assignment.grade',
     label: "Vazifani baholash",
-    description: "O'quvchi topshirgan vazifani baholash",
+    description: "O'z bergan vazifasiga topshirilgan ishni baholash (egalik bilan cheklangan)",
     category: "Vazifalar",
-    defaults: { admin: true, director: true, teacher: true, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
+    defaults: { admin: false, director: false, teacher: true, student: false, supervisor: false, accountant: false, hr: false, reception: false, callcenter: false }
   },
 
   // ========== DARS JADVALI ==========
@@ -219,8 +233,17 @@ const PERMISSIONS = [
   {
     key: 'schedule.edit_topic',
     label: "Dars mavzusini yozish",
-    description: "O'qituvchi o'z darsiga mavzu yozsin",
+    description: "O'qituvchi o'z darsiga mavzu yozsin (egalik bilan cheklangan)",
     category: "Dars jadvali",
+    defaults: { admin: false, director: false, teacher: true, student: false, supervisor: false, accountant: false, hr: false, reception: false, callcenter: false }
+  },
+
+  // ========== DARS ALMASHTIRISH (O'RNINI BOSISH) ==========
+  {
+    key: 'lesson.substitute',
+    label: "O'rniga dars o'tishni belgilash",
+    description: "Boshqa o'qituvchi o'rniga dars o'tganini belgilash va tasdiqlash. Belgilangach o'sha sinf jurnali vaqtincha ochiladi.",
+    category: "Dars almashtirish",
     defaults: { admin: true, director: true, teacher: true, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
   },
 
@@ -294,6 +317,13 @@ const PERMISSIONS = [
     category: "E'lonlar",
     defaults: { admin: true, director: true, teacher: false, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
   },
+  {
+    key: 'parent_contact.manage',
+    label: "Ota-ona aloqa jurnalini boshqarish",
+    description: "Ota-ona bilan aloqa yozuvlarini qo'shish va tahrirlash",
+    category: "Ota-ona aloqasi",
+    defaults: { admin: true, director: true, teacher: true, student: false, supervisor: false, accountant: true, hr: false, reception: false, callcenter: false }
+  },
 
   // ========== SINF/FAN ==========
   {
@@ -322,7 +352,7 @@ const PERMISSIONS = [
     label: "Fanlarni boshqarish",
     description: "Fan qo'shish, tahrirlash, o'chirish",
     category: "Fanlar",
-    defaults: { admin: true, director: true, teacher: false, student: false, supervisor: true, accountant: false, hr: false, reception: false, callcenter: false }
+    defaults: { admin: true, director: true, teacher: false, student: false, supervisor: true, accountant: false, hr: false, reception: true, callcenter: false }
   },
 
   // ========== O'QITUVCHI MAOSHI ==========
@@ -416,6 +446,11 @@ function getDefaultPermissions() {
   return result;
 }
 
+// Mongoose Map kalitlari nuqtani (".") qo'llab-quvvatlamaydi, shuning uchun bazaga
+// saqlashdan oldin nuqtani ":" ga almashtiramiz, o'qiganda esa qaytaramiz.
+function encodeKey(k) { return k.replace(/\./g, ':'); }
+function decodeKey(k) { return k.replace(/:/g, '.'); }
+
 // Kategoriyalar bo'yicha guruhlash
 function getGroupedCatalog() {
   const groups = {};
@@ -426,4 +461,4 @@ function getGroupedCatalog() {
   return groups;
 }
 
-module.exports = { ROLES, PERMISSIONS, getDefaultPermissions, getGroupedCatalog };
+module.exports = { ROLES, PERMISSIONS, getDefaultPermissions, getGroupedCatalog, encodeKey, decodeKey };

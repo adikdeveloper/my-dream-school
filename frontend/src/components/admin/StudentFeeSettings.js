@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Can } from '../../context/PermissionsContext';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api';
 
 const StudentFeeSettings = () => {
   const [students, setStudents] = useState([]);
@@ -159,9 +160,11 @@ const StudentFeeSettings = () => {
     <div className="student-fee-settings">
       <div className="header">
         <h1>O'qish narxlari</h1>
-        <button className="btn-primary" onClick={handleAddNew}>
-          + Yangi narx belgilash
-        </button>
+        <Can perm="fee.set_and_edit">
+          <button className="btn-primary" onClick={handleAddNew}>
+            + Yangi narx belgilash
+          </button>
+        </Can>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -247,9 +250,11 @@ const StudentFeeSettings = () => {
                   </td>
                   <td>
                     <div className="action-buttons">
-                      <button className="btn-edit" onClick={() => handleEdit(fee)}>
-                        Tahrirlash
-                      </button>
+                      <Can perm="fee.set_and_edit">
+                        <button className="btn-edit" onClick={() => handleEdit(fee)}>
+                          Tahrirlash
+                        </button>
+                      </Can>
                       <button className="btn-delete" onClick={() => handleDelete(fee._id)}>
                         O'chirish
                       </button>
@@ -372,9 +377,11 @@ const StudentFeeSettings = () => {
                 <button type="button" className="btn-outline" onClick={() => setShowModal(false)}>
                   Bekor qilish
                 </button>
-                <button type="submit" className="btn-primary">
-                  Saqlash
-                </button>
+                <Can perm="fee.set_and_edit">
+                  <button type="submit" className="btn-primary">
+                    Saqlash
+                  </button>
+                </Can>
               </div>
             </form>
           </div>

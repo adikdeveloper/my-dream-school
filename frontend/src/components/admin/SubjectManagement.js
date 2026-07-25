@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
 import apiService from '../../services/apiService';
 import SubjectProfile from './SubjectProfile';
+import { Can } from '../../context/PermissionsContext';
 
 const SubjectManagement = () => {
   const { setLoading, setError } = useData();
@@ -218,10 +219,12 @@ const SubjectManagement = () => {
             </div>
           </div>
 
-          <button className="btn-add-compact" onClick={handleAddSubject}>
-            <span className="add-icon">➕</span>
-            <span className="add-text">Yangi fan</span>
-          </button>
+          <Can perm="subject.manage">
+            <button className="btn-add-compact" onClick={handleAddSubject}>
+              <span className="add-icon">➕</span>
+              <span className="add-text">Yangi fan</span>
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -260,20 +263,24 @@ const SubjectManagement = () => {
                     <span>👁️</span>
                     <span>Ko'rish</span>
                   </button>
-                  <button
-                    className="subject-action-btn edit"
-                    onClick={() => handleEditSubject(subject)}
-                  >
-                    <span>✏️</span>
-                    <span>Tahrirlash</span>
-                  </button>
-                  <button
-                    className="subject-action-btn delete"
-                    onClick={() => handleDeleteSubject(subject)}
-                  >
-                    <span>🗑️</span>
-                    <span>O'chirish</span>
-                  </button>
+                  <Can perm="subject.manage">
+                    <button
+                      className="subject-action-btn edit"
+                      onClick={() => handleEditSubject(subject)}
+                    >
+                      <span>✏️</span>
+                      <span>Tahrirlash</span>
+                    </button>
+                  </Can>
+                  <Can perm="subject.manage">
+                    <button
+                      className="subject-action-btn delete"
+                      onClick={() => handleDeleteSubject(subject)}
+                    >
+                      <span>🗑️</span>
+                      <span>O'chirish</span>
+                    </button>
+                  </Can>
                 </div>
               </div>
             ))}
@@ -336,10 +343,12 @@ const SubjectManagement = () => {
                 <span>✕</span>
                 <span>Bekor qilish</span>
               </button>
-              <button className="modal-btn confirm-btn" onClick={confirmDelete}>
-                <span>🗑️</span>
-                <span>Ha, o'chirish</span>
-              </button>
+              <Can perm="subject.manage">
+                <button className="modal-btn confirm-btn" onClick={confirmDelete}>
+                  <span>🗑️</span>
+                  <span>Ha, o'chirish</span>
+                </button>
+              </Can>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { api } from '../../services/authService';
 import apiService from '../../services/apiService';
 import { useAuth } from '../../context/AuthContext';
@@ -6,6 +6,8 @@ import './Homework.css';
 
 // MongoDB ObjectId validation regex
 const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
+// Biriktirma fayllar uchun asosiy URL (rasmlar bilan bir xil)
+const FILE_BASE = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
 
 const Homework = () => {
   useAuth();
@@ -15,6 +17,7 @@ const Homework = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [submissionText, setSubmissionText] = useState('');
+  const [submissionFile, setSubmissionFile] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // 'success' or 'error'
@@ -23,14 +26,21 @@ const Homework = () => {
   const [modalViewMode, setModalViewMode] = useState(false);
 
   // Define showToastMessage FIRST before using it
+  const toastTimerRef = useRef(null);
   const showToastMessage = useCallback((message, type = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
 
-    setTimeout(() => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => {
       setShowToast(false);
     }, 5000); // 5 seconds - better UX for reading
+  }, []);
+
+  // Komponent yo'q qilinganda toast taymerini tozalaymiz
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
   const loadUserData = useCallback(async () => {
@@ -81,9 +91,11 @@ const Homework = () => {
   const handleSubmit = async () => {
     // Sanitize and validate input
     const sanitizedText = submissionText.trim();
+    const hasExistingAttachment = !!selectedAssignment?.mySubmission?.attachmentUrl;
 
-    if (!sanitizedText || sanitizedText.length < 10) {
-      showToastMessage('Javob kamida 10 belgidan iborat bo\'lishi kerak', 'error');
+    // Matn (>=10 belgi) yoki fayl — kamida bittasi bo'lishi shart
+    if (!submissionFile && !hasExistingAttachment && sanitizedText.length < 10) {
+      showToastMessage('Javob kamida 10 belgidan iborat bo\'lishi yoki fayl biriktirilishi kerak', 'error');
       return;
     }
 
@@ -99,12 +111,15 @@ const Homework = () => {
     }
 
     try {
-      const response = await api.post(`/assignments/${selectedAssignment._id}/submit`, {
-        submissionText: sanitizedText
-      });
+      const formData = new FormData();
+      formData.append('submissionText', sanitizedText);
+      if (submissionFile) formData.append('attachment', submissionFile);
+
+      const response = await api.post(`/assignments/${selectedAssignment._id}/submit`, formData);
 
       setShowSubmitModal(false);
       setSubmissionText('');
+      setSubmissionFile(null);
       setSelectedAssignment(null);
       setModalUnsavedChanges(false);
       loadAssignments();
@@ -124,38 +139,44 @@ const Homework = () => {
   const openSubmitModal = (assignment, viewOnly = false) => {
     setSelectedAssignment(assignment);
     setSubmissionText(assignment.mySubmission?.submissionText || '');
+    setSubmissionFile(null);
     setModalUnsavedChanges(false);
     setModalViewMode(viewOnly);
     setShowSubmitModal(true);
   };
 
   const closeModal = () => {
-    if (modalUnsavedChanges && submissionText.trim()) {
+    if (modalUnsavedChanges && (submissionText.trim() || submissionFile)) {
       if (!window.confirm('O\'zgarishlar saqlanmaydi. Aniq chiqmoqchimisiz?')) {
         return;
       }
     }
     setShowSubmitModal(false);
+    setSubmissionFile(null);
     setModalUnsavedChanges(false);
   };
 
   // Helper function for date formatting with fallback
   const formatDate = useCallback((date) => {
+    const d = new Date(date);
+    if (!date || isNaN(d.getTime())) return '—';
     try {
-      return new Date(date).toLocaleDateString('uz-UZ', {
+      return d.toLocaleDateString('uz-UZ', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
       });
     } catch (error) {
       // Fallback to ISO format if locale not supported
-      return new Date(date).toLocaleDateString('en-GB');
+      return d.toLocaleDateString('en-GB');
     }
   }, []);
 
   // FIXED: Improved tab categorization with 4 clear categories and performance optimization
   const { pending, underReview, completed, overdue } = useMemo(() => {
     const now = new Date();
+    const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    const todayStart = startOfDay(now);
     const pendingList = [];
     const underReviewList = [];
     const completedList = [];
@@ -165,15 +186,15 @@ const Homework = () => {
       const dueDate = new Date(assignment.dueDate);
       const submission = assignment.mySubmission;
 
-      // Pre-calculate values for performance
-      const daysRemaining = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+      // Pre-calculate values for performance (taqvim kunlari bo'yicha, soat farqisiz)
+      const daysRemaining = Math.round((startOfDay(dueDate) - todayStart) / 86400000);
       const isNew = lastViewedHomework && new Date(assignment.createdAt) > new Date(lastViewedHomework);
 
       if (submission && submission.status === 'graded') {
         // Graded assignments go to completed
         completedList.push({
           ...assignment,
-          completedDate: submission.submittedAt,
+          completedDate: submission.gradedAt || submission.submittedAt,
           isNew
         });
       } else if (submission && submission.status === 'submitted') {
@@ -281,6 +302,7 @@ const Homework = () => {
                 <div className="homework-subject">
                   {hw.subject?.name}
                   {isNew && <span className="new-indicator mobile-compact">🔔 YANGI</span>}
+                  {hw.mySubmission?.isLate && <span className="late-flag">⏰ Kech</span>}
                 </div>
                 <div className="submitted-badge">✓ Topshirildi</div>
               </div>
@@ -334,6 +356,7 @@ const Homework = () => {
                 <div className="homework-subject">
                   {hw.subject?.name}
                   {isNew && <span className="new-indicator mobile-compact">🔔 YANGI</span>}
+                  {hw.mySubmission?.isLate && <span className="late-flag">⏰ Kech</span>}
                 </div>
                 <div className="grade-badge">
                   {grade}/{hw.maxScore} ({percentage}%)
@@ -480,7 +503,7 @@ const Homework = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{selectedAssignment.title}</h2>
-              <button className="modal-close" onClick={closeModal}>✕</button>
+              <button type="button" className="modal-close" onClick={closeModal} aria-label="Yopish">✕</button>
             </div>
 
             <div className="modal-body">
@@ -502,8 +525,18 @@ const Homework = () => {
                 <div className="submission-view-mode">
                   <label>Sizning javobingiz:</label>
                   <div className="submission-readonly">
-                    {submissionText || 'Javob topilmadi'}
+                    {submissionText || (selectedAssignment.mySubmission?.attachmentUrl ? 'Fayl biriktirilgan' : 'Javob topilmadi')}
                   </div>
+                  {selectedAssignment.mySubmission?.attachmentUrl && (
+                    <a
+                      className="attachment-link"
+                      href={`${FILE_BASE}${selectedAssignment.mySubmission.attachmentUrl}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      📎 {selectedAssignment.mySubmission.attachmentName || 'Biriktirilgan fayl'}
+                    </a>
+                  )}
                   {selectedAssignment.mySubmission?.feedback && (
                     <div className="feedback-section">
                       <strong>O'qituvchi izohi:</strong>
@@ -523,6 +556,31 @@ const Homework = () => {
                     rows="8"
                     placeholder="Vazifa javobini bu yerga yozing..."
                   />
+                  <div className="attachment-row">
+                    <label className="attachment-upload">
+                      📎 Fayl biriktirish (rasm yoki PDF, ixtiyoriy)
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => {
+                          setSubmissionFile(e.target.files?.[0] || null);
+                          setModalUnsavedChanges(true);
+                        }}
+                      />
+                    </label>
+                    {submissionFile ? (
+                      <span className="attachment-chosen">✓ {submissionFile.name}</span>
+                    ) : selectedAssignment.mySubmission?.attachmentUrl ? (
+                      <a
+                        className="attachment-link"
+                        href={`${FILE_BASE}${selectedAssignment.mySubmission.attachmentUrl}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        📎 {selectedAssignment.mySubmission.attachmentName || 'Joriy fayl'}
+                      </a>
+                    ) : null}
+                  </div>
                 </div>
               )}
             </div>

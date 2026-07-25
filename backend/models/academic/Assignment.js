@@ -16,11 +16,23 @@ const assignmentSubmissionSchema = new mongoose.Schema({
   submissionText: {
     type: String,
     trim: true,
-    minlength: [10, 'Javob kamida 10 belgidan iborat bo\'lishi kerak'],
+    // minlength route'da tekshiriladi: matn >=10 YOKI fayl biriktirilishi shart
     maxlength: [5000, 'Javob 5000 belgidan oshmasligi kerak']
+  },
+  attachmentUrl: {
+    type: String,
+    default: null
+  },
+  attachmentName: {
+    type: String,
+    default: null
   },
   submittedAt: {
     type: Date
+  },
+  isLate: {
+    type: Boolean,
+    default: false
   },
   grade: {
     type: Number,
@@ -41,6 +53,9 @@ const assignmentSubmissionSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: [1000, 'Izoh 1000 belgidan oshmasligi kerak']
+  },
+  gradedAt: {
+    type: Date
   }
 });
 

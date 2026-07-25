@@ -2,6 +2,15 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import apiService from '../../services/apiService';
 import './ParentContacts.css';
 
+// Sinf yorlig'i - sinf darajasi ixtiyoriy bo'lgani uchun bo'lmasa nom/bo'limga qaytamiz
+const classLabel = (c) => {
+  if (!c) return '';
+  if (c.grade !== null && c.grade !== undefined && c.grade !== '') {
+    return `${c.grade}-${c.section}`;
+  }
+  return c.name || c.section || '';
+};
+
 // ─── Konstanta ko'rsatkichlari ───────────────────────────────────────────────
 const STATUS_META = {
   contacted:   { label: "Gaplashildi",       color: '#059669', soft: '#d1fae5', icon: '✅' },
@@ -500,7 +509,7 @@ const ParentContacts = () => {
                           </div>
                         </td>
                         <td>
-                          <span className="pc-cls-badge">{s.classId ? `${s.classId.grade}-${s.classId.section}` : '—'}</span>
+                          <span className="pc-cls-badge">{s.classId ? classLabel(s.classId) : '—'}</span>
                         </td>
                         <td>
                           <div className="pc-parent-cell">
@@ -663,7 +672,7 @@ const ContactFormModal = ({ student, editingContact, month, allStudents, onClose
               <div className="pc-modal-sub">
                 <span>{selectedStudent.studentId || '—'}</span>
                 <span>•</span>
-                <span>{selectedStudent.classId ? `${selectedStudent.classId.grade}-${selectedStudent.classId.section}` : 'Sinfsiz'}</span>
+                <span>{selectedStudent.classId ? classLabel(selectedStudent.classId) : 'Sinfsiz'}</span>
               </div>
             )}
           </div>
@@ -681,7 +690,7 @@ const ContactFormModal = ({ student, editingContact, month, allStudents, onClose
                   <option value="">— tanlang —</option>
                   {studentOptions.map((s) => (
                     <option key={s._id} value={s._id}>
-                      {s.firstName} {s.lastName} {s.studentId ? `(${s.studentId})` : ''} {s.classId ? `— ${s.classId.grade}-${s.classId.section}` : ''}
+                      {s.firstName} {s.lastName} {s.studentId ? `(${s.studentId})` : ''} {s.classId ? `— ${classLabel(s.classId)}` : ''}
                     </option>
                   ))}
                 </select>
@@ -831,7 +840,7 @@ const HistoryPanel = ({ student, contacts, loading, onClose, onEdit, onDelete })
             <div className="pc-modal-sub">
               <span>{student.studentId || '—'}</span>
               <span>•</span>
-              <span>{student.classId ? `${student.classId.grade}-${student.classId.section}` : 'Sinfsiz'}</span>
+              <span>{student.classId ? classLabel(student.classId) : 'Sinfsiz'}</span>
               <span>•</span>
               <span>{student.parentName || 'Ota-ona ismi yo\'q'}</span>
               <span>•</span>

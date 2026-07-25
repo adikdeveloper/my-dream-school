@@ -35,6 +35,314 @@
   --ai-transition:   all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Director Dashboard design-system overrides */
+.admin-dashboard-layout .ai-assistant {
+  --ai-primary-dark: var(--director-primary-700);
+  --ai-primary: var(--director-primary-600);
+  --ai-primary-soft: var(--director-primary-400);
+  --ai-bg-page: var(--director-slate-50);
+  --ai-bg-card: var(--director-white);
+  --ai-bg-muted: var(--director-slate-100);
+  --ai-bg-hover: var(--director-primary-50);
+  --ai-border: var(--director-slate-200);
+  --ai-border-soft: var(--director-slate-100);
+  --ai-text-main: var(--director-slate-900);
+  --ai-text: var(--director-slate-800);
+  --ai-text-muted: var(--director-slate-500);
+  --ai-text-light: var(--director-slate-400);
+  --ai-text-link: var(--director-primary-700);
+  --ai-soft-bg: var(--director-primary-100);
+  --ai-soft-bg-2: var(--director-primary-200);
+  --ai-radius-sm: var(--director-radius-sm);
+  --ai-radius: var(--director-radius-md);
+  --ai-radius-md: var(--director-radius-md);
+  --ai-radius-lg: var(--director-radius-lg);
+  --ai-shadow-sm: var(--director-shadow-xs);
+  --ai-shadow: var(--director-shadow-sm);
+  --ai-shadow-md: var(--director-shadow-md);
+  --ai-shadow-blue: none;
+  width: 100%;
+  max-width: var(--director-content-max-width);
+  height: calc(100vh - var(--director-topbar-height));
+  margin: 0 auto;
+  background: var(--director-slate-50);
+}
+
+.admin-dashboard-layout .ai-header {
+  gap: 16px;
+  padding: 24px 28px 0;
+  background: var(--director-white);
+  border-bottom: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .ai-header .page-title {
+  gap: 12px;
+  color: var(--director-slate-900);
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.admin-dashboard-layout .ai-header .page-title span {
+  color: var(--director-slate-900);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.admin-dashboard-layout .ai-title-avatar {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.admin-dashboard-layout .ai-subtitle {
+  max-width: 720px;
+  color: var(--director-slate-500);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.admin-dashboard-layout .ai-tab {
+  min-height: 40px;
+  padding: 8px 14px;
+  color: var(--director-slate-600);
+  border-bottom-width: 2px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.admin-dashboard-layout .ai-tab:hover {
+  color: var(--director-slate-900);
+  background: var(--director-slate-100);
+}
+
+.admin-dashboard-layout .ai-tab.active {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-bottom-color: var(--director-primary-600);
+}
+
+.admin-dashboard-layout .ai-chat-container {
+  grid-template-columns: 272px minmax(0, 1fr);
+  background: var(--director-slate-50);
+}
+
+.admin-dashboard-layout .ai-sessions {
+  padding: 12px;
+  gap: 8px;
+}
+
+.admin-dashboard-layout .btn-new-chat,
+.admin-dashboard-layout .btn-add-key,
+.admin-dashboard-layout .ai-send-btn,
+.admin-dashboard-layout .ai-assistant .btn-save {
+  min-height: 40px;
+  color: var(--director-white);
+  background: var(--director-primary-600);
+  border: 1px solid var(--director-primary-600);
+  border-radius: var(--director-radius-sm);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .btn-new-chat:hover,
+.admin-dashboard-layout .btn-add-key:hover,
+.admin-dashboard-layout .ai-send-btn:hover,
+.admin-dashboard-layout .ai-assistant .btn-save:hover {
+  background: var(--director-primary-700);
+  border-color: var(--director-primary-700);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .session-item,
+.admin-dashboard-layout .capability-card,
+.admin-dashboard-layout .ai-assistant .card {
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-lg);
+  box-shadow: var(--director-shadow-sm);
+  transform: none;
+}
+
+.admin-dashboard-layout .session-item {
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .session-item:hover {
+  background: var(--director-slate-50);
+  border-color: var(--director-slate-300);
+  transform: none;
+}
+
+.admin-dashboard-layout .session-item.active {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-200);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .usage-mini {
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-100);
+}
+
+.admin-dashboard-layout .ai-messages {
+  padding: 24px 28px;
+}
+
+.admin-dashboard-layout .ai-welcome { padding-top: 0; }
+.admin-dashboard-layout .ai-welcome-icon { min-height: 120px; }
+
+.admin-dashboard-layout .ai-suggestion-btn {
+  min-height: 40px;
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-md);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .ai-suggestion-btn:hover {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-200);
+  transform: none;
+}
+
+.admin-dashboard-layout .ai-input-area {
+  padding: 16px 28px;
+  background: var(--director-white);
+  border-top: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .ai-input,
+.admin-dashboard-layout .ai-assistant input,
+.admin-dashboard-layout .ai-assistant select,
+.admin-dashboard-layout .ai-assistant textarea {
+  box-sizing: border-box;
+  min-height: 42px;
+  color: var(--director-slate-900);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-300);
+  border-radius: var(--director-radius-sm);
+  font-size: 14px;
+}
+
+.admin-dashboard-layout .ai-input:focus,
+.admin-dashboard-layout .ai-assistant input:focus,
+.admin-dashboard-layout .ai-assistant select:focus,
+.admin-dashboard-layout .ai-assistant textarea:focus {
+  border-color: var(--director-primary-400);
+  outline: 3px solid rgba(59, 130, 246, .14);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .ai-mic-btn,
+.admin-dashboard-layout .session-delete,
+.admin-dashboard-layout .msg-copy-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.admin-dashboard-layout .ai-capabilities-container,
+.admin-dashboard-layout .ai-keys-container,
+.admin-dashboard-layout .ai-usage-container,
+.admin-dashboard-layout .ai-sandbox-container {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 24px 28px;
+  background: var(--director-slate-50);
+}
+
+.admin-dashboard-layout .usage-card {
+  min-height: 124px;
+  padding: 20px;
+}
+
+.admin-dashboard-layout .usage-card-value {
+  font-size: 28px;
+  font-weight: 750;
+}
+
+.admin-dashboard-layout .capability-card:hover,
+.admin-dashboard-layout .usage-card:hover,
+.admin-dashboard-layout .api-key-card:hover {
+  transform: none;
+  box-shadow: var(--director-shadow-sm);
+}
+
+.admin-dashboard-layout .sandbox-role-btn {
+  min-height: 44px;
+  color: var(--director-slate-600);
+  background: transparent;
+  border-radius: 10px;
+}
+
+.admin-dashboard-layout .sandbox-role-btn:hover {
+  color: var(--director-slate-900);
+  background: var(--director-slate-100);
+}
+
+.admin-dashboard-layout .sandbox-role-btn.active {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-100);
+}
+
+.admin-dashboard-layout .confirm-overlay {
+  background: rgba(9, 20, 36, .62);
+  backdrop-filter: blur(5px);
+}
+
+.admin-dashboard-layout .confirm-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: 90vh;
+  border-radius: var(--director-radius-xl);
+  box-shadow: var(--director-shadow-lg);
+}
+
+.admin-dashboard-layout .ai-assistant button:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .2);
+  outline-offset: 2px;
+}
+
+.admin-dashboard-layout .ai-assistant button:disabled {
+  color: var(--director-slate-500);
+  background: var(--director-slate-100);
+  border-color: var(--director-slate-200);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+@media (max-width: 639px) {
+  .admin-dashboard-layout .ai-header {
+    padding: 16px 14px 0;
+  }
+
+  .admin-dashboard-layout .ai-header .page-title {
+    font-size: 24px;
+  }
+
+  .admin-dashboard-layout .ai-messages,
+  .admin-dashboard-layout .ai-input-area,
+  .admin-dashboard-layout .ai-capabilities-container,
+  .admin-dashboard-layout .ai-keys-container,
+  .admin-dashboard-layout .ai-usage-container,
+  .admin-dashboard-layout .ai-sandbox-container {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+}
+
 /* ============================================================
    BASE — Kompyuter (≥1200px)
 ============================================================ */
@@ -1547,4 +1855,3 @@
   .capability-header h3 { font-size: 0.95rem; }
   .capability-example-btn { font-size: 0.78rem; padding: 0.5rem 0.6rem; }
 }
-

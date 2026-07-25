@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
 import TeacherProfile from './TeacherProfile';
 
 const TeacherManagement = () => {
   const { setLoading, setError } = useData();
+  const { user } = useAuth();
+  // Maoshni faqat hisobchi/admin/direktor boshqaradi (reception ko'ra olmaydi)
+  const canManageSalary = ['admin', 'director', 'accountant'].includes(user?.role);
   const [teachers, setTeachers] = useState([]);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -288,7 +292,20 @@ const TeacherManagement = () => {
 
     try {
       setLoading(true);
-      await apiService.updateTeacherSalaryRate(selectedTeacherForSalary._id, Number(newSalaryRate));
+      const response = await apiService.updateTeacherSalaryRate(selectedTeacherForSalary._id, Number(newSalaryRate));
+      const updatedRate = response.teacher?.salaryPerLesson ?? Number(newSalaryRate);
+
+      setSelectedTeacherForSalary(prev => prev ? ({
+        ...prev,
+        salaryPerLesson: updatedRate
+      }) : prev);
+
+      const updatedSalaryData = await apiService.getTeacherMonthlySalary(
+        selectedYear,
+        selectedMonth,
+        selectedTeacherForSalary._id
+      );
+      setSalaryData(updatedSalaryData);
       await loadTeachersData();
       setError(null);
       alert('Maosh stavkasi muvaffaqiyatli yangilandi!');
@@ -297,7 +314,7 @@ const TeacherManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedTeacherForSalary, newSalaryRate, setLoading, setError, loadTeachersData]);
+  }, [selectedTeacherForSalary, newSalaryRate, selectedYear, selectedMonth, setLoading, setError, loadTeachersData]);
 
   const handleCloseSalaryModal = useCallback(() => {
     setShowSalaryModal(false);
@@ -409,15 +426,6 @@ const TeacherManagement = () => {
 
   return (
     <div className="teacher-management">
-      <header className="teachers-page-header">
-        <div>
-          <h1>O'qituvchilar</h1>
-          <p>O'qituvchilar ro'yxati, maoshi, holati va shaxsiy ma'lumotlarini boshqaring.</p>
-        </div>
-        <button className="teachers-primary-action" onClick={handleAddTeacher}>
-          Yangi o'qituvchi
-        </button>
-      </header>
 
       {/* Stats Cards */}
       <div className="stats-grid">
@@ -549,7 +557,7 @@ const TeacherManagement = () => {
                       <td>
                         <div className="teacher-cell">
                           <div className="teacher-avatar" style={teacher.profileImage ? {
-                            backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${teacher.profileImage})`,
+                            backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${teacher.profileImage})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             color: 'transparent'
@@ -602,14 +610,16 @@ const TeacherManagement = () => {
                           >
                             <span>👁️</span>
                           </button>
-                          <button
-                            className="action-btn salary-btn"
-                            title="Maosh"
-                            onClick={() => handleViewSalary(teacher)}
-                            aria-label={`${teacher.firstName} ${teacher.lastName} maoshi`}
-                          >
-                            <span>💰</span>
-                          </button>
+                          {canManageSalary && (
+                            <button
+                              className="action-btn salary-btn"
+                              title="Maosh"
+                              onClick={() => handleViewSalary(teacher)}
+                              aria-label={`${teacher.firstName} ${teacher.lastName} maoshi`}
+                            >
+                              <span>💰</span>
+                            </button>
+                          )}
                           <button
                             className="action-btn edit-btn"
                             title="Tahrirlash"
@@ -640,7 +650,7 @@ const TeacherManagement = () => {
                 <div key={teacher._id} className={`teacher-card ${!teacher.isActive ? 'card-inactive' : ''}`}>
                   <div className="card-header">
                     <div className="card-avatar" style={teacher.profileImage ? {
-                      backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${teacher.profileImage})`,
+                      backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${teacher.profileImage})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       color: 'transparent'
@@ -695,14 +705,16 @@ const TeacherManagement = () => {
                       <span>👁️</span>
                       <span>Ko'rish</span>
                     </button>
-                    <button
-                      className="card-action-btn salary"
-                      onClick={() => handleViewSalary(teacher)}
-                      aria-label={`${teacher.firstName} ${teacher.lastName} maoshi`}
-                    >
-                      <span>💰</span>
-                      <span>Maosh</span>
-                    </button>
+                    {canManageSalary && (
+                      <button
+                        className="card-action-btn salary"
+                        onClick={() => handleViewSalary(teacher)}
+                        aria-label={`${teacher.firstName} ${teacher.lastName} maoshi`}
+                      >
+                        <span>💰</span>
+                        <span>Maosh</span>
+                      </button>
+                    )}
                     <button
                       className="card-action-btn edit"
                       onClick={() => handleEditTeacher(teacher)}

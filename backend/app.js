@@ -90,10 +90,12 @@ app.use('/api/grades', require('./routes/academic/grades'));
 app.use('/api/attendance', require('./routes/academic/attendance'));
 app.use('/api/tests', require('./routes/academic/tests'));
 app.use('/api/assignments', require('./routes/academic/assignments'));
+app.use('/api/coins', require('./routes/academic/coins'));
 
 // Routes - Scheduling
 app.use('/api/schedule', require('./routes/scheduling/schedule'));
 app.use('/api/holidays', require('./routes/scheduling/holidays'));
+app.use('/api/substitutions', require('./routes/scheduling/substitutions'));
 
 // Routes - Financial
 app.use('/api/salary', require('./routes/financial/salary'));

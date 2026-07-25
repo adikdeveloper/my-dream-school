@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/apiService';
+import { useAuth } from '../../context/AuthContext';
 import styles from './Schedule.module.css';
 
 const Schedule = () => {
+  const { user } = useAuth();
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mobileGroup, setMobileGroup] = useState(0); // 0, 1, 2 for the 3 groups
+  const [weekSubs, setWeekSubs] = useState([]); // bu haftadagi almashtirishlar
 
   const dayNamesUz = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
   const dayNamesEn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -20,6 +23,7 @@ const Schedule = () => {
 
   useEffect(() => {
     fetchSchedule();
+    fetchWeekSubs();
   }, []);
 
   const fetchSchedule = async () => {
@@ -34,6 +38,31 @@ const Schedule = () => {
       setLoading(false);
     }
   };
+
+  // Bu haftadagi almashtirishlar (men o'tgan yoki mening o'rnimga o'tilgan)
+  const fetchWeekSubs = async () => {
+    try {
+      const today = new Date();
+      const dow = today.getDay();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+      const saturday = new Date(monday);
+      saturday.setDate(monday.getDate() + 5);
+      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const subs = await apiService.getSubstitutionOverlay(fmt(monday), fmt(saturday));
+      setWeekSubs(Array.isArray(subs) ? subs : []);
+    } catch (e) {
+      setWeekSubs([]);
+    }
+  };
+
+  const myId = user?._id;
+  // Mening o'z darsim o'rniga kim o'tgani (jadval katagiga belgi qo'yish uchun)
+  const coveredOnMyCell = (dayEn, timeSlot) => weekSubs.find((s) =>
+    s.originalTeacher && String(s.originalTeacher._id) === String(myId) &&
+    `${s.day}-${s.startTime}-${s.endTime}` === `${dayEn}-${timeSlot}`
+  );
+  const formatDateShort = (d) => new Date(d).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' });
 
   // Get all unique time slots
   const getTimeSlots = () => {
@@ -84,6 +113,15 @@ const Schedule = () => {
                         {period.topic && (
                           <div className={styles.periodTopic}>{period.topic}</div>
                         )}
+                        {(() => {
+                          const cov = coveredOnMyCell(dayEn, timeSlot);
+                          if (!cov || !cov.substituteTeacher) return null;
+                          return (
+                            <div style={{ marginTop: 4, background: '#fee2e2', color: '#991b1b', borderRadius: 4, padding: '2px 5px', fontSize: '0.62rem', fontWeight: 700 }}>
+                              🔄 O'rniga: {cov.substituteTeacher.name} ({formatDateShort(cov.date)})
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <div className={styles.periodEmpty}>—</div>
@@ -155,6 +193,27 @@ const Schedule = () => {
         </div>
         {renderTable(groups[mobileGroup].uz, groups[mobileGroup].en)}
       </div>
+
+      {/* Bu haftadagi almashtirishlar */}
+      {(() => {
+        const asSub = weekSubs.filter((s) => s.substituteTeacher && String(s.substituteTeacher._id) === String(myId));
+        const asOrig = weekSubs.filter((s) => s.originalTeacher && String(s.originalTeacher._id) === String(myId));
+        if (asSub.length === 0 && asOrig.length === 0) return null;
+        const row = (s, label) => (
+          <div key={s._id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9', fontSize: '0.85rem' }}>
+            <strong>{formatDateShort(s.date)}</strong> • {s.startTime}-{s.endTime} • {s.className}
+            {s.subjectName ? ` • ${s.subjectName}` : ''} — <span style={{ color: '#0c4a6e' }}>{label}</span>
+            {s.status === 'pending' && <span style={{ marginLeft: 6, color: '#92400e', fontSize: '0.72rem' }}>(tasdiq kutilmoqda)</span>}
+          </div>
+        );
+        return (
+          <div style={{ background: '#fff', borderRadius: 12, padding: '1rem 1.25rem', marginTop: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#0f172a' }}>🔄 Bu haftadagi almashtirishlar</h2>
+            {asSub.map((s) => row(s, `Siz ${s.originalTeacher ? s.originalTeacher.name : ''} o'rniga o'tdingiz`))}
+            {asOrig.map((s) => row(s, `${s.substituteTeacher ? s.substituteTeacher.name : ''} sizning o'rningizga o'tdi`))}
+          </div>
+        );
+      })()}
     </div>
   );
 };

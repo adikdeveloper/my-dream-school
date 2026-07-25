@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import apiService from '../../services/apiService';
+import { useAuth } from '../../context/AuthContext';
 
 const ROLE_LABELS = {
   admin: '🛡️ Admin',
@@ -14,14 +15,28 @@ const ROLE_LABELS = {
 };
 
 const DirectorPermissions = () => {
+  const { user } = useAuth();
+  const isDirector = user?.role === 'director';
+
   const [catalog, setCatalog] = useState(null);
   const [permissions, setPermissions] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeRole, setActiveRole] = useState('teacher');
   const [search, setSearch] = useState('');
-  const [savingKey, setSavingKey] = useState(null);
+  const [savingKeys, setSavingKeys] = useState(() => new Set()); // `${role}:${key}` in-flight
+  const [savingRole, setSavingRole] = useState(null); // "hammasini yoq/o'chir" yoki reset jarayonidagi rol
   const [resetConfirm, setResetConfirm] = useState(null);
+  const [resetting, setResetting] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Eng so'nggi commit qilingan permissions — handlerlar eskirgan closure o'qimasligi uchun.
+  const permissionsRef = useRef(permissions);
+  permissionsRef.current = permissions;
+
+  // 'director' (eng yuqori rol) ruxsatlarini faqat direktorning o'zi tahrirlay oladi.
+  // Admin (yordamchi) uchun direktor tab'i read-only.
+  const roleLocked = (role) => role === 'director' && !isDirector;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,8 +47,10 @@ const DirectorPermissions = () => {
       ]);
       setCatalog(cat);
       setPermissions(perms);
+      setError(null);
     } catch (err) {
       console.error(err);
+      setError("Ruxsatlarni yuklashda xatolik: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -42,52 +59,64 @@ const DirectorPermissions = () => {
   useEffect(() => { load(); }, [load]);
 
   const handleToggle = async (role, key, value) => {
-    setSavingKey(`${role}:${key}`);
+    if (roleLocked(role)) return;
+    const sk = `${role}:${key}`;
+    const prevValue = !!(permissionsRef.current[role]?.[key]); // rollback uchun aniq oldingi qiymat
+    setSavingKeys((s) => { const n = new Set(s); n.add(sk); return n; });
     // Optimistik update
-    setPermissions((prev) => ({
-      ...prev,
-      [role]: { ...(prev[role] || {}), [key]: value }
-    }));
+    setPermissions((prev) => ({ ...prev, [role]: { ...(prev[role] || {}), [key]: value } }));
     try {
       await apiService.togglePermission(role, key, value);
       setSavedAt(new Date());
+      setError(null);
     } catch (err) {
       console.error(err);
-      // Qaytarish
-      setPermissions((prev) => ({
-        ...prev,
-        [role]: { ...(prev[role] || {}), [key]: !value }
-      }));
-      alert("Saqlashda xatolik: " + (err.response?.data?.message || err.message));
+      // Aniq oldingi qiymatga qaytarish (!value emas — oraliqdagi o'zgarishni buzmaslik uchun)
+      setPermissions((prev) => ({ ...prev, [role]: { ...(prev[role] || {}), [key]: prevValue } }));
+      setError("Saqlashda xatolik: " + (err.response?.data?.message || err.message));
     } finally {
-      setSavingKey(null);
+      setSavingKeys((s) => { const n = new Set(s); n.delete(sk); return n; });
     }
   };
 
   const handleReset = async (role) => {
-    setResetConfirm(null);
+    if (roleLocked(role)) return;
+    setResetting(true);
+    setSavingRole(role);
     try {
       const data = await apiService.resetRolePermissions(role);
       setPermissions((prev) => ({ ...prev, [role]: data.permissions }));
       setSavedAt(new Date());
+      setError(null);
+      setResetConfirm(null); // faqat muvaffaqiyatda yopiladi
     } catch (err) {
-      alert("Qaytarishda xatolik");
+      console.error(err);
+      setError("Qaytarishda xatolik: " + (err.response?.data?.message || err.message));
+    } finally {
+      setResetting(false);
+      setSavingRole(null);
     }
   };
 
   const handleToggleAll = async (role, category, value) => {
+    if (roleLocked(role)) return;
     const keys = (catalog?.grouped[category] || []).map((p) => p.key);
     if (!keys.length) return;
-    const newPerms = { ...(permissions[role] || {}) };
-    keys.forEach((k) => { newPerms[k] = value; });
-    setPermissions((prev) => ({ ...prev, [role]: newPerms }));
+    setSavingRole(role);
+    // Eng so'nggi holatdan to'liq xaritani tuzish (stale closure'dan emas)
+    const merged = { ...(permissionsRef.current[role] || {}) };
+    keys.forEach((k) => { merged[k] = value; });
+    setPermissions((prev) => ({ ...prev, [role]: merged }));
     try {
-      await apiService.updateRolePermissions(role, newPerms);
+      await apiService.updateRolePermissions(role, merged);
       setSavedAt(new Date());
+      setError(null);
     } catch (err) {
       console.error(err);
-      // Qaytarish — qayta yuklash
-      load();
+      setError("Saqlashda xatolik: " + (err.response?.data?.message || err.message));
+      load(); // serverdan qayta yuklash
+    } finally {
+      setSavingRole(null);
     }
   };
 
@@ -128,22 +157,34 @@ const DirectorPermissions = () => {
           <p className="dp-subtitle">Har bir rol uchun ruxsatlarni sozlang</p>
         </div>
         {savedAt && (
-          <div className="dp-saved">
+          <div className="dp-saved" aria-live="polite">
             ✓ Saqlandi {savedAt.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </div>
         )}
       </div>
 
-      <div className="dp-role-tabs">
+      {error && (
+        <div className="dp-errbar" role="alert" aria-live="assertive">
+          <span>⚠️ {error}</span>
+          <button className="dp-errbar-close" onClick={() => setError(null)} aria-label="Yopish">✕</button>
+        </div>
+      )}
+
+      <div className="dp-role-tabs" role="tablist" aria-label="Rollar">
         {catalog.roles.map((r) => {
           const cnt = Object.values(permissions[r] || {}).filter(Boolean).length;
+          const locked = roleLocked(r);
           return (
             <button
               key={r}
+              role="tab"
+              aria-selected={activeRole === r}
               className={`dp-role-tab ${activeRole === r ? 'active' : ''}`}
               onClick={() => setActiveRole(r)}
+              title={locked ? "Admin rolini faqat admin tahrirlay oladi" : undefined}
             >
               {ROLE_LABELS[r] || r}
+              {locked && <span className="dp-lock" aria-hidden="true">🔒</span>}
               <span className="dp-role-count">{cnt}</span>
             </button>
           );
@@ -160,14 +201,28 @@ const DirectorPermissions = () => {
         <div className="dp-stats">
           <strong>{grantedCount}</strong> / {totalCount} ta ruxsat berilgan
         </div>
-        <button className="dp-reset-btn" onClick={() => setResetConfirm(activeRole)}>
+        <button
+          className="dp-reset-btn"
+          onClick={() => setResetConfirm(activeRole)}
+          disabled={roleLocked(activeRole) || savingRole === activeRole}
+        >
           ↺ Default'ga qaytarish
         </button>
       </div>
 
-      {(activeRole === 'admin' || activeRole === 'director') && (
+      {roleLocked(activeRole) && (
+        <div className="dp-warning dp-warning-lock">
+          🔒 Direktor rolining ruxsatlarini faqat direktorning o'zi o'zgartira oladi. Bu yerda u faqat ko'rish uchun.
+        </div>
+      )}
+      {activeRole === 'director' && isDirector && (
         <div className="dp-warning">
-          ⚠️ Admin va Direktor uchun ruxsatlar — defaultda barchasi yoqilgan. O'chirish o'zingizni cheklab qo'yishi mumkin.
+          👑 Direktor — eng yuqori rol: kodda har doim barcha huquqlarga ega. Bu yerdagi o'zgartirishlar direktorni cheklamaydi.
+        </div>
+      )}
+      {activeRole === 'admin' && (
+        <div className="dp-warning">
+          ℹ️ Admin — direktor yordamchisi (administrator). Uning ruxsatlarini shu yerdan to'liq boshqarishingiz mumkin.
         </div>
       )}
 
@@ -178,6 +233,8 @@ const DirectorPermissions = () => {
         {Object.entries(filteredGroups).map(([cat, items]) => {
           const catGranted = items.filter((p) => rolePerms[p.key]).length;
           const allOn = catGranted === items.length;
+          const locked = roleLocked(activeRole);
+          const roleBusy = savingRole === activeRole;
           return (
             <div key={cat} className="dp-category">
               <div className="dp-cat-head">
@@ -187,6 +244,7 @@ const DirectorPermissions = () => {
                   <button
                     className="dp-cat-btn"
                     onClick={() => handleToggleAll(activeRole, cat, !allOn)}
+                    disabled={locked || roleBusy}
                   >
                     {allOn ? "Hammasini o'chir" : "Hammasini yoq"}
                   </button>
@@ -195,9 +253,10 @@ const DirectorPermissions = () => {
               <div className="dp-perm-list">
                 {items.map((p) => {
                   const checked = !!rolePerms[p.key];
-                  const saving = savingKey === `${activeRole}:${p.key}`;
+                  const saving = savingKeys.has(`${activeRole}:${p.key}`);
+                  const disabled = saving || roleBusy || locked;
                   return (
-                    <label key={p.key} className={`dp-perm-row ${checked ? 'on' : 'off'}`}>
+                    <label key={p.key} className={`dp-perm-row ${checked ? 'on' : 'off'}`} aria-busy={saving}>
                       <div className="dp-perm-info">
                         <div className="dp-perm-label">{p.label}</div>
                         <div className="dp-perm-desc">{p.description}</div>
@@ -206,8 +265,11 @@ const DirectorPermissions = () => {
                       <div className="dp-perm-toggle">
                         <input
                           type="checkbox"
+                          role="switch"
+                          aria-checked={checked}
+                          aria-label={p.label}
                           checked={checked}
-                          disabled={saving}
+                          disabled={disabled}
                           onChange={(e) => handleToggle(activeRole, p.key, e.target.checked)}
                         />
                         <span className="dp-switch" />
@@ -222,13 +284,15 @@ const DirectorPermissions = () => {
       </div>
 
       {resetConfirm && (
-        <div className="dp-modal-backdrop" onClick={() => setResetConfirm(null)}>
+        <div className="dp-modal-backdrop" onClick={() => !resetting && setResetConfirm(null)}>
           <div className="dp-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Default'ga qaytarish</h3>
             <p>{ROLE_LABELS[resetConfirm]} rolining barcha ruxsatlari boshlang'ich qiymatlariga qaytariladi. Bu o'zgartirishlarni bekor qiladi.</p>
             <div className="dp-modal-actions">
-              <button className="dp-btn-cancel" onClick={() => setResetConfirm(null)}>Bekor qilish</button>
-              <button className="dp-btn-danger" onClick={() => handleReset(resetConfirm)}>↺ Qaytarish</button>
+              <button className="dp-btn-cancel" onClick={() => setResetConfirm(null)} disabled={resetting}>Bekor qilish</button>
+              <button className="dp-btn-danger" onClick={() => handleReset(resetConfirm)} disabled={resetting}>
+                {resetting ? "⏳ Qaytarilmoqda..." : "↺ Qaytarish"}
+              </button>
             </div>
           </div>
         </div>
@@ -287,12 +351,26 @@ const DirectorPermissions = () => {
           color: #b91c1c; border-radius: 8px; cursor: pointer; font-size: 0.8125rem;
           font-weight: 600; transition: all .15s ease;
         }
-        .dp-reset-btn:hover { background: #fee2e2; }
+        .dp-reset-btn:hover:not(:disabled) { background: #fee2e2; }
+        .dp-reset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .dp-errbar {
+          display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+          padding: 0.75rem 1rem; background: #fef2f2; border: 1px solid #fecaca;
+          border-radius: 10px; color: #b91c1c; font-size: 0.875rem; margin-bottom: 1rem; font-weight: 500;
+        }
+        .dp-errbar-close {
+          background: none; border: none; color: #b91c1c; cursor: pointer;
+          font-size: 1rem; padding: 0 0.25rem; line-height: 1; flex-shrink: 0;
+        }
+
+        .dp-lock { font-size: 0.75rem; }
 
         .dp-warning {
           padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fde68a;
           border-radius: 10px; color: #92400e; font-size: 0.875rem; margin-bottom: 1rem;
         }
+        .dp-warning-lock { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
 
         .dp-categories { display: flex; flex-direction: column; gap: 1rem; }
         .dp-category {
@@ -311,7 +389,8 @@ const DirectorPermissions = () => {
           border: 1px solid #e2e8f0; background: #fff; color: #475569;
           border-radius: 6px; cursor: pointer;
         }
-        .dp-cat-btn:hover { background: #f1f5f9; }
+        .dp-cat-btn:hover:not(:disabled) { background: #f1f5f9; }
+        .dp-cat-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
         .dp-perm-list { padding: 0.5rem; display: flex; flex-direction: column; gap: 4px; }
         .dp-perm-row {

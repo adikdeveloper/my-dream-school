@@ -401,7 +401,22 @@
 
 @media (max-width: 767px) {
   .sai-page { height: calc(100vh - 75px); }
-  .sai-sessions { display: none; }
+  /* Sessiyalar panelini yashirmaymiz — yuqorida gorizontal lentaga aylantiramiz,
+     shunda o'quvchi mobilda ham yangi suhbat ochishi/almashtirishi mumkin */
+  .sai-layout { flex-direction: column; }
+  .sai-sessions {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.5rem 0.75rem;
+  }
+  .sai-new-btn { flex-shrink: 0; white-space: nowrap; }
+  .sai-session-item { flex-shrink: 0; max-width: 160px; }
+  .sai-sessions-empty { display: none; }
 }
 
 @media (max-width: 480px) {

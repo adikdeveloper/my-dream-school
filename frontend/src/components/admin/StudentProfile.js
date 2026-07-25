@@ -69,7 +69,7 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
       if (student.profileImage) {
         const imageUrl = student.profileImage.startsWith('http')
           ? student.profileImage
-          : `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${student.profileImage}`;
+          : `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage}`;
         setImagePreview(imageUrl);
       } else {
         setImagePreview(null);
@@ -314,7 +314,11 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
 
   const getClassInfo = () => {
     if (student && student.classId) {
-      return `${student.classId.grade}-${student.classId.section}`;
+      const { grade, section, name } = student.classId;
+      if (grade !== null && grade !== undefined && grade !== '') {
+        return `${grade}-${section}`;
+      }
+      return name || section || 'Biriktirilmagan';
     }
     return 'Biriktirilmagan';
   };
@@ -882,7 +886,7 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
                     <option value="">Sinf tanlang...</option>
                     {classes.map((cls) => (
                       <option key={cls._id} value={cls._id}>
-                        {cls.grade}-{cls.section}
+                        {(cls.grade !== null && cls.grade !== undefined && cls.grade !== '') ? `${cls.grade}-${cls.section}` : (cls.name || cls.section)}
                       </option>
                     ))}
                   </select>

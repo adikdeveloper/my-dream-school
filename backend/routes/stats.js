@@ -2,6 +2,7 @@
 const router = express.Router();
 const mongoose = require('mongoose');
 const { auth, authorize } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permissions');
 const User = require('../models/users/User');
 const Class = require('../models/academic/Class');
 const Subject = require('../models/academic/Subject');
@@ -17,7 +18,7 @@ const scheduleValidator = require('../utils/scheduleValidator');
 // @route   GET /api/stats/admin
 // @desc    Get admin dashboard statistics
 // @access  Private/Admin
-router.get('/admin', auth, authorize('admin', 'accountant'), async (req, res) => {
+router.get('/admin', auth, authorize('admin', 'accountant', 'supervisor', 'hr'), requirePermission('report.view_school'), async (req, res) => {
   try {
     // Get counts using countDocuments for better performance
     const [
@@ -218,24 +219,51 @@ router.get('/teacher/classes', auth, authorize('teacher'), async (req, res) => {
         }
       },
       {
+        // Har bir bahoni foizga normallashtiramiz (kunlik 0.5, imtihon examMaxScore, maks 100%)
+        $addFields: {
+          pct: {
+            $min: [
+              {
+                $multiply: [
+                  {
+                    $divide: [
+                      '$score',
+                      {
+                        $cond: [
+                          { $or: [{ $eq: ['$isExam', true] }, { $eq: ['$type', 'exam'] }] },
+                          { $max: [{ $ifNull: ['$examMaxScore', { $ifNull: ['$maxScore', 100] }] }, 0.5] },
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  100
+                ]
+              },
+              100
+            ]
+          }
+        }
+      },
+      {
         $group: {
           _id: {
             class: '$class',
             subject: '$subject'
           },
-          average: { $avg: '$score' },
+          average: { $avg: '$pct' },
           totalGrades: { $sum: 1 },
           excellentCount: {
-            $sum: { $cond: [{ $gte: ['$score', 85] }, 1, 0] }
+            $sum: { $cond: [{ $gte: ['$pct', 85] }, 1, 0] }
           },
           goodCount: {
-            $sum: { $cond: [{ $and: [{ $gte: ['$score', 70] }, { $lt: ['$score', 85] }] }, 1, 0] }
+            $sum: { $cond: [{ $and: [{ $gte: ['$pct', 70] }, { $lt: ['$pct', 85] }] }, 1, 0] }
           },
           averageCount: {
-            $sum: { $cond: [{ $and: [{ $gte: ['$score', 60] }, { $lt: ['$score', 70] }] }, 1, 0] }
+            $sum: { $cond: [{ $and: [{ $gte: ['$pct', 60] }, { $lt: ['$pct', 70] }] }, 1, 0] }
           },
           poorCount: {
-            $sum: { $cond: [{ $lt: ['$score', 60] }, 1, 0] }
+            $sum: { $cond: [{ $lt: ['$pct', 60] }, 1, 0] }
           }
         }
       }
@@ -257,7 +285,7 @@ router.get('/teacher/classes', auth, authorize('teacher'), async (req, res) => {
           },
           totalRecords: { $sum: 1 },
           presentCount: {
-            $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] }
+            $sum: { $cond: [{ $in: ['$status', ['present', 'keldi']] }, 1, 0] }
           }
         }
       }
@@ -325,6 +353,105 @@ router.get('/teacher/classes', auth, authorize('teacher'), async (req, res) => {
 // @route   GET /api/stats/teacher/students
 // @desc    Get detailed student performance for a class and subject (OPTIMIZED)
 // @access  Private/Teacher
+// Bitta o'quvchining umumiy ko'rsatkichlari: akademik %, davomat %, umumiy %, oylik trend.
+// Ko'rish huquqi: o'quvchining o'zi, admin/direktor, yoki shu o'quvchi bilan sinf bo'lishadigan o'qituvchi.
+router.get('/teacher/student/:studentId', auth, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: 'Noto\'g\'ri o\'quvchi ID' });
+    }
+
+    const role = req.user.role;
+    const isSelf = req.user._id.toString() === studentId;
+    const isPrivileged = ['admin', 'director'].includes(role);
+
+    if (!isSelf && !isPrivileged) {
+      if (role !== 'teacher') {
+        return res.status(403).json({ message: 'Ruxsat yo\'q' });
+      }
+      const sharesClass = await Class.exists({
+        students: new mongoose.Types.ObjectId(studentId),
+        $or: [
+          { classTeacher: req.user._id },
+          { 'subjects.teacher': req.user._id }
+        ]
+      });
+      if (!sharesClass) {
+        return res.status(403).json({ message: 'Bu o\'quvchi sizning sinflaringizda emas' });
+      }
+    }
+
+    const student = await User.findById(studentId).select('firstName lastName studentId').lean();
+    if (!student) {
+      return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+    }
+
+    const [grades, attendance] = await Promise.all([
+      Grade.find({ student: studentId }).select('score isExam examMaxScore maxScore type date subject').populate('subject', 'name').lean(),
+      Attendance.find({ student: studentId }).select('status date').lean()
+    ]);
+
+    // Bahoni foizga aylantirish (kunlik 0.5, imtihon examMaxScore, maks 100%)
+    const gradeToPercent = (g) => {
+      const isExam = g.isExam || g.type === 'exam' || !!g.examMaxScore;
+      const cap = isExam ? Math.max(g.examMaxScore || g.maxScore || 100, 0.5) : 0.5;
+      return cap > 0 ? Math.min(100, Math.round(((g.score || 0) / cap) * 100)) : 0;
+    };
+
+    const pcts = grades.map(gradeToPercent);
+    const academicPercent = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
+
+    // Davomat: keldi/present = kelgan; kelmadi/sababli/excused = kelmagan
+    const present = attendance.filter(a => a.status === 'present' || a.status === 'keldi').length;
+    const attendancePercent = attendance.length ? Math.round((present / attendance.length) * 100) : 0;
+
+    const overallPercent = Math.round((academicPercent + attendancePercent) / 2);
+
+    // Oylik trend (oxirgi 6 oy)
+    const monthsUz = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
+    const monthly = {};
+    grades.forEach(g => {
+      if (!g.date) return;
+      const d = new Date(g.date);
+      const key = d.getFullYear() + '-' + d.getMonth();
+      if (!monthly[key]) monthly[key] = { label: monthsUz[d.getMonth()], scores: [], y: d.getFullYear(), m: d.getMonth() };
+      monthly[key].scores.push(gradeToPercent(g));
+    });
+    const sortedMonths = Object.values(monthly).sort((a, b) => (a.y * 12 + a.m) - (b.y * 12 + b.m)).slice(-6);
+    const trend = {
+      labels: sortedMonths.map(x => x.label),
+      averages: sortedMonths.map(x => Math.round(x.scores.reduce((a, b) => a + b, 0) / x.scores.length))
+    };
+
+    // Fan bo'yicha %
+    const bySubject = {};
+    grades.forEach(g => {
+      const name = g.subject?.name || 'Noma\'lum';
+      if (!bySubject[name]) bySubject[name] = [];
+      bySubject[name].push(gradeToPercent(g));
+    });
+    const subjects = Object.entries(bySubject).map(([name, arr]) => ({
+      name,
+      percent: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length),
+      count: arr.length
+    })).sort((a, b) => b.percent - a.percent);
+
+    res.json({
+      student: { _id: studentId, firstName: student.firstName, lastName: student.lastName, studentId: student.studentId },
+      academicPercent,
+      attendancePercent,
+      overallPercent,
+      totalGrades: grades.length,
+      attendanceTotal: attendance.length,
+      trend,
+      subjects
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server xatosi', error: error.message });
+  }
+});
+
 router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => {
   try {
     const { classId, subjectId } = req.query;
@@ -390,7 +517,31 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
         {
           $group: {
             _id: '$student',
-            average: { $avg: '$score' },
+            // O'rtacha foiz: kunlik baho 0.5 ga, imtihon examMaxScore ga normallashtiriladi (maks 100%)
+            average: {
+              $avg: {
+                $min: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          '$score',
+                          {
+                            $cond: [
+                              { $or: [{ $eq: ['$isExam', true] }, { $eq: ['$type', 'exam'] }] },
+                              { $max: [{ $ifNull: ['$examMaxScore', { $ifNull: ['$maxScore', 100] }] }, 0.5] },
+                              0.5
+                            ]
+                          }
+                        ]
+                      },
+                      100
+                    ]
+                  },
+                  100
+                ]
+              }
+            },
             totalGrades: { $sum: 1 },
             recentGrades: {
               $push: {
@@ -425,7 +576,7 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
             _id: '$student',
             totalClasses: { $sum: 1 },
             presentCount: {
-              $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] }
+              $sum: { $cond: [{ $in: ['$status', ['present', 'keldi']] }, 1, 0] }
             }
           }
         }
@@ -584,11 +735,19 @@ router.get('/teacher/attendance', auth, authorize('teacher'), async (req, res) =
       .lean();
 
     // Calculate statistics
+    // Status'ni kanonik shaklga keltiramiz (o'zbekcha/inglizcha): keldi=present, kelmadi=absent, sababli=excused
+    const attCanon = (s) => {
+      if (s === 'present' || s === 'keldi') return 'present';
+      if (s === 'absent' || s === 'kelmadi') return 'absent';
+      if (s === 'excused' || s === 'sababli') return 'excused';
+      if (s === 'late') return 'late';
+      return s;
+    };
     const totalRecords = attendanceRecords.length;
-    const presentCount = attendanceRecords.filter(a => a.status === 'present').length;
-    const absentCount = attendanceRecords.filter(a => a.status === 'absent').length;
-    const lateCount = attendanceRecords.filter(a => a.status === 'late').length;
-    const excusedCount = attendanceRecords.filter(a => a.status === 'excused').length;
+    const presentCount = attendanceRecords.filter(a => attCanon(a.status) === 'present').length;
+    const absentCount = attendanceRecords.filter(a => attCanon(a.status) === 'absent').length;
+    const lateCount = attendanceRecords.filter(a => attCanon(a.status) === 'late').length;
+    const excusedCount = attendanceRecords.filter(a => attCanon(a.status) === 'excused').length;
 
     const attendanceRate = totalRecords > 0
       ? ((presentCount / totalRecords) * 100).toFixed(1)
@@ -608,7 +767,8 @@ router.get('/teacher/attendance', auth, authorize('teacher'), async (req, res) =
           total: 0
         };
       }
-      byDate[dateStr][record.status]++;
+      const canonStatus = attCanon(record.status);
+      if (byDate[dateStr][canonStatus] !== undefined) byDate[dateStr][canonStatus]++;
       byDate[dateStr].total++;
     });
 

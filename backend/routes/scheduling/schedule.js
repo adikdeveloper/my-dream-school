@@ -448,7 +448,7 @@ router.get('/class/:classId/current', rateLimiters.api, auth, async (req, res) =
 // @route   GET /schedule/class/:classId/next-available-date
 // @desc    Get next available start date for a class (after all existing schedules)
 // @access  Private/Admin
-router.get('/class/:classId/next-available-date', rateLimiters.api, auth, authorize('admin'), async (req, res) => {
+router.get('/class/:classId/next-available-date', rateLimiters.api, auth, authorize('admin', 'director', 'supervisor'), async (req, res) => {
   try {
     const { classId } = req.params;
 
@@ -785,7 +785,7 @@ router.get('/:id', rateLimiters.api, auth, async (req, res) => {
 });
 
 // Create new schedule
-router.post('/', rateLimiters.api, auth, authorize('admin'), async (req, res) => {
+router.post('/', rateLimiters.api, auth, authorize('admin', 'director', 'supervisor'), requirePermission('schedule.edit'), async (req, res) => {
   try {
     const { classId, academicYear, semester, name, startDate, endDate, schedule, periodTimes } = req.body;
 
@@ -953,7 +953,7 @@ router.put('/:id/extend', rateLimiters.api, auth, authorize('admin'), async (req
 });
 
 // Update schedule
-router.put('/:id', rateLimiters.api, auth, authorize('admin'), async (req, res) => {
+router.put('/:id', rateLimiters.api, auth, authorize('admin', 'director', 'supervisor'), requirePermission('schedule.edit'), async (req, res) => {
   try {
     const { id } = req.params;
     const { academicYear, semester, name, startDate, endDate, schedule, isActive, periodTimes } = req.body;
@@ -1015,10 +1015,8 @@ router.put('/:id', rateLimiters.api, auth, authorize('admin'), async (req, res) 
       }
     }
 
-    // Check for teacher conflicts (if schedule is being updated)
-    // Skip conflict check for active schedules being edited (they're already in use)
-    const currentStatus = existingSchedule.getStatus();
-    if (schedule && currentStatus !== 'active') {
+    // Aktiv jadval tahrirlanganda ham yangi o'qituvchi to'qnashuvlarini tekshiramiz.
+    if (schedule) {
       const scheduleValidator = require('../../utils/scheduleValidator');
       const conflictCheck = await scheduleValidator.validateScheduleForConflicts(
         existingSchedule.classId,
@@ -1037,7 +1035,6 @@ router.put('/:id', rateLimiters.api, auth, authorize('admin'), async (req, res) 
           }))
         });
       }
-    } else if (schedule && currentStatus === 'active') {
     }
 
     await existingSchedule.save();

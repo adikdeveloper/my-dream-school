@@ -29,7 +29,7 @@ ChartJS.register(
   Filler
 );
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api';
 
 const FinancialOverview = () => {
   const [currentBalance, setCurrentBalance] = useState(null);
@@ -325,7 +325,7 @@ const FinancialOverview = () => {
               <tbody>
                 {studentsWithDebt.students.map((item, i) => (
                   <tr key={i}>
-                    <td><div className="fo-student-info"><div className="fo-student-avatar" style={item.student?.profileImage ? { backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${item.student.profileImage})`, backgroundSize: 'cover' } : {}}>{!item.student?.profileImage && <span>{item.student?.firstName?.charAt(0)}{item.student?.lastName?.charAt(0)}</span>}</div><div><div className="fo-student-name">{item.student.firstName} {item.student.lastName}</div><div className="fo-student-id">{item.student.studentId}</div></div></div></td>
+                    <td><div className="fo-student-info"><div className="fo-student-avatar" style={item.student?.profileImage ? { backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${item.student.profileImage})`, backgroundSize: 'cover' } : {}}>{!item.student?.profileImage && <span>{item.student?.firstName?.charAt(0)}{item.student?.lastName?.charAt(0)}</span>}</div><div><div className="fo-student-name">{item.student.firstName} {item.student.lastName}</div><div className="fo-student-id">{item.student.studentId}</div></div></div></td>
                     <td>{item.student.phone}</td>
                     <td><span className="fo-badge fo-badge-gray">{formatCurrency(item.monthlyFee)}</span></td>
                     <td><span className="fo-badge fo-badge-green">{formatCurrency(item.paidAmount)}</span></td>
@@ -409,7 +409,7 @@ const FinancialOverview = () => {
                         {monthDetails.payments.map((p, i) => (
                           <tr key={i}>
                             <td>{formatDate(p.paymentDate)}</td>
-                            <td><div className="fo-student-info-sm"><div className="fo-avatar-sm" style={p.studentId?.profileImage ? { backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${p.studentId.profileImage})`, backgroundSize: 'cover' } : {}}>{!p.studentId?.profileImage && <span>{p.studentId?.firstName?.charAt(0)}{p.studentId?.lastName?.charAt(0)}</span>}</div><span>{p.studentId?.firstName} {p.studentId?.lastName}</span></div></td>
+                            <td><div className="fo-student-info-sm"><div className="fo-avatar-sm" style={p.studentId?.profileImage ? { backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${p.studentId.profileImage})`, backgroundSize: 'cover' } : {}}>{!p.studentId?.profileImage && <span>{p.studentId?.firstName?.charAt(0)}{p.studentId?.lastName?.charAt(0)}</span>}</div><span>{p.studentId?.firstName} {p.studentId?.lastName}</span></div></td>
                             <td>{p.studentId?.classId?.className || '—'}</td>
                             <td><span className="fo-type-badge" style={{ backgroundColor: getPaymentTypeColor(p.paymentType) + '20', color: getPaymentTypeColor(p.paymentType) }}>{getPaymentTypeLabel(p.paymentType)}</span></td>
                             <td><strong>{formatCurrency(p.amount)}</strong></td>

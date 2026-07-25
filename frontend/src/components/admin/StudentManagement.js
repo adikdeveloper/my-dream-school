@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 import StudentProfile from './StudentProfile';
 import StudentPayments from './StudentPayments';
@@ -26,6 +27,12 @@ const StudentManagement = () => {
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [showPaymentsModal, setShowPaymentsModal] = useState(false);
   const [paymentsStudent, setPaymentsStudent] = useState(null);
+  // O'quvchini boshqa guruhga ko'chirish
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferStudentData, setTransferStudentData] = useState(null);
+  const [classesList, setClassesList] = useState([]);
+  const [transferClassId, setTransferClassId] = useState('');
+  const [transferLoading, setTransferLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -87,6 +94,13 @@ const StudentManagement = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, debouncedSearchTerm]);
+
+  // Ko'chirish modali uchun sinflar ro'yxatini yuklaymiz
+  useEffect(() => {
+    apiService.getClasses()
+      .then(data => setClassesList(data?.classes || (Array.isArray(data) ? data : [])))
+      .catch(() => setClassesList([]));
+  }, []);
 
   // Client-side filtering only for active/inactive status
   const filteredStudents = useMemo(() => {
@@ -178,9 +192,45 @@ const StudentManagement = () => {
     setPaymentsStudent(null);
   };
 
+  const handleTransferStudent = (student) => {
+    setTransferStudentData(student);
+    setTransferClassId('');
+    setShowTransferModal(true);
+  };
+
+  const cancelTransfer = () => {
+    setShowTransferModal(false);
+    setTransferStudentData(null);
+    setTransferClassId('');
+  };
+
+  const confirmTransfer = async () => {
+    if (!transferStudentData || !transferClassId) return;
+    try {
+      setTransferLoading(true);
+      await apiService.transferStudent(transferStudentData._id, transferClassId);
+      setShowTransferModal(false);
+      setTransferStudentData(null);
+      setTransferClassId('');
+      loadStudents();
+      loadStudentStats();
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || 'O\'quvchini ko\'chirishda xatolik';
+      setError(errorMsg);
+      setLocalError(errorMsg);
+      setShowTransferModal(false);
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
   const getClassInfo = (student) => {
     if (student.classId) {
-      return `${student.classId.grade}-${student.classId.section}`;
+      const { grade, section, name } = student.classId;
+      if (grade !== null && grade !== undefined && grade !== '') {
+        return `${grade}-${section}`;
+      }
+      return name || section || 'Biriktirilmagan';
     }
     return 'Biriktirilmagan';
   };
@@ -190,6 +240,17 @@ const StudentManagement = () => {
 
   return (
     <div className="student-management">
+      <header className="students-page-header">
+        <div>
+          <h1>O'quvchilar</h1>
+          <p>O'quvchilar ro'yxati, sinfi, holati va shaxsiy ma'lumotlarini boshqaring.</p>
+        </div>
+        <Can perm="teacher.create_student">
+          <button className="students-primary-action" onClick={handleAddStudent}>
+            Yangi o'quvchi
+          </button>
+        </Can>
+      </header>
       {/* Loading Overlay */}
       {localLoading && <LoadingOverlay message="O'quvchilar yuklanmoqda" />}
 
@@ -291,10 +352,12 @@ const StudentManagement = () => {
             </div>
           </div>
 
-          <button className="btn-add-compact" onClick={handleAddStudent}>
-            <span className="add-icon">➕</span>
-            <span className="add-text">Yangi o'quvchi</span>
-          </button>
+          <Can perm="teacher.create_student">
+            <button className="btn-add-compact" onClick={handleAddStudent}>
+              <span className="add-icon">➕</span>
+              <span className="add-text">Yangi o'quvchi</span>
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -323,7 +386,7 @@ const StudentManagement = () => {
                       <td>
                         <div className="student-cell">
                           <div className="student-avatar" style={student.profileImage ? {
-                            backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${student.profileImage})`,
+                            backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             color: 'transparent'
@@ -393,6 +456,15 @@ const StudentManagement = () => {
                               <span>✏️</span>
                             </button>
                           )}
+                          {!hideEdit && (
+                            <button
+                              className="action-btn transfer-btn"
+                              title="Boshqa guruhga ko'chirish"
+                              onClick={() => handleTransferStudent(student)}
+                            >
+                              <span>🔀</span>
+                            </button>
+                          )}
                           {!hidePaymentsDelete && (
                             <button
                               className="action-btn payment-btn"
@@ -403,13 +475,15 @@ const StudentManagement = () => {
                             </button>
                           )}
                           {!hidePaymentsDelete && (
-                            <button
-                              className="action-btn delete-btn"
-                              title="O'chirish"
-                              onClick={() => handleDeleteStudent(student)}
-                            >
-                              <span>🗑️</span>
-                            </button>
+                            <Can perm="teacher.delete_student">
+                              <button
+                                className="action-btn delete-btn"
+                                title="O'chirish"
+                                onClick={() => handleDeleteStudent(student)}
+                              >
+                                <span>🗑️</span>
+                              </button>
+                            </Can>
                           )}
                         </div>
                       </td>
@@ -425,7 +499,7 @@ const StudentManagement = () => {
                 <div key={student._id} className={`student-card ${!student.isActive ? 'card-inactive' : ''}`}>
                   <div className="card-header">
                     <div className="card-avatar" style={student.profileImage ? {
-                      backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${student.profileImage})`,
+                      backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       color: 'transparent'
@@ -499,6 +573,15 @@ const StudentManagement = () => {
                         <span>Tahrirlash</span>
                       </button>
                     )}
+                    {!hideEdit && (
+                      <button
+                        className="card-action-btn transfer"
+                        onClick={() => handleTransferStudent(student)}
+                      >
+                        <span>🔀</span>
+                        <span>Ko'chirish</span>
+                      </button>
+                    )}
                     {!hidePaymentsDelete && (
                       <button
                         className="card-action-btn payment"
@@ -509,13 +592,15 @@ const StudentManagement = () => {
                       </button>
                     )}
                     {!hidePaymentsDelete && (
-                      <button
-                        className="card-action-btn delete"
-                        onClick={() => handleDeleteStudent(student)}
-                      >
-                        <span>🗑️</span>
-                        <span>O'chirish</span>
-                      </button>
+                      <Can perm="teacher.delete_student">
+                        <button
+                          className="card-action-btn delete"
+                          onClick={() => handleDeleteStudent(student)}
+                        >
+                          <span>🗑️</span>
+                          <span>O'chirish</span>
+                        </button>
+                      </Can>
                     )}
                   </div>
                 </div>
@@ -754,6 +839,70 @@ const StudentManagement = () => {
               <button className="modal-btn confirm-btn" onClick={confirmDelete}>
                 <span>🗑️</span>
                 <span>Ha, o'chirish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTransferModal && transferStudentData && (
+        <div className="modal-overlay" onClick={cancelTransfer}>
+          <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-modal-header" style={{ background: 'linear-gradient(135deg, #0ea5e9, #0369a1)' }}>
+              <div className="delete-icon-wrapper">
+                <span className="delete-icon">🔀</span>
+              </div>
+              <h2 className="delete-title">O'quvchini ko'chirish</h2>
+              <p className="delete-subtitle">Barcha baholari va tarixi saqlanib qoladi</p>
+            </div>
+
+            <div className="delete-modal-body">
+              <div className="student-info-card">
+                <div className="student-info-avatar">
+                  {transferStudentData.firstName?.charAt(0)}{transferStudentData.lastName?.charAt(0)}
+                </div>
+                <div className="student-info-details">
+                  <h3 className="student-info-name">
+                    {transferStudentData.firstName} {transferStudentData.lastName}
+                  </h3>
+                  <p className="student-info-meta">
+                    Joriy guruh: {getClassInfo(transferStudentData)}
+                  </p>
+                </div>
+              </div>
+
+              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', color: '#475569', margin: '1rem 0 0.5rem' }}>
+                Yangi guruhni tanlang:
+              </label>
+              <select
+                value={transferClassId}
+                onChange={(e) => setTransferClassId(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem 1rem', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.9375rem', background: 'white' }}
+              >
+                <option value="">— Guruhni tanlang —</option>
+                {classesList
+                  .filter(c => c._id !== (transferStudentData.classId?._id || transferStudentData.classId))
+                  .map(c => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}{c.grade ? ` (${c.grade}-sinf${c.section ? ' ' + c.section : ''})` : ''}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="delete-modal-footer">
+              <button className="modal-btn cancel-btn" onClick={cancelTransfer} disabled={transferLoading}>
+                <span>✕</span>
+                <span>Bekor qilish</span>
+              </button>
+              <button
+                className="modal-btn confirm-btn"
+                onClick={confirmTransfer}
+                disabled={transferLoading || !transferClassId}
+                style={{ background: 'linear-gradient(135deg, #0ea5e9, #0369a1)' }}
+              >
+                <span>🔀</span>
+                <span>{transferLoading ? 'Ko\'chirilmoqda...' : 'Ko\'chirish'}</span>
               </button>
             </div>
           </div>
@@ -1151,6 +1300,8 @@ const StudentManagement = () => {
 
         .edit-btn { background: #fef3c7; color: #92400e; }
         .edit-btn:hover { background: #f59e0b; color: white; }
+        .transfer-btn { background: #e0f2fe; color: #075985; }
+        .transfer-btn:hover { background: #0ea5e9; color: white; }
 
         .payment-btn { background: #d1fae5; color: #065f46; }
         .payment-btn:hover { background: #10b981; color: white; }
@@ -1301,6 +1452,8 @@ const StudentManagement = () => {
 
         .card-action-btn.edit { background: #fef3c7; color: #92400e; }
         .card-action-btn.edit:hover { background: #f59e0b; color: white; }
+        .card-action-btn.transfer { background: #e0f2fe; color: #075985; }
+        .card-action-btn.transfer:hover { background: #0ea5e9; color: white; }
 
         .card-action-btn.payment { background: #d1fae5; color: #065f46; }
         .card-action-btn.payment:hover { background: #10b981; color: white; }

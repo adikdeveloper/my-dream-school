@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import apiService from '../../services/apiService';
 import PaymentReceipt from './PaymentReceipt';
 import LoadingOverlay from '../common/LoadingOverlay';
+import { Can } from '../../context/PermissionsContext';
 
 const PaymentManagement = ({ initialTab }) => {
   // Tab state
@@ -75,7 +76,7 @@ const PaymentManagement = ({ initialTab }) => {
 
   // Category detail modal state
   const [showCategoryDetailModal, setShowCategoryDetailModal] = useState(false);
-  const [selectedCategoryForDetails, setSelectedCategoryForDetails] = useState(null);
+  const [selectedCategoryForDetails] = useState(null);
 
   // Category page view state (new feature)
   const [selectedCategoryPage, setSelectedCategoryPage] = useState(null);
@@ -90,9 +91,9 @@ const PaymentManagement = ({ initialTab }) => {
   // Custom transaction date (new feature)
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Missing state declarations
-  const [deletedTransactions, setDeletedTransactions] = useState([]);
-  const [selectedClassForPayment, setSelectedClassForPayment] = useState('');
+  // Missing state declarations (qiymatlar hozircha o'qilmaydi — faqat setterlar ishlatiladi)
+  const [, setDeletedTransactions] = useState([]);
+  const [, setSelectedClassForPayment] = useState('');
 
 
   // Categories list
@@ -190,7 +191,7 @@ const PaymentManagement = ({ initialTab }) => {
     try {
       const [year, month] = monthStr.split('-');
       const token = localStorage.getItem('token');
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api';
       const response = await fetch(`${API_URL}/salary/monthly/${year}/${parseInt(month)}?teacherId=${teacherId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -828,6 +829,7 @@ const PaymentManagement = ({ initialTab }) => {
                 </div>
               </div>
 
+              <Can perm="payment.create">
               <button className="btn-add-compact" onClick={() => {
                 setShowModal(true);
                 setSelectedClassForPayment('');
@@ -835,6 +837,7 @@ const PaymentManagement = ({ initialTab }) => {
                 <span className="add-icon">➕</span>
                 <span className="add-text">Yangi to'lov</span>
               </button>
+              </Can>
             </div>
           </div>
 
@@ -866,7 +869,7 @@ const PaymentManagement = ({ initialTab }) => {
                                 <div
                                   className="student-avatar"
                                   style={payment.studentId?.profileImage ? {
-                                    backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${payment.studentId.profileImage})`,
+                                    backgroundImage: `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${payment.studentId.profileImage})`,
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center'
                                   } : {}}
@@ -938,6 +941,7 @@ const PaymentManagement = ({ initialTab }) => {
                                     }}>{group.count}</span>
                                   </button>
                                 )}
+                                <Can perm="payment.edit">
                                 <button
                                   className="action-btn edit-btn"
                                   onClick={() => openEditModal(payment)}
@@ -946,6 +950,7 @@ const PaymentManagement = ({ initialTab }) => {
                                 >
                                   <span>✏️</span>
                                 </button>
+                                </Can>
                                 <button
                                   className="action-btn print-btn"
                                   onClick={() => handlePrintReceipt(payment)}
@@ -953,6 +958,7 @@ const PaymentManagement = ({ initialTab }) => {
                                 >
                                   <span>🖨️</span>
                                 </button>
+                                <Can perm="payment.delete">
                                 <button
                                   className="action-btn delete-btn"
                                   onClick={() => handleDelete(payment)}
@@ -961,6 +967,7 @@ const PaymentManagement = ({ initialTab }) => {
                                 >
                                   <span>🗑️</span>
                                 </button>
+                                </Can>
                               </div>
                             </td>
                           </tr>
@@ -994,6 +1001,7 @@ const PaymentManagement = ({ initialTab }) => {
                               <td></td>
                               <td>
                                 <div className="action-buttons">
+                                  <Can perm="payment.edit">
                                   <button
                                     className="action-btn edit-btn"
                                     onClick={() => openEditModal(histPayment)}
@@ -1002,6 +1010,7 @@ const PaymentManagement = ({ initialTab }) => {
                                   >
                                     <span>✏️</span>
                                   </button>
+                                  </Can>
                                   <button
                                     className="action-btn print-btn"
                                     onClick={() => handlePrintReceipt(histPayment)}
@@ -1009,6 +1018,7 @@ const PaymentManagement = ({ initialTab }) => {
                                   >
                                     <span>🖨️</span>
                                   </button>
+                                  <Can perm="payment.delete">
                                   <button
                                     className="action-btn delete-btn"
                                     onClick={() => handleDelete(histPayment)}
@@ -1017,6 +1027,7 @@ const PaymentManagement = ({ initialTab }) => {
                                   >
                                     <span>🗑️</span>
                                   </button>
+                                  </Can>
                                 </div>
                               </td>
                             </tr>
@@ -1624,10 +1635,12 @@ const PaymentManagement = ({ initialTab }) => {
                   </div>
                 </div>
               </div>
+              <Can perm="payment.create">
               <button className="btn-add-compact" onClick={() => setShowTeacherModal(true)}>
                 <span className="add-icon">➕</span>
                 <span className="add-text">Yangi to'lov</span>
               </button>
+              </Can>
             </div>
           </div>
 
@@ -1693,6 +1706,7 @@ const PaymentManagement = ({ initialTab }) => {
                           </td>
                           <td>
                             <div className="action-buttons">
+                              <Can perm="payment.delete">
                               <button
                                 className="action-btn delete-btn"
                                 onClick={() => {
@@ -1704,6 +1718,7 @@ const PaymentManagement = ({ initialTab }) => {
                               >
                                 <span>🗑️</span>
                               </button>
+                              </Can>
                             </div>
                           </td>
                         </tr>
@@ -2090,6 +2105,7 @@ const PaymentManagement = ({ initialTab }) => {
                     ))}
                   </select>
                 </div>
+                <Can perm="payment.create">
                 <button
                   className="btn-add-compact"
                   onClick={() => {
@@ -2100,6 +2116,7 @@ const PaymentManagement = ({ initialTab }) => {
                   <span className="add-icon">➕</span>
                   <span className="add-text">Yangi kirim/chiqim</span>
                 </button>
+                </Can>
               </div>
 
               {/* Yearly Chart Section */}
@@ -2184,6 +2201,7 @@ const PaymentManagement = ({ initialTab }) => {
                               </td>
                               <td>
                                 <div className="action-buttons">
+                                  <Can perm="payment.delete">
                                   <button
                                     className="action-btn delete-btn"
                                     onClick={() => handleDeleteTransactionWithComment(transaction)}
@@ -2191,6 +2209,7 @@ const PaymentManagement = ({ initialTab }) => {
                                   >
                                     <span>🗑️</span>
                                   </button>
+                                  </Can>
                                 </div>
                               </td>
                             </tr>

@@ -146,6 +146,19 @@
   white-space: nowrap;
 }
 
+.late-flag {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+  background: #f59e0b;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  margin-left: 0.35rem;
+}
+
 /* Badge'lar */
 .priority-badge,
 .submitted-badge,
@@ -356,6 +369,51 @@
   box-sizing: border-box;
 }
 .submission-form textarea:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12); }
+
+.attachment-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.attachment-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: #047857 !important;
+  background: #ecfdf5;
+  border: 1px dashed #6ee7b7;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+}
+.attachment-upload input[type="file"] { display: none; }
+.attachment-chosen {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+.attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  background: #eff6ff;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+.attachment-link:hover { text-decoration: underline; }
 
 .submission-readonly {
   background: #f8fafc;

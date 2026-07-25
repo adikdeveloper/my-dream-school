@@ -82,7 +82,42 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+// ── Uy vazifa biriktirmalari (rasm yoki PDF) ──
+const homeworkDir = path.join(__dirname, '../uploads/homework');
+if (!fs.existsSync(homeworkDir)) {
+  fs.mkdirSync(homeworkDir, { recursive: true });
+}
+
+const homeworkStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, homeworkDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `hw-${uniqueSuffix}${ext}`);
+  }
+});
+
+const homeworkFileFilter = (req, file, cb) => {
+  const allowedExt = /jpeg|jpg|png|gif|webp|pdf/;
+  const allowedMime = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+  const extOk = allowedExt.test(path.extname(file.originalname).toLowerCase());
+  const mimeOk = allowedMime.includes(file.mimetype.toLowerCase());
+  if (extOk && mimeOk) {
+    return cb(null, true);
+  }
+  cb(new Error('Faqat rasm (JPEG, PNG, GIF, WebP) yoki PDF fayl biriktirish mumkin'));
+};
+
+const homeworkUpload = multer({
+  storage: homeworkStorage,
+  limits: { fileSize: 8 * 1024 * 1024 }, // 8MB
+  fileFilter: homeworkFileFilter
+});
+
 module.exports = upload;
 module.exports.compressImage = compressImage;
 module.exports.getRoleSubdir = getRoleSubdir;
+module.exports.homeworkUpload = homeworkUpload;
 

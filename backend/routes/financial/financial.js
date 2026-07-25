@@ -5,13 +5,11 @@ const Payment = require('../../models/financial/Payment');
 const StudentFee = require('../../models/financial/StudentFee');
 const User = require('../../models/users/User');
 const { auth } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/permissions');
 
 // Get current financial summary (kassa holati)
-router.get('/current-balance', auth, async (req, res) => {
+router.get('/current-balance', auth, requirePermission('report.view_financial'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     // Get latest summary or create new one
     let summary = await FinancialSummary.findOne().sort({ date: -1 });
@@ -64,11 +62,8 @@ router.get('/current-balance', auth, async (req, res) => {
 });
 
 // Get financial summary by date range
-router.get('/summary', auth, async (req, res) => {
+router.get('/summary', auth, requirePermission('report.view_financial'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { startDate, endDate } = req.query;
     const filter = {};
@@ -90,11 +85,8 @@ router.get('/summary', auth, async (req, res) => {
 });
 
 // Get daily report
-router.get('/daily-report', auth, async (req, res) => {
+router.get('/daily-report', auth, requirePermission('report.view_financial'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { date } = req.query;
     const targetDate = date ? new Date(date) : new Date();
@@ -156,11 +148,8 @@ router.get('/daily-report', auth, async (req, res) => {
 });
 
 // Get monthly income report
-router.get('/monthly-income', auth, async (req, res) => {
+router.get('/monthly-income', auth, requirePermission('report.view_financial'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { year } = req.query;
     const targetYear = year ? parseInt(year) : new Date().getFullYear();
@@ -220,11 +209,8 @@ router.get('/monthly-income', auth, async (req, res) => {
 });
 
 // Get students with debt
-router.get('/students-with-debt', auth, async (req, res) => {
+router.get('/students-with-debt', auth, requirePermission('report.view_financial'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     // Get all active students with fees
     const studentFees = await StudentFee.find({ isActive: true })
@@ -297,11 +283,8 @@ router.post('/update-summary', auth, async (req, res) => {
 });
 
 // Get detailed monthly transactions
-router.get('/monthly-details/:year/:month', auth, async (req, res) => {
+router.get('/monthly-details/:year/:month', auth, requirePermission('report.view_financial'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { year, month } = req.params;
     const targetYear = parseInt(year);

@@ -1,0 +1,549 @@
+.admin-dashboard-layout .student-management {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--director-content-max-width);
+  margin: 0 auto;
+  padding: 24px 28px;
+  color: var(--director-slate-900);
+  background: var(--director-slate-50);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: clip;
+}
+
+.admin-dashboard-layout .students-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-dashboard-layout .students-page-header h1 {
+  margin: 0;
+  color: var(--director-slate-900);
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+.admin-dashboard-layout .students-page-header p {
+  max-width: 720px;
+  margin: 6px 0 0;
+  color: var(--director-slate-500);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.admin-dashboard-layout .students-primary-action,
+.admin-dashboard-layout .student-management .btn-add-compact {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  color: var(--director-white);
+  background: var(--director-primary-600);
+  border: 1px solid var(--director-primary-600);
+  border-radius: var(--director-radius-sm);
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.admin-dashboard-layout .students-primary-action:hover {
+  background: var(--director-primary-700);
+  border-color: var(--director-primary-700);
+}
+
+.admin-dashboard-layout .student-management .filter-card > .btn-add-compact {
+  display: none;
+}
+
+.admin-dashboard-layout .student-management .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 24px;
+}
+
+.admin-dashboard-layout .student-management .stat-card {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 124px;
+  padding: 20px;
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-left: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-lg);
+  box-shadow: var(--director-shadow-sm);
+  transform: none;
+}
+
+.admin-dashboard-layout .student-management .stat-card:hover {
+  box-shadow: var(--director-shadow-sm);
+  transform: none;
+}
+
+.admin-dashboard-layout .student-management .stat-decoration {
+  display: none;
+}
+
+.admin-dashboard-layout .student-management .stat-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-radius: var(--director-radius-md);
+  box-shadow: none;
+  font-size: 0;
+}
+
+.admin-dashboard-layout .student-management .stat-icon::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 8px 6px 0 -4px var(--director-primary-100);
+}
+
+.admin-dashboard-layout .student-management .stat-value {
+  color: var(--director-slate-900);
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.1;
+}
+
+.admin-dashboard-layout .student-management .stat-label {
+  color: var(--director-slate-500);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-dashboard-layout .student-management .filters-container {
+  margin: 0 0 24px;
+}
+
+.admin-dashboard-layout .student-management .filter-card {
+  display: flex;
+  align-items: flex-end;
+  padding: 12px;
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-md);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .student-management .filter-left {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.admin-dashboard-layout .student-management .filter-item {
+  gap: 6px;
+}
+
+.admin-dashboard-layout .student-management .filter-item:first-child {
+  width: min(320px, 100%);
+}
+
+.admin-dashboard-layout .student-management .filter-label {
+  color: var(--director-slate-700);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.admin-dashboard-layout .student-management .label-icon,
+.admin-dashboard-layout .student-management .add-icon {
+  display: none;
+}
+
+.admin-dashboard-layout .student-management .search-input,
+.admin-dashboard-layout .student-management .filter-select,
+.admin-dashboard-layout .student-management .transfer-class-select {
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: var(--director-slate-900);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-300);
+  border-radius: var(--director-radius-sm);
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-dashboard-layout .student-management .search-input:focus,
+.admin-dashboard-layout .student-management .filter-select:focus,
+.admin-dashboard-layout .student-management .transfer-class-select:focus {
+  border-color: var(--director-primary-400);
+  outline: 3px solid rgba(59, 130, 246, .14);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .student-management .search-clear,
+.admin-dashboard-layout .student-management .error-close {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--director-radius-sm);
+}
+
+.admin-dashboard-layout .student-management .filter-results {
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--director-slate-600);
+  background: var(--director-slate-50);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-sm);
+}
+
+.admin-dashboard-layout .student-management .results-count {
+  color: var(--director-slate-900);
+}
+
+.admin-dashboard-layout .student-management .students-container {
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-lg);
+  box-shadow: var(--director-shadow-sm);
+  overflow: hidden;
+}
+
+.admin-dashboard-layout .student-management .table-view {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-dashboard-layout .student-management .students-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.admin-dashboard-layout .student-management .students-table thead {
+  background: var(--director-slate-50);
+}
+
+.admin-dashboard-layout .student-management .students-table th {
+  height: 44px;
+  padding: 12px 14px;
+  color: var(--director-slate-600);
+  background: var(--director-slate-50);
+  border-bottom: 1px solid var(--director-slate-200);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.admin-dashboard-layout .student-management .students-table td {
+  min-height: 52px;
+  padding: 12px 14px;
+  color: var(--director-slate-700);
+  border-bottom: 1px solid var(--director-slate-100);
+  font-size: 13px;
+}
+
+.admin-dashboard-layout .student-management .students-table tbody tr {
+  background: var(--director-white);
+}
+
+.admin-dashboard-layout .student-management .students-table tbody tr:hover {
+  background: var(--director-slate-50);
+  transform: none;
+}
+
+.admin-dashboard-layout .student-management .students-table tbody tr.inactive-row {
+  background: var(--director-slate-50);
+  opacity: 1;
+}
+
+.admin-dashboard-layout .student-management .student-avatar,
+.admin-dashboard-layout .student-management .card-avatar {
+  width: 40px;
+  height: 40px;
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border: 1px solid var(--director-primary-100);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .student-management .student-name,
+.admin-dashboard-layout .student-management .card-name {
+  color: var(--director-slate-900);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.admin-dashboard-layout .student-management .student-id-badge,
+.admin-dashboard-layout .student-management .class-badge {
+  min-height: 24px;
+  padding: 5px 9px;
+  color: var(--director-slate-700);
+  background: var(--director-slate-100);
+  border: 0;
+  border-radius: var(--director-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .student-management .class-badge {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+}
+
+.admin-dashboard-layout .student-management .status-badge,
+.admin-dashboard-layout .student-management .card-status {
+  min-height: 24px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: var(--director-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .student-management .status-active {
+  color: var(--director-success-dark);
+  background: var(--director-success-bg);
+}
+
+.admin-dashboard-layout .student-management .status-inactive {
+  color: var(--director-slate-600);
+  background: var(--director-slate-100);
+}
+
+.admin-dashboard-layout .student-management .action-buttons {
+  gap: 4px;
+}
+
+.admin-dashboard-layout .student-management .action-btn {
+  width: 40px;
+  height: 40px;
+  color: var(--director-slate-600);
+  background: transparent;
+  border: 0;
+  border-radius: var(--director-radius-sm);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .student-management .action-btn:hover {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  transform: none;
+}
+
+.admin-dashboard-layout .student-management .action-btn.delete-btn:hover {
+  color: var(--director-danger-dark);
+  background: var(--director-danger-soft);
+}
+
+.admin-dashboard-layout .student-management .error-banner {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  color: var(--director-danger-dark);
+  background: var(--director-danger-soft);
+  border: 1px solid var(--director-danger);
+  border-radius: 10px;
+}
+
+.admin-dashboard-layout .student-management .empty-state {
+  min-height: 240px;
+  padding: 40px 20px;
+  background: var(--director-white);
+}
+
+.admin-dashboard-layout .student-management .empty-title {
+  color: var(--director-slate-900);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .student-management .empty-text {
+  max-width: 480px;
+  margin: 6px auto 0;
+  color: var(--director-slate-500);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.admin-dashboard-layout .student-management .pagination-container {
+  padding: 16px;
+  border-top: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .student-management .pagination-btn,
+.admin-dashboard-layout .student-management .pagination-page,
+.admin-dashboard-layout .student-management .pagination-ellipsis.clickable {
+  min-width: 40px;
+  min-height: 40px;
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-300);
+  border-radius: var(--director-radius-sm);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .student-management .pagination-page.active {
+  color: var(--director-white);
+  background: var(--director-primary-600);
+  border-color: var(--director-primary-600);
+}
+
+.admin-dashboard-layout .student-management .modal-overlay {
+  background: rgba(9, 20, 36, .62);
+  backdrop-filter: blur(5px);
+}
+
+.admin-dashboard-layout .student-management .delete-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  max-height: 90vh;
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-xl);
+  box-shadow: var(--director-shadow-lg);
+  overflow: auto;
+}
+
+.admin-dashboard-layout .student-management .delete-modal-header {
+  padding: 18px 22px;
+  color: var(--director-slate-900);
+  background: var(--director-white);
+  border-bottom: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .student-management .delete-title {
+  color: var(--director-slate-900);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .student-management .delete-subtitle {
+  color: var(--director-slate-500);
+  font-size: 13px;
+}
+
+.admin-dashboard-layout .student-management .delete-modal-body {
+  padding: 22px;
+}
+
+.admin-dashboard-layout .student-management .delete-modal-footer {
+  padding: 16px 22px;
+  background: var(--director-white);
+  border-top: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .student-management .modal-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--director-radius-sm);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.admin-dashboard-layout .student-management .cancel-btn {
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-300);
+}
+
+.admin-dashboard-layout .student-management .confirm-btn {
+  color: var(--director-white);
+  background: var(--director-danger);
+  border: 1px solid var(--director-danger);
+}
+
+.admin-dashboard-layout .student-management button:focus-visible,
+.admin-dashboard-layout .student-management input:focus-visible,
+.admin-dashboard-layout .student-management select:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .2);
+  outline-offset: 2px;
+}
+
+.admin-dashboard-layout .student-management button:disabled {
+  color: var(--director-slate-500);
+  background: var(--director-slate-100);
+  border-color: var(--director-slate-200);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .admin-dashboard-layout .student-management .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-layout .student-management .filter-left {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 639px) {
+  .admin-dashboard-layout .student-management {
+    padding: 16px 14px;
+  }
+
+  .admin-dashboard-layout .students-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-dashboard-layout .students-page-header h1 {
+    font-size: 24px;
+  }
+
+  .admin-dashboard-layout .students-primary-action {
+    width: 100%;
+  }
+
+  .admin-dashboard-layout .student-management .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-dashboard-layout .student-management .filter-card,
+  .admin-dashboard-layout .student-management .filter-left {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-dashboard-layout .student-management .filter-item,
+  .admin-dashboard-layout .student-management .filter-item:first-child {
+    width: 100%;
+  }
+
+  .admin-dashboard-layout .student-management .students-container {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .admin-dashboard-layout .student-management .student-card {
+    padding: 16px;
+    background: var(--director-white);
+    border: 1px solid var(--director-slate-200);
+    border-radius: var(--director-radius-lg);
+    box-shadow: var(--director-shadow-sm);
+  }
+
+  .admin-dashboard-layout .student-management .card-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .admin-dashboard-layout .student-management .card-action-btn {
+    min-height: 40px;
+    border-radius: var(--director-radius-sm);
+  }
+}

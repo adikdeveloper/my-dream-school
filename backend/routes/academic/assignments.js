@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Assignment = require('../../models/academic/Assignment');
 const Class = require('../../models/academic/Class');
+const PushNotification = require('../../models/communication/PushNotification');
+const Coin = require('../../models/academic/Coin');
+const { homeworkUpload } = require('../../middleware/upload');
 const { auth, authorize } = require('../../middleware/auth');
 const { requirePermission } = require('../../middleware/permissions');
 const { body, param, query, validationResult } = require('express-validator');
@@ -22,15 +25,23 @@ const gradingLimiter = rateLimit({
 });
 
 // Sanitize function to prevent XSS
+// Matn (sarlavha, tavsif, javob, izoh) React tomonidan chiqishda avtomatik
+// escape qilinadi va hech qayerda dangerouslySetInnerHTML ishlatilmaydi, shuning
+// uchun bu yerda HTML-entity kodlash kerak emas. Avval u apostrof/qiyshiq chiziqni
+// (' -> &#x27;, / -> &#x2F;) buzib ko'rsatardi. Faqat NUL baytni olib tashlaymiz.
 const sanitizeHtml = (text) => {
   if (!text) return text;
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+  return String(text).replace(/\0/g, '');
+};
+
+// Uy vazifa fayl biriktirmasini multer bilan qabul qilamiz (xatolarni toza JSON qaytaramiz)
+const acceptHomeworkFile = (req, res, next) => {
+  homeworkUpload.single('attachment')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message || 'Fayl yuklashda xatolik' });
+    }
+    next();
+  });
 };
 
 // Get all assignments for a teacher
@@ -59,6 +70,16 @@ router.get('/teacher', auth, authorize('teacher'), async (req, res) => {
         .lean(),
       Assignment.countDocuments(filter)
     ]);
+
+    // Har submission uchun coin holatini biriktiramiz (grade modalidagi checkbox uchun)
+    const assignmentIds = assignments.map(a => a._id);
+    const coins = await Coin.find({ assignment: { $in: assignmentIds } }).select('assignment student').lean();
+    const coinSet = new Set(coins.map(c => `${c.assignment}_${c.student}`));
+    assignments.forEach(a => {
+      (a.submissions || []).forEach(s => {
+        s.hasCoin = coinSet.has(`${a._id}_${s.student?._id || s.student}`);
+      });
+    });
 
     // Return array directly for backward compatibility
     res.json(assignments);
@@ -109,7 +130,7 @@ router.get('/student', auth, authorize('student'), async (req, res) => {
 // Create new assignment
 router.post('/',
   auth,
-  authorize('teacher'),
+  authorize('teacher', 'admin', 'supervisor'),
   requirePermission('assignment.create'),
   createAssignmentLimiter,
   [
@@ -175,9 +196,10 @@ router.post('/',
 router.post('/:assignmentId/submit',
   auth,
   authorize('student'),
+  acceptHomeworkFile,
   [
     param('assignmentId').isMongoId().withMessage('Noto\'g\'ri vazifa ID'),
-    body('submissionText').trim().isLength({ min: 10, max: 5000 }).withMessage('Javob 10-5000 belgi oralig\'ida bo\'lishi kerak')
+    body('submissionText').optional({ checkFalsy: true }).trim().isLength({ max: 5000 }).withMessage('Javob 5000 belgidan oshmasligi kerak')
   ],
   async (req, res) => {
     try {
@@ -190,7 +212,8 @@ router.post('/:assignmentId/submit',
       let { submissionText } = req.body;
 
       // Sanitize submission text
-      submissionText = sanitizeHtml(submissionText);
+      submissionText = sanitizeHtml((submissionText || '').trim());
+      const hasNewFile = !!req.file;
 
       const assignment = await Assignment.findById(assignmentId);
 
@@ -212,11 +235,23 @@ router.post('/:assignmentId/submit',
         return res.status(400).json({ message: 'Bu vazifa allaqachon baholangan. Qayta topshirish mumkin emas.' });
       }
 
+      // Matn yoki fayl — kamida bittasi bo'lishi shart
+      const existingAttachment = assignment.submissions[submissionIndex].attachmentUrl;
+      if (!hasNewFile && !existingAttachment && (submissionText || '').length < 10) {
+        return res.status(400).json({ message: 'Javob matni kamida 10 belgidan iborat bo\'lishi yoki fayl biriktirilishi kerak' });
+      }
+
       // Allow resubmission for submitted but not graded assignments
       // Update submission (allow late submissions and resubmissions for non-graded work)
-      assignment.submissions[submissionIndex].submissionText = submissionText;
+      const submittedAt = new Date();
+      assignment.submissions[submissionIndex].submissionText = submissionText || undefined;
       assignment.submissions[submissionIndex].status = 'submitted';
-      assignment.submissions[submissionIndex].submittedAt = new Date();
+      assignment.submissions[submissionIndex].submittedAt = submittedAt;
+      assignment.submissions[submissionIndex].isLate = submittedAt > assignment.dueDate;
+      if (hasNewFile) {
+        assignment.submissions[submissionIndex].attachmentUrl = `/uploads/homework/${req.file.filename}`;
+        assignment.submissions[submissionIndex].attachmentName = req.file.originalname;
+      }
 
       await assignment.save();
 
@@ -257,7 +292,7 @@ router.post('/:assignmentId/grade',
       }
 
       const { assignmentId } = req.params;
-      const { studentId, grade } = req.body;
+      const { studentId, grade, awardCoin } = req.body;
       let { feedback } = req.body;
 
       // Sanitize feedback
@@ -301,8 +336,56 @@ router.post('/:assignmentId/grade',
       assignment.submissions[submissionIndex].grade = grade;
       assignment.submissions[submissionIndex].feedback = feedback || '';
       assignment.submissions[submissionIndex].status = 'graded';
+      assignment.submissions[submissionIndex].gradedAt = new Date();
 
       await assignment.save();
+
+      // O'quvchiga "vazifangiz baholandi" inbox bildirishnomasini yuboramiz
+      // (xatolik bo'lsa ham baholash saqlanib qoladi)
+      try {
+        await PushNotification.create({
+          title: 'Uy vazifangiz baholandi',
+          message: `"${assignment.title}" vazifasi uchun ${grade}/${assignment.maxScore} ball qo'yildi.`,
+          icon: '📝',
+          category: 'info',
+          link: '/student/homework',
+          sender: req.user._id,
+          targetFilter: { mode: 'users', userIds: [studentId], summary: "1 o'quvchi" },
+          recipients: [studentId]
+        });
+      } catch (notifyErr) {
+        // bildirishnoma yuborilmadi — baholash baribir muvaffaqiyatli
+      }
+
+      // Coin: a'lo bajarilgan uy vazifa uchun (1 vazifaga maksimum 1 coin).
+      // O'qituvchi checkboxiga qarab beriladi yoki olib tashlanadi.
+      try {
+        if (awardCoin === true) {
+          const nowD = new Date();
+          await Coin.updateOne(
+            { assignment: assignment._id, student: studentId },
+            {
+              $setOnInsert: {
+                assignment: assignment._id,
+                student: studentId,
+                subject: assignment.subject,
+                teacher: assignment.teacher,
+                class: assignment.class,
+                amount: 1,
+                reason: 'homework_excellent',
+                month: nowD.getMonth() + 1,
+                year: nowD.getFullYear(),
+                date: nowD
+              }
+            },
+            { upsert: true }
+          );
+        } else if (awardCoin === false) {
+          await Coin.deleteOne({ assignment: assignment._id, student: studentId });
+        }
+      } catch (coinErr) {
+        // coin amali xato bo'lsa, baholash baribir saqlanib qoladi
+      }
 
       const updatedAssignment = await Assignment.findById(assignmentId)
         .populate('class', 'name')
@@ -434,6 +517,8 @@ router.delete('/:id',
       }
 
       await Assignment.findByIdAndDelete(req.params.id);
+      // Shu vazifaga bog'langan coinlarni ham olib tashlaymiz
+      await Coin.deleteMany({ assignment: req.params.id });
 
       res.json({ message: 'Vazifa o\'chirildi' });
     } catch (error) {

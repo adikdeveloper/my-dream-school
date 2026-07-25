@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/common/Logo';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import NotificationBell from '../../components/common/NotificationBell';
 import './StudentDashboard.css';
 
 // Lazy load components for code splitting and better performance
@@ -46,6 +47,8 @@ const LoadingFallback = () => (
   </div>
 );
 
+const GREEN = '#10b981';
+
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -53,7 +56,7 @@ const StudentDashboard = () => {
   // Generate profile image URL with cache busting
   const profileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
-    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
     const timestamp = user._updated || Date.now();
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
   }, [user?.profileImage, user?._updated]);
@@ -157,10 +160,16 @@ const StudentDashboard = () => {
       <header className="header">
         <div className="header-content">
           <div className="header-left">
-            <button className="sidebar-toggle" onClick={toggleSidebar}>
-              <span className="hamburger"></span>
-              <span className="hamburger"></span>
-              <span className="hamburger"></span>
+            <button
+              type="button"
+              className="sidebar-toggle"
+              onClick={toggleSidebar}
+              aria-label={sidebarOpen ? 'Menyuni yopish' : 'Menyuni ochish'}
+              aria-expanded={sidebarOpen}
+            >
+              <span className="hamburger" aria-hidden="true"></span>
+              <span className="hamburger" aria-hidden="true"></span>
+              <span className="hamburger" aria-hidden="true"></span>
             </button>
             <Logo />
             <div className="page-info">
@@ -169,6 +178,7 @@ const StudentDashboard = () => {
             </div>
           </div>
           <div className="header-right">
+            <NotificationBell accent={GREEN} viewAllLink="/student/notifications" />
             <div className="user-info">
               <div
                 className={`user-avatar ${profileImageUrl ? 'has-image' : ''}`}
@@ -214,8 +224,8 @@ const StudentDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             <ul className="nav-list">
-              {menuItems.map((item, index) => (
-                <li key={index} className="nav-item">
+              {menuItems.map((item) => (
+                <li key={item.path} className="nav-item">
                   <NavLink
                     to={item.path}
                     className={({ isActive }) =>

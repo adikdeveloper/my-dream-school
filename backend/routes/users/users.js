@@ -4,12 +4,15 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const User = require('../../models/users/User');
 const Subject = require('../../models/academic/Subject');
+const Class = require('../../models/academic/Class');
 const { auth, authorize } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
 const { compressImage, getRoleSubdir } = require('../../middleware/upload');
 const { syncUserToSchedule } = require('../../utils/scheduleSynchronizer');
 const { createUzbekSearchRegex } = require('../../utils/uzbekHelper');
 const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
+const { hasPermission } = require('../../middleware/permissions');
+const { syncOpenSalaryRecords } = require('../../utils/salaryRateSync');
 
 
 const router = express.Router();
@@ -47,6 +50,19 @@ const parseBoolean = (value) => {
     return false;
   }
   return Boolean(value);
+};
+
+const parseNonNegativeAmount = (value, fieldLabel) => {
+  if (value === undefined || value === null || value === '') return null;
+
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) {
+    const error = new Error(`${fieldLabel} musbat son bo'lishi kerak`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return amount;
 };
 
 // @route   GET /api/users
@@ -203,15 +219,15 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
     const isAdmin = (req.user.role === 'admin' || req.user.role === 'director' || req.user.role === 'accountant');
     const isOwnProfile = req.user._id.toString() === req.params.id;
     const isTeacherEditingStudent = req.user.role === 'teacher' && req.targetUser?.role === 'student';
-    const isReceptionEditingStudent = req.user.role === 'reception' && req.targetUser?.role === 'student';
+    // Reception o'quvchi va o'qituvchini tahrirlay oladi
+    const isReceptionEditing = req.user.role === 'reception' && ['student', 'teacher'].includes(req.targetUser?.role);
 
-    if (!isAdmin && !isOwnProfile && !isTeacherEditingStudent && !isReceptionEditingStudent) {
+    if (!isAdmin && !isOwnProfile && !isTeacherEditingStudent && !isReceptionEditing) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Teacher/Reception edits student — qo'shimcha ruxsat tekshirish
-    if ((isTeacherEditingStudent || isReceptionEditingStudent) && !isOwnProfile) {
-      const { hasPermission } = require('../../middleware/permissions');
+    // Teacher/Reception edits student/teacher — qo'shimcha ruxsat tekshirish
+    if ((isTeacherEditingStudent || isReceptionEditing) && !isOwnProfile) {
       const allowed = await hasPermission(req.user, 'teacher.edit_student_info');
       if (!allowed) {
         return res.status(403).json({ message: "O'quvchi ma'lumotlarini tahrirlash uchun ruxsat yo'q" });
@@ -259,6 +275,22 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
     if (req.body.education) updateData.education = sanitizeString(req.body.education);
     if (req.body.classId) updateData.classId = req.body.classId;
     if (req.body.registrationDate) updateData.registrationDate = req.body.registrationDate;
+    if (req.body.salaryPerLesson !== undefined) {
+      if (user.role !== 'teacher') {
+        return res.status(400).json({ message: "Maosh stavkasi faqat o'qituvchi uchun belgilanadi" });
+      }
+
+      const allowed = await hasPermission(req.user, 'salary.edit');
+      if (!allowed) {
+        return res.status(403).json({ message: "Maosh stavkasini o'zgartirish uchun ruxsat yo'q" });
+      }
+
+      const salaryRate = parseNonNegativeAmount(req.body.salaryPerLesson, 'Maosh miqdori');
+      if (salaryRate === null) {
+        return res.status(400).json({ message: 'Maosh miqdori kiritilishi kerak' });
+      }
+      updateData.salaryPerLesson = salaryRate;
+    }
     // Handle monthlyFee for students
     if (req.body.monthlyFee !== undefined) {
       const fee = parseFloat(req.body.monthlyFee);
@@ -395,8 +427,15 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
       console.warn('Chat room sync (user update) failed:', chatErr.message);
     }
 
+    if (user.role === 'teacher' && updateData.salaryPerLesson !== undefined) {
+      await syncOpenSalaryRecords(updatedUser._id, updateData.salaryPerLesson);
+    }
+
     res.json(updatedUser);
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
     // Error is logged by error handling middleware
     if (error.code === 11000) {
       // Duplicate key error
@@ -466,7 +505,7 @@ router.put('/:id/password', auth, passwordChangeLimiter, [
 // @route   DELETE /api/users/:id
 // @desc    Delete user (admin only)
 // @access  Private/Admin
-router.delete('/:id', auth, authorize('admin', 'accountant'), async (req, res) => {
+router.delete('/:id', auth, authorize('admin', 'accountant', 'reception', 'teacher'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -478,9 +517,29 @@ router.delete('/:id', auth, authorize('admin', 'accountant'), async (req, res) =
       return res.status(400).json({ message: 'Siz o\'zingizni o\'chira olmaysiz' });
     }
 
+    // Reception faqat o'quvchi va o'qituvchini o'chira oladi
+    if (req.user.role === 'reception' && !['student', 'teacher'].includes(user.role)) {
+      return res.status(403).json({ message: "Reception faqat o'quvchi va o'qituvchini o'chira oladi" });
+    }
+
+    const Class = require('../../models/academic/Class');
+
+    // O'qituvchi faqat o'quvchini, va faqat o'zining sinfidagi o'quvchini o'chira oladi
+    if (req.user.role === 'teacher') {
+      if (user.role !== 'student') {
+        return res.status(403).json({ message: "O'qituvchi faqat o'quvchini o'chira oladi" });
+      }
+      const inMyClass = await Class.exists({
+        $or: [{ classTeacher: req.user._id }, { 'subjects.teacher': req.user._id }],
+        students: user._id
+      });
+      if (!inMyClass) {
+        return res.status(403).json({ message: "Bu o'quvchi sizning sinfingizga tegishli emas" });
+      }
+    }
+
     // O'quvchi o'chirish uchun ruxsat
     if (user.role === 'student') {
-      const { hasPermission } = require('../../middleware/permissions');
       const allowed = await hasPermission(req.user, 'teacher.delete_student');
       if (!allowed) {
         return res.status(403).json({ message: "O'quvchini o'chirish ruxsati yo'q" });
@@ -492,6 +551,14 @@ router.delete('/:id', auth, authorize('admin', 'accountant'), async (req, res) =
       await Subject.updateMany(
         { teachers: req.params.id },
         { $pull: { teachers: req.params.id } }
+      );
+    }
+
+    // O'quvchi o'chirilsa — uni barcha sinflar ro'yxatidan ham olib tashlaymiz
+    if (user.role === 'student') {
+      await Class.updateMany(
+        { students: user._id },
+        { $pull: { students: user._id } }
       );
     }
 
@@ -558,7 +625,62 @@ router.put('/:id/balance', auth, authorize('admin', 'accountant'), async (req, r
   }
 });
 
+// @route   POST /api/users/:id/transfer
+// @desc    O'quvchini boshqa sinf/guruhga ko'chirish (baholar va butun tarix saqlanadi)
+// @access  admin, accountant, reception (director superuser)
+router.post('/:id/transfer', auth, authorize('admin', 'accountant', 'reception'), async (req, res) => {
+  try {
+    const { newClassId } = req.body;
+    if (!newClassId) {
+      return res.status(400).json({ message: 'Yangi sinf (newClassId) talab qilinadi' });
+    }
+
+    const student = await User.findById(req.params.id);
+    if (!student || student.role !== 'student') {
+      return res.status(404).json({ message: 'O\'quvchi topilmadi' });
+    }
+
+    const newClass = await Class.findById(newClassId);
+    if (!newClass) {
+      return res.status(404).json({ message: 'Yangi sinf topilmadi' });
+    }
+
+    const oldClassId = student.classId ? student.classId.toString() : null;
+    if (oldClassId === newClass._id.toString()) {
+      return res.status(400).json({ message: 'O\'quvchi allaqachon shu sinfda' });
+    }
+
+    // Eski sinf ro'yxatidan olib tashlaymiz
+    if (oldClassId) {
+      await Class.updateOne({ _id: oldClassId }, { $pull: { students: student._id } });
+    }
+    // Yangi sinf ro'yxatiga qo'shamiz (dublikatsiz)
+    await Class.updateOne({ _id: newClass._id }, { $addToSet: { students: student._id } });
+
+    // O'quvchining joriy sinfini yangilaymiz. MUHIM: baholar/davomat/test natijalari
+    // o'quvchi _id'siga bog'langani uchun ular O'CHMAYDI — butun tarix saqlanib qoladi.
+    student.classId = newClass._id;
+    await student.save();
+
+    // Chat xonalarini sinxronlaymiz (xato bo'lsa ko'chirish baribir muvaffaqiyatli)
+    try {
+      if (oldClassId) await ensureClassRoom(oldClassId);
+      await ensureClassRoom(newClass._id.toString());
+    } catch (chatErr) {
+      // chat sinxronizatsiyasi ikkilamchi
+    }
+
+    const updated = await User.findById(student._id)
+      .select('-password')
+      .populate('classId', 'name grade section');
+
+    res.json({
+      message: 'O\'quvchi muvaffaqiyatli ko\'chirildi. Barcha baholari va tarixi saqlanib qoldi.',
+      user: updated
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Ko\'chirishda xatolik', error: error.message });
+  }
+});
+
 module.exports = router;
-
-
-

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import styles from './Tests.module.css';
+import { Can } from '../../context/PermissionsContext';
 
 const Tests = () => {
   const currentYear = new Date().getFullYear();
@@ -107,7 +108,7 @@ const Tests = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/tests/teacher/assigned`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/tests/teacher/assigned`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setClasses(response.data.classes);
@@ -131,7 +132,7 @@ const Tests = () => {
       if (selectedSubject) params.append('subjectId', selectedSubject);
 
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/tests/teacher?${params}`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/tests/teacher?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTests(response.data);
@@ -146,7 +147,7 @@ const Tests = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/classes/${classId}`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/classes/${classId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setStudents(response.data.students || []);
@@ -347,7 +348,7 @@ const Tests = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/upload/image`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/upload/image`,
         formData,
         {
           headers: {
@@ -465,7 +466,7 @@ const Tests = () => {
       };
 
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/tests`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/tests`,
         testData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -500,7 +501,7 @@ const Tests = () => {
       setError('');
       const token = localStorage.getItem('token');
       await axios.put(
-        `${process.env.REACT_APP_API_URL}/tests/${editingTest._id}`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/tests/${editingTest._id}`,
         editFormData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -537,7 +538,7 @@ const Tests = () => {
       setError('');
       const token = localStorage.getItem('token');
       await axios.delete(
-        `${process.env.REACT_APP_API_URL}/tests/${testToDelete._id}`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/tests/${testToDelete._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setSuccess('Test muvaffaqiyatli o\'chirildi!');
@@ -585,7 +586,7 @@ const Tests = () => {
       setError('');
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/tests/${selectedTest._id}/results`,
+        `${process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api'}/tests/${selectedTest._id}/results`,
         { studentId, score: Number(score) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -656,13 +657,15 @@ const Tests = () => {
           <h1>Testlar</h1>
           <p>Nazorat testlarini yaratish va boshqarish</p>
         </div>
-        <button className={styles.btnCreate} onClick={openCreateModal}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Yangi test
-        </button>
+        <Can perm="test.create">
+          <button className={styles.btnCreate} onClick={openCreateModal}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Yangi test
+          </button>
+        </Can>
       </header>
 
       {/* Filters */}

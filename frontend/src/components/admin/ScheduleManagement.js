@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useData } from '../../context/DataContext';
+import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 
 const ScheduleManagement = () => {
@@ -285,6 +286,9 @@ const ScheduleManagement = () => {
 
   // Sana mavjud jadvallar bilan kesishishini tekshirish
   const isDateInExistingRange = (dateStr) => {
+    // Tahrirlashdagi sana backendda aynan shu jadval chiqarib tashlangan holda
+    // tekshiriladi; frontenddagi create uchun olingan oraliqlar bunga halal bermasin.
+    if (viewMode === 'edit') return false;
     if (!dateInfo.existingRanges || dateInfo.existingRanges.length === 0) return false;
     const date = new Date(dateStr);
     return dateInfo.existingRanges.some(range => {
@@ -380,7 +384,11 @@ const ScheduleManagement = () => {
     setPeriodTimes(currentPeriodTimes);
 
     // Prepare schedule data using currentPeriodTimes (not state which updates async)
-    const fullSchedule = daysOfWeek.map(day => {
+    const existingDays = (scheduleItem.schedule && scheduleItem.schedule.length > 0)
+      ? scheduleItem.schedule.map(s => s.day)
+      : daysOfWeek;
+
+    const fullSchedule = existingDays.map(day => {
       const existing = scheduleItem.schedule?.find(s => s.day === day);
       if (existing && existing.periods) {
         const periods = existing.periods.map(p => ({
@@ -587,6 +595,37 @@ const ScheduleManagement = () => {
     showToast(`${dayNames[schedule[dayIndex].day]}dan oxirgi dars o'chirildi`);
   };
 
+  // Kunni butunlay o'chirish
+  const handleRemoveDay = (dayIndex) => {
+    if (schedule.length <= 1) {
+      showToast('Jadvalda kamida 1 ta kun bo\'lishi kerak', 'warning');
+      return;
+    }
+    const dayNameStr = dayNames[schedule[dayIndex].day] || schedule[dayIndex].day;
+    const newSchedule = schedule.filter((_, idx) => idx !== dayIndex);
+    setSchedule(newSchedule);
+    showToast(`${dayNameStr} kuni jadvaldan olib tashlandi`);
+  };
+
+  // O'chirilgan kunni qayta qo'shish
+  const handleAddDay = (dayName) => {
+    if (schedule.some(d => d.day === dayName)) return;
+    const newDay = {
+      day: dayName,
+      periods: periodTimes.map(pt => ({
+        startTime: pt.startTime,
+        endTime: pt.endTime,
+        subject: null,
+        teacher: null
+      }))
+    };
+    const updatedSchedule = [...schedule, newDay].sort(
+      (a, b) => daysOfWeek.indexOf(a.day) - daysOfWeek.indexOf(b.day)
+    );
+    setSchedule(updatedSchedule);
+    showToast(`${dayNames[dayName]} kuni jadvalga qo'shildi`);
+  };
+
   const confirmDeletePeriod = () => {
     const index = deleteModal.periodIndex;
     const newPeriodTimes = periodTimes.filter((_, i) => i !== index);
@@ -750,22 +789,13 @@ const ScheduleManagement = () => {
         loadTeacherDetails(selectedTeacher._id);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teacherMonth, teacherYear]);
 
   const monthNames = [
     'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
     'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'
   ];
-
-  const dayNamesUz = {
-    'Sunday': 'Yak',
-    'Monday': 'Dush',
-    'Tuesday': 'Sesh',
-    'Wednesday': 'Chor',
-    'Thursday': 'Pay',
-    'Friday': 'Jum',
-    'Saturday': 'Shan'
-  };
 
   const handlePeriodTimeChange = (index, field, value) => {
     const newPeriodTimes = [...periodTimes];
@@ -805,8 +835,7 @@ const ScheduleManagement = () => {
       return;
     }
 
-    // Aktiv jadvalni tahrirlashda jadval to'liqligini tekshirmaslik
-    if (!(viewMode === 'edit' && selectedSchedule?.status === 'active')) {
+    {
       // Maksimal dars sonini topish
       const maxDayPeriods = Math.max(...schedule.map(day => day.periods.length));
 
@@ -904,9 +933,9 @@ const ScheduleManagement = () => {
                 ))}
               </select>
             </div>
-            <button className="btn btn-primary" onClick={handleCreateNew}>
+            <Can perm="schedule.edit"><button className="btn btn-primary" onClick={handleCreateNew}>
               + Yangi Jadval
-            </button>
+            </button></Can>
           </div>
         </div>
 
@@ -915,9 +944,9 @@ const ScheduleManagement = () => {
             <div className="empty-icon">📅</div>
             <p>Jadvallar topilmadi</p>
             {schedules.length === 0 && (
-              <button className="btn btn-primary" onClick={handleCreateNew}>
+              <Can perm="schedule.edit"><button className="btn btn-primary" onClick={handleCreateNew}>
                 Birinchi jadvalni yarating
-              </button>
+              </button></Can>
             )}
           </div>
         ) : (
@@ -947,22 +976,22 @@ const ScheduleManagement = () => {
                     <button className="btn btn-sm btn-info" onClick={() => handleViewSchedule(sched)}>
                       Ko'rish
                     </button>
-                    <button
+                    <Can perm="schedule.edit"><button
                       className="btn btn-sm btn-secondary"
                       onClick={() => handleEditSchedule(sched)}
                       disabled={status === 'archived'}
                       title={status === 'archived' ? 'Arxivlangan jadvallarni tahrirlash mumkin emas' : ''}
                     >
                       Tahrirlash
-                    </button>
-                    <button
+                    </button></Can>
+                    <Can perm="schedule.edit"><button
                       className="btn btn-sm btn-danger"
                       onClick={() => handleDeleteSchedule(sched._id)}
                       disabled={status !== 'expired'}
                       title={status !== 'expired' ? 'Faqat muddati o\'tgan jadvallarni arxivlash mumkin' : ''}
                     >
                       Arxivlash
-                    </button>
+                    </button></Can>
                   </div>
                 </div>
               );
@@ -986,7 +1015,7 @@ const ScheduleManagement = () => {
         {viewMode === 'edit' && selectedSchedule?.status === 'active' && (
           <div className="active-schedule-warning">
             <span className="warning-icon">⚠️</span>
-            <span>Aktiv jadval - faqat tugash sanasini o'zgartirish mumkin</span>
+            <span>Amaldagi jadval tahrirlanmoqda. Saqlangan o'zgarishlar darhol qo'llanadi.</span>
           </div>
         )}
 
@@ -999,7 +1028,6 @@ const ScheduleManagement = () => {
                 value={scheduleName}
                 onChange={(e) => setScheduleName(e.target.value)}
                 placeholder="Masalan: 1-semestr jadvali"
-                disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
               />
             </div>
             <div className="form-group">
@@ -1009,7 +1037,6 @@ const ScheduleManagement = () => {
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value)}
                 placeholder="2024-2025"
-                disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
               />
             </div>
           </div>
@@ -1034,7 +1061,6 @@ const ScheduleManagement = () => {
                   }
                   setStartDate(newDate);
                 }}
-                disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
               />
               {viewMode === 'create' && dateInfo.hasExistingSchedules && (
                 <small className="date-info">
@@ -1124,14 +1150,13 @@ const ScheduleManagement = () => {
           )}
         </div>
 
-        <div className={`period-times-editor ${viewMode === 'edit' && selectedSchedule?.status === 'active' ? 'disabled-section' : ''}`}>
+        <div className="period-times-editor">
           <div className="editor-header">
             <h4>⏰ Dars Vaqtlari</h4>
             <button
               className="btn btn-sm btn-primary"
               onClick={handleAddPeriod}
               type="button"
-              disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
             >
               + Dars qo'shish
             </button>
@@ -1149,7 +1174,6 @@ const ScheduleManagement = () => {
                   }}
                   placeholder="Dars nomi"
                   className="period-label-input"
-                  disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
                 />
                 <div className="time-inputs">
                   <label>Boshlanish:</label>
@@ -1158,7 +1182,6 @@ const ScheduleManagement = () => {
                     value={period.startTime}
                     onChange={(e) => handlePeriodTimeChange(index, 'startTime', e.target.value)}
                     className="time-input"
-                    disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
                   />
                 </div>
                 <div className="time-inputs">
@@ -1168,7 +1191,6 @@ const ScheduleManagement = () => {
                     value={period.endTime}
                     onChange={(e) => handlePeriodTimeChange(index, 'endTime', e.target.value)}
                     className="time-input"
-                    disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
                   />
                 </div>
                 {periodTimes.length > 1 && (
@@ -1177,7 +1199,6 @@ const ScheduleManagement = () => {
                     onClick={() => handleRemovePeriod(index)}
                     type="button"
                     title="Darsni o'chirish"
-                    disabled={viewMode === 'edit' && selectedSchedule?.status === 'active'}
                   >
                     🗑️
                   </button>
@@ -1187,32 +1208,73 @@ const ScheduleManagement = () => {
           </div>
         </div>
 
-        <div className={`schedule-editor ${viewMode === 'edit' && selectedSchedule?.status === 'active' ? 'disabled-section' : ''}`}>
+        <div className="schedule-editor">
           <h4>📅 Dars Jadvali</h4>
+
+          {/* Kunlar boshqaruvi */}
+          <div className="days-control-bar">
+            <span className="days-control-label">📅 Dars Kunlari:</span>
+            <div className="days-chips">
+              {daysOfWeek.map(dayKey => {
+                const isIncluded = schedule.some(s => s.day === dayKey);
+                return (
+                  <button
+                    key={dayKey}
+                    type="button"
+                    className={`day-chip ${isIncluded ? 'active' : 'inactive'}`}
+                    onClick={() => {
+                      if (isIncluded) {
+                        const idx = schedule.findIndex(s => s.day === dayKey);
+                        if (idx !== -1) handleRemoveDay(idx);
+                      } else {
+                        handleAddDay(dayKey);
+                      }
+                    }}
+                    title={isIncluded ? `${dayNames[dayKey]} kunini olib tashlash` : `${dayNames[dayKey]} kunini qo'shish`}
+                  >
+                    {isIncluded ? '✓ ' : '+ '} {dayNames[dayKey]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {schedule.map((daySchedule, dayIndex) => {
-            const isActiveEdit = viewMode === 'edit' && selectedSchedule?.status === 'active';
+            const isActiveEdit = false;
             return (
               <div key={daySchedule.day} className="day-schedule">
                 <div className="day-header">
-                  <h5>{dayNames[daySchedule.day]} <span className="day-period-count">({daySchedule.periods.length} dars)</span></h5>
+                  <h5>
+                    <span>📅</span> {dayNames[daySchedule.day]} <span className="day-period-count">({daySchedule.periods.length} ta dars soati)</span>
+                  </h5>
                   {!isActiveEdit && (
                     <div className="day-actions">
                       <button
-                        className="btn btn-sm btn-outline-primary"
+                        type="button"
+                        className="btn-day-action btn-add-p"
                         onClick={() => handleAddPeriodToDay(dayIndex)}
-                        title="Dars qo'shish"
+                        title="Dars soati qo'shish"
                       >
-                        +
+                        + Dars
                       </button>
                       {daySchedule.periods.length > 1 && (
                         <button
-                          className="btn btn-sm btn-outline-danger"
+                          type="button"
+                          className="btn-day-action btn-rem-p"
                           onClick={() => handleRemovePeriodFromDay(dayIndex)}
-                          title="Oxirgi darsni o'chirish"
+                          title="Oxirgi dars soatini olib tashlash"
                         >
-                          −
+                          − Dars
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className="btn-day-action btn-del-day"
+                        onClick={() => handleRemoveDay(dayIndex)}
+                        title="Ushbu kunni jadvaldan o'chirish"
+                      >
+                        🗑️ Kunni o'chirish
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1221,22 +1283,25 @@ const ScheduleManagement = () => {
                   {daySchedule.periods.map((period, periodIndex) => {
                     const conflictKey = `${dayIndex}-${periodIndex}`;
                     const hasConflict = teacherConflicts[conflictKey];
-                    const isActiveEdit = viewMode === 'edit' && selectedSchedule?.status === 'active';
+                    const isActiveEdit = false;
+                    const isAssigned = period.subject && period.teacher;
 
                     return (
-                      <div key={periodIndex} className={`period-row ${hasConflict ? 'has-conflict' : ''}`}>
+                      <div key={periodIndex} className={`period-row ${isAssigned ? 'period-assigned' : 'period-empty'} ${hasConflict ? 'has-conflict' : ''}`}>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: '100%' }}>
                           <div className="period-info">
-                            <strong>{periodTimes[periodIndex].label}</strong>
+                            <strong>{periodTimes[periodIndex]?.label || `${periodIndex + 1}-dars`}</strong>
                             <span>{period.startTime} - {period.endTime}</span>
+                            {isAssigned && <span className="assigned-badge">✓ Biriktirilgan</span>}
                           </div>
                           <div className="period-fields">
                             <select
                               value={period.subject || ''}
                               onChange={(e) => handlePeriodChange(dayIndex, periodIndex, 'subject', e.target.value)}
                               disabled={isActiveEdit}
+                              className={period.subject ? 'select-selected' : ''}
                             >
-                              <option value="">Fan tanlang</option>
+                              <option value="">📘 Fan tanlang</option>
                               {subjects.map(subj => (
                                 <option key={subj._id} value={subj._id}>
                                   {subj.name}
@@ -1247,9 +1312,10 @@ const ScheduleManagement = () => {
                               value={period.teacher || ''}
                               onChange={(e) => handlePeriodChange(dayIndex, periodIndex, 'teacher', e.target.value)}
                               disabled={!period.subject || isActiveEdit}
+                              className={period.teacher ? 'select-selected' : ''}
                             >
                               <option value="">
-                                {!period.subject ? 'Avval fan tanlang' : 'O\'qituvchi tanlang'}
+                                {!period.subject ? 'Avval fan tanlang' : '👨‍🏫 O\'qituvchi tanlang'}
                               </option>
                               {period.subject && (() => {
                                 // Tanlangan fan ma'lumotlarini topish
@@ -1262,14 +1328,13 @@ const ScheduleManagement = () => {
                                 // Agar fan topilsa va teachers maydoni bo'lsa
                                 if (selectedSubject && selectedSubject.teachers && selectedSubject.teachers.length > 0) {
                                   // Faqat shu fanni o'qituvchi o'qituvchilarni ko'rsatish
-                                  // teachers array ichida ObjectId yoki populate qilingan object bo'lishi mumkin
                                   const subjectTeacherIds = selectedSubject.teachers.map(t =>
                                     typeof t === 'string' ? t : (t._id || t)
                                   );
 
                                   return teachers
                                     .filter(teacher => subjectTeacherIds.includes(teacher._id))
-                                    .filter(teacher => !busyTeacherIds.includes(teacher._id)) // Band o'qituvchilarni chiqarib tashlash
+                                    .filter(teacher => !busyTeacherIds.includes(teacher._id))
                                     .map(teacher => (
                                       <option key={teacher._id} value={teacher._id}>
                                         {teacher.firstName} {teacher.lastName}
@@ -1278,7 +1343,7 @@ const ScheduleManagement = () => {
                                 } else {
                                   // Agar fan uchun o'qituvchilar belgilanmagan bo'lsa, barcha bo'sh o'qituvchilarni ko'rsatish
                                   return teachers
-                                    .filter(teacher => !busyTeacherIds.includes(teacher._id)) // Band o'qituvchilarni chiqarib tashlash
+                                    .filter(teacher => !busyTeacherIds.includes(teacher._id))
                                     .map(teacher => (
                                       <option key={teacher._id} value={teacher._id}>
                                         {teacher.firstName} {teacher.lastName}
@@ -1289,10 +1354,12 @@ const ScheduleManagement = () => {
                             </select>
                             {(period.subject || period.teacher) && !isActiveEdit && (
                               <button
-                                className="btn btn-sm btn-text"
+                                className="btn btn-sm btn-clear-slot"
                                 onClick={() => handleClearPeriod(dayIndex, periodIndex)}
+                                title="Darsni tozalash"
+                                type="button"
                               >
-                                ✕
+                                ✕ Tozalash
                               </button>
                             )}
                           </div>
@@ -1307,7 +1374,7 @@ const ScheduleManagement = () => {
                   })}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
 
@@ -1315,9 +1382,9 @@ const ScheduleManagement = () => {
           <button className="btn btn-secondary" onClick={() => setViewMode('list')}>
             Bekor qilish
           </button>
-          <button className="btn btn-primary" onClick={handleSaveSchedule}>
+          <Can perm="schedule.edit"><button className="btn btn-primary" onClick={handleSaveSchedule}>
             Saqlash
-          </button>
+          </button></Can>
         </div>
       </div>
     );
@@ -1393,7 +1460,7 @@ const ScheduleManagement = () => {
                     <div className="teacher-avatar">
                       {teacherData.teacher.profileImage ? (
                         <img
-                          src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${teacherData.teacher.profileImage}`}
+                          src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${teacherData.teacher.profileImage}`}
                           alt=""
                         />
                       ) : (
@@ -1750,9 +1817,9 @@ const ScheduleManagement = () => {
           <button className="btn btn-secondary" onClick={() => setViewMode('list')}>
             Yopish
           </button>
-          <button className="btn btn-primary" onClick={() => handleEditSchedule(selectedSchedule)}>
+          <Can perm="schedule.edit"><button className="btn btn-primary" onClick={() => handleEditSchedule(selectedSchedule)}>
             ✏️ Tahrirlash
-          </button>
+          </button></Can>
         </div>
       </div>
     );
@@ -2472,20 +2539,23 @@ const ScheduleManagement = () => {
 
         .schedules-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 1rem;
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          gap: 1.5rem;
           animation: fade-in 0.6s ease-in-out;
         }
 
         .schedule-card {
           background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 1.25rem;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 1.5rem;
           transition: all 0.3s ease;
-          box-shadow: 0 2px 8px rgba(30, 58, 138, 0.06);
+          box-shadow: 0 4px 16px rgba(30, 58, 138, 0.06);
           position: relative;
           overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
 
         .schedule-card::before {
@@ -2494,139 +2564,89 @@ const ScheduleManagement = () => {
           top: 0;
           left: 0;
           right: 0;
-          height: 3px;
+          height: 4px;
           background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 50%, #fbbf24 100%);
-        }
-
-        .schedule-card::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.08) 0%, transparent 60%),
-                      radial-gradient(circle at bottom left, rgba(30, 58, 138, 0.06) 0%, transparent 60%);
-          opacity: 0;
-          transition: opacity 0.5s ease;
-          pointer-events: none;
         }
 
         .schedule-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(30, 58, 138, 0.12);
+          box-shadow: 0 12px 28px rgba(30, 58, 138, 0.12);
           border-color: #3b82f6;
-        }
-
-        .schedule-card:hover::after {
-          opacity: 1;
         }
 
         .schedule-card-header {
           display: flex;
           justify-content: space-between;
-          align-items: start;
-          margin-bottom: 1rem;
-          gap: 1rem;
-          position: relative;
-          z-index: 1;
+          align-items: center;
+          margin-bottom: 1.25rem;
+          gap: 0.75rem;
         }
 
         .schedule-card-header h4 {
           margin: 0;
           color: #1e3a8a;
-          font-size: 1rem;
+          font-size: 1.15rem;
           font-weight: 700;
           line-height: 1.3;
           flex: 1;
-          letter-spacing: -0.5px;
           display: flex;
           align-items: center;
           gap: 0.5rem;
         }
 
-        .schedule-card-header h4::before {
-          content: '📅';
-          font-size: 2rem;
+        .status-badge {
+          padding: 0.35rem 0.85rem;
+          border-radius: 20px;
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
           flex-shrink: 0;
         }
 
-        .status-badge {
-          padding: 0.75rem 1.5rem;
-          border-radius: 30px;
-          color: white;
-          font-size: 0.875rem;
-          font-weight: 800;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-          white-space: nowrap;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .status-badge::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-          transition: left 0.6s;
-        }
-
-        .schedule-card:hover .status-badge::before {
-          left: 100%;
-        }
-
         .schedule-card-body {
-          margin-bottom: 2rem;
-          position: relative;
-          z-index: 1;
+          margin-bottom: 1.5rem;
         }
 
         .schedule-info p {
-          margin: 1rem 0;
+          margin: 0.75rem 0;
           color: #475569;
-          font-size: 1.05rem;
-          line-height: 1.7;
+          font-size: 0.95rem;
+          line-height: 1.5;
           display: flex;
           align-items: center;
-          padding: 0.75rem 1rem;
-          background: linear-gradient(135deg, rgba(30, 58, 138, 0.04) 0%, rgba(251, 191, 36, 0.04) 100%);
-          border-radius: 12px;
-          border-left: 4px solid #e2e8f0;
-          transition: all 0.3s ease;
+          justify-content: space-between;
+          padding: 0.625rem 0.875rem;
+          background: #f8fafc;
+          border-radius: 10px;
+          border-left: 3px solid #cbd5e1;
+          transition: all 0.2s ease;
         }
 
         .schedule-info p:hover {
-          background: linear-gradient(135deg, rgba(30, 58, 138, 0.08) 0%, rgba(251, 191, 36, 0.08) 100%);
+          background: #f1f5f9;
           border-left-color: #fbbf24;
-          transform: translateX(4px);
-        }
-
-        .schedule-info p::before {
-          font-size: 1.25rem;
-          margin-right: 0.75rem;
-        }
-
-        .schedule-info p:nth-child(1)::before {
-          content: '📚';
-        }
-
-        .schedule-info p:nth-child(2)::before {
-          content: '📆';
         }
 
         .schedule-info p strong {
           color: #1e3a8a;
-          margin-right: 0.75rem;
-          min-width: 120px;
-          font-weight: 700;
-          font-size: 0.95rem;
+          font-weight: 600;
+          font-size: 0.875rem;
+        }
+
+        .created-info {
+          font-size: 0.85rem;
+          color: #64748b;
+          margin-top: 1rem !important;
+          padding-top: 0.75rem;
+          border-top: 1px dashed #e2e8f0;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
 
         .created-info {
@@ -3123,6 +3143,114 @@ const ScheduleManagement = () => {
           color: white;
         }
 
+        .days-control-bar {
+          background: #f8fafc;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 1rem 1.25rem;
+          margin-bottom: 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .days-control-label {
+          font-weight: 700;
+          color: #1e3a8a;
+          font-size: 0.95rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .days-chips {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .day-chip {
+          padding: 0.45rem 0.9rem;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: 1.5px solid transparent;
+        }
+
+        .day-chip.active {
+          background: #eff6ff;
+          color: #1d4ed8;
+          border-color: #3b82f6;
+          box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+        }
+
+        .day-chip.active:hover {
+          background: #fef2f2;
+          color: #dc2626;
+          border-color: #ef4444;
+        }
+
+        .day-chip.inactive {
+          background: white;
+          color: #64748b;
+          border-color: #cbd5e1;
+        }
+
+        .day-chip.inactive:hover {
+          background: #ecfdf5;
+          color: #047857;
+          border-color: #10b981;
+        }
+
+        .btn-day-action {
+          padding: 0.35rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: 1px solid transparent;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+
+        .btn-add-p {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-add-p:hover {
+          background: white;
+          color: #1e3a8a;
+        }
+
+        .btn-rem-p {
+          background: rgba(255, 255, 255, 0.15);
+          color: #fef08a;
+          border-color: rgba(254, 240, 138, 0.3);
+        }
+
+        .btn-rem-p:hover {
+          background: #fef08a;
+          color: #854d0e;
+        }
+
+        .btn-del-day {
+          background: rgba(239, 68, 68, 0.25);
+          color: #fecaca;
+          border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-del-day:hover {
+          background: #ef4444;
+          color: white;
+        }
+
         .periods-grid {
           padding: 1.5rem;
           background: #fafbfc;
@@ -3134,15 +3262,25 @@ const ScheduleManagement = () => {
           gap: 0.5rem;
           margin-bottom: 1rem;
           background: white;
-          padding: 1rem;
-          border-radius: 10px;
-          border: 1px solid #e5e7eb;
+          padding: 1.15rem;
+          border-radius: 12px;
+          border: 1.5px solid #e5e7eb;
           transition: all 0.3s ease;
         }
 
+        .period-row.period-assigned {
+          background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+          border-color: #10b981;
+          box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+        }
+
+        .period-row.period-empty {
+          background: #f8fafc;
+          border-color: #e2e8f0;
+        }
+
         .period-row:hover {
-          border-color: #fbbf24;
-          box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+          box-shadow: 0 4px 12px rgba(30, 58, 138, 0.08);
         }
 
         .period-row.has-conflict {
@@ -3155,6 +3293,43 @@ const ScheduleManagement = () => {
           gap: 1rem;
           align-items: center;
           width: 100%;
+        }
+
+        .assigned-badge {
+          display: inline-block;
+          font-size: 0.725rem;
+          font-weight: 700;
+          color: #047857;
+          background: #d1fae5;
+          padding: 0.15rem 0.45rem;
+          border-radius: 4px;
+          margin-top: 0.25rem;
+          width: fit-content;
+        }
+
+        .select-selected {
+          border-color: #10b981 !important;
+          background-color: #f0fdf4 !important;
+          font-weight: 600 !important;
+          color: #065f46 !important;
+        }
+
+        .btn-clear-slot {
+          background: #fee2e2;
+          color: #dc2626;
+          border: 1px solid #fca5a5;
+          padding: 0.5rem 0.85rem;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+        }
+
+        .btn-clear-slot:hover {
+          background: #ef4444;
+          color: white;
         }
 
         .conflict-warning {

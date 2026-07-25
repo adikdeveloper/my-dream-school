@@ -1,66 +1,24 @@
-// Service Worker for My Dream School PWA
-const CACHE_NAME = 'my-dream-school-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/192x192.png',
-    '/512x512.png',
-    '/manifest.json'
-];
+// Cleanup service worker for My Dream School.
+// The dashboard must always load live routes from Vercel/Render.
+const CACHE_PREFIX = 'my-dream-school';
 
-// Install event
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    );
-    self.skipWaiting();
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
-// Fetch event
-self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests (POST, PUT, DELETE cannot be cached)
-    if (event.request.method !== 'GET') {
-        return;
-    }
-
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request)
-                    .then((response) => {
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-                        return response;
-                    });
-            })
-    );
-});
-
-// Activate event
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((key) => key.startsWith(CACHE_PREFIX))
+        .map((key) => caches.delete(key))
     );
-    self.clients.claim();
+
+    await self.clients.claim();
+    await self.registration.unregister();
+  })());
 });
+
+// Do not call respondWith here. Requests should go straight to the network.
+self.addEventListener('fetch', () => {});

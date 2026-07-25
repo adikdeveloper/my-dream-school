@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../services/authService';
+import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 import styles from './Assignments.module.css';
+
+// Biriktirma fayllar uchun asosiy URL
+const FILE_BASE = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
 
 const Assignments = () => {
   const [assignments, setAssignments] = useState([]);
@@ -26,7 +30,8 @@ const Assignments = () => {
 
   const [gradeData, setGradeData] = useState({
     grade: '',
-    feedback: ''
+    feedback: '',
+    awardCoin: false
   });
 
   // Memoized classes and subjects for optimization
@@ -143,11 +148,12 @@ const Assignments = () => {
       await api.post(`/assignments/${selectedAssignment._id}/grade`, {
         studentId: selectedStudent.student._id,
         grade: gradeValue,
-        feedback: gradeData.feedback
+        feedback: gradeData.feedback,
+        awardCoin: gradeData.awardCoin
       });
 
       setShowGradeModal(false);
-      setGradeData({ grade: '', feedback: '' });
+      setGradeData({ grade: '', feedback: '', awardCoin: false });
       setSelectedStudent(null);
       setSuccess('Baholash muvaffaqiyatli saqlandi!');
       setTimeout(() => setSuccess(''), 3000);
@@ -165,7 +171,8 @@ const Assignments = () => {
     setSelectedStudent(submission);
     setGradeData({
       grade: submission.grade || '',
-      feedback: submission.feedback || ''
+      feedback: submission.feedback || '',
+      awardCoin: submission.hasCoin || false
     });
     setShowGradeModal(true);
   };
@@ -212,9 +219,9 @@ const Assignments = () => {
     <div className={styles.assignmentsContainer}>
       <div className={styles.assignmentsHeader}>
         <h1 className={styles.pageTitle}>📝 Uyga Vazifalar</h1>
-        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowCreateModal(true)}>
+        <Can perm="assignment.create"><button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowCreateModal(true)}>
           ➕ Yangi Vazifa
-        </button>
+        </button></Can>
       </div>
 
       {/* Success Message */}
@@ -306,6 +313,9 @@ const Assignments = () => {
                               {isNew && <span className={styles.newSubmissionBadge}>🔔 YANGI</span>}
                             </span>
                             {getStatusBadge(submission)}
+                            {submission.isLate && (
+                              <span style={{ marginLeft: '0.4rem', fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '0.12rem 0.45rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>⏰ Kech</span>
+                            )}
                           </div>
 
                           {submission.status !== 'pending' && (
@@ -313,15 +323,25 @@ const Assignments = () => {
                               {submission.submissionText && (
                                 <p className={styles.submissionText}>{submission.submissionText}</p>
                               )}
+                              {submission.attachmentUrl && (
+                                <a
+                                  href={`${FILE_BASE}${submission.attachmentUrl}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', fontWeight: 600, color: '#2563eb', textDecoration: 'none', background: '#eff6ff', padding: '0.35rem 0.7rem', borderRadius: '8px', marginBottom: '0.4rem' }}
+                                >
+                                  📎 {submission.attachmentName || 'Biriktirilgan fayl'}
+                                </a>
+                              )}
                               {submission.grade !== undefined && (
                                 <span className={styles.gradeDisplay}>Ball: {submission.grade}</span>
                               )}
-                              <button
+                              <Can perm="assignment.grade"><button
                                 className={`${styles.btn} ${styles.btnSm} ${styles.btnPrimary}`}
                                 onClick={() => openGradeModal(assignment, submission)}
                               >
                                 {submission.status === 'graded' ? 'Tahrirlash' : 'Baholash'}
-                              </button>
+                              </button></Can>
                             </div>
                           )}
                         </div>
@@ -507,6 +527,18 @@ const Assignments = () => {
                   placeholder="O'quvchiga qaytarilma..."
                   maxLength="1000"
                 />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.75rem', background: gradeData.awardCoin ? '#fffbeb' : '#f8fafc', border: `1px solid ${gradeData.awardCoin ? '#fcd34d' : '#e2e8f0'}`, borderRadius: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={gradeData.awardCoin}
+                    onChange={(e) => setGradeData(prev => ({ ...prev, awardCoin: e.target.checked }))}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>🪙 Coin berish — a'lo bajargan uy vazifa uchun (1 dars = 1 coin)</span>
+                </label>
               </div>
 
               <div className={styles.modalActions}>

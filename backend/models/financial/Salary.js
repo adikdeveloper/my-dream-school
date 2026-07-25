@@ -38,6 +38,11 @@ const salaryTransactionSchema = new mongoose.Schema({
   coveredByTeacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  // Dars almashtirish yozuvi bilan bog'liqlik (idempotent qaytarish uchun)
+  substitution: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'LessonSubstitution'
   }
 }, { _id: true });
 
@@ -97,6 +102,22 @@ const salarySchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Soliqdan oldingi summa (jami daromad - chegirmalar)
+  grossSalary: {
+    type: Number,
+    default: 0
+  },
+  // Daromad solig'i stavkasi (O'zbekiston JShDS = 12%)
+  incomeTaxRate: {
+    type: Number,
+    default: 0.12
+  },
+  // Ushlab qolingan daromad solig'i miqdori
+  incomeTaxAmount: {
+    type: Number,
+    default: 0
+  },
+  // Soliqdan keyin o'qituvchi qo'liga oladigan sof summa
   netSalary: {
     type: Number,
     default: 0
@@ -124,38 +145,58 @@ const salarySchema = new mongoose.Schema({
 // Compound index for efficient queries
 salarySchema.index({ teacher: 1, year: 1, month: 1 }, { unique: true });
 
-// Method to calculate net salary
+// Barcha summalarni va statistikani transaksiyalardan qayta hisoblaydi.
+// Transaksiya amount'lari ishorali: dars o'tildi/o'rnini bosdi/bonus = musbat,
+// dars qoldirildi/chegirma = manfiy. Shu sababli har bir o'qituvchi o'z
+// stavkasida hisoblanadi (o'rnini bosishda ham).
 salarySchema.methods.calculateNetSalary = function() {
-  this.totalEarned = this.totalLessonsTaught * this.baseSalaryPerLesson;
-  this.totalDeductions = this.totalLessonsMissed * this.baseSalaryPerLesson;
-  this.netSalary = this.totalEarned - this.totalDeductions + this.totalBonuses;
+  const txns = this.transactions || [];
+
+  let earned = 0;       // jami musbat (o'tilgan + o'rnini bosgan + bonus)
+  let deductions = 0;   // jami manfiy (qoldirilgan + chegirma)
+  let bonuses = 0;
+  let taught = 0, missed = 0, covered = 0;
+
+  for (const t of txns) {
+    const amt = Number(t.amount) || 0;
+    if (amt >= 0) earned += amt; else deductions += Math.abs(amt);
+
+    switch (t.type) {
+      case 'lesson_taught': taught += 1; break;
+      case 'lesson_missed': missed += 1; break;
+      case 'lesson_covered': covered += 1; break;
+      case 'bonus': bonuses += amt; break;
+      default: break;
+    }
+  }
+
+  this.totalEarned = earned;
+  this.totalDeductions = deductions;
+  this.totalBonuses = bonuses;
+  this.totalLessonsTaught = taught;
+  this.totalLessonsMissed = missed;
+  this.totalLessonsCovered = covered;
+
+  // Soliqdan oldingi (gross) summa
+  const gross = earned - deductions;
+  this.grossSalary = gross;
+
+  // Daromad solig'i (JShDS) — faqat musbat daromaddan ushlanadi
+  if (this.incomeTaxRate === undefined || this.incomeTaxRate === null) {
+    this.incomeTaxRate = 0.12;
+  }
+  const taxable = Math.max(0, gross);
+  this.incomeTaxAmount = Math.round(taxable * this.incomeTaxRate);
+
+  // Sof maosh = gross - soliq
+  this.netSalary = gross - this.incomeTaxAmount;
   return this.netSalary;
 };
 
 // Method to add a transaction
 salarySchema.methods.addTransaction = function(transactionData) {
   this.transactions.push(transactionData);
-
-  // Update statistics based on transaction type
-  switch (transactionData.type) {
-    case 'lesson_taught':
-      this.totalLessonsTaught += 1;
-      break;
-    case 'lesson_missed':
-      this.totalLessonsMissed += 1;
-      break;
-    case 'lesson_covered':
-      this.totalLessonsCovered += 1;
-      break;
-    case 'bonus':
-      this.totalBonuses += transactionData.amount;
-      break;
-    case 'deduction':
-      this.totalDeductions += Math.abs(transactionData.amount);
-      break;
-  }
-
-  // Recalculate net salary
+  // Statistika va summalar transaksiyalardan to'liq qayta hisoblanadi
   this.calculateNetSalary();
 };
 

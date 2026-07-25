@@ -9,11 +9,17 @@ import StudentLists from '../../components/teacher/StudentLists';
 import Tests from '../../components/teacher/Tests';
 import Assignments from '../../components/teacher/Assignments';
 import TeacherReports from '../../components/teacher/TeacherReports';
+import TeacherCoins from '../../components/teacher/TeacherCoins';
 import TeacherProfile from '../../components/teacher/TeacherProfile';
 import TeacherSalary from '../../components/teacher/TeacherSalary';
+import TeacherAI from '../../components/teacher/TeacherAI';
+import Substitutions from '../../components/common/Substitutions';
 import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
+import NotificationBell from '../../components/common/NotificationBell';
 import apiService from '../../services/apiService';
+
+const TEACHER_BLUE = '#075985';
 
 const TeacherDashboard = () => {
   const { user, logout } = useAuth();
@@ -41,7 +47,7 @@ const TeacherDashboard = () => {
   // Generate profile image URL with cache busting
   const profileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
-    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
     const timestamp = user._updated || Date.now();
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
   }, [user?.profileImage, user?._updated]);
@@ -56,12 +62,15 @@ const TeacherDashboard = () => {
     { path: '/teacher',             label: 'Bosh sahifa',     icon: '🏠', end: true, badge: null, section: null },
     { path: '/teacher/journal',     label: 'Sinf jurnali',    icon: '📖', badge: null, section: null },
     { path: '/teacher/schedule',    label: 'Dars jadvali',    icon: '📅', badge: null, section: null },
+    { path: '/teacher/substitutions', label: 'Almashtirish',  icon: '🔄', badge: null, section: null },
     { path: '/teacher/students',    label: "O'quvchilar",     icon: '👥', badge: null, section: null },
     { path: '/teacher/tests',       label: 'Testlar',         icon: '📋', badge: null, section: null },
+    { path: '/teacher/ai',          label: 'AI Yordamchi',    icon: '🤖', badge: null, section: null },
     { path: '/teacher/assignments', label: 'Vazifalar',       icon: '📝', badge: notificationCounts.pendingGrading, section: 'assignments' },
     { path: '/teacher/chat',        label: 'Chat',            icon: '💬', badge: null, section: null },
     { path: '/teacher/notifications', label: 'Bildirishnomalar', icon: '📥', badge: null, section: null },
     { path: '/teacher/reports',     label: 'Hisobotlar',      icon: '📊', badge: null, section: null },
+    { path: '/teacher/coins',       label: 'Coinlar',         icon: '🪙', badge: null, section: null },
     { path: '/teacher/salary',      label: 'Maosh',           icon: '💰', badge: null, section: null },
     { path: '/teacher/profile',     label: 'Profil',          icon: '👤', badge: null, section: null }
   ];
@@ -104,6 +113,7 @@ const TeacherDashboard = () => {
             </div>
           </div>
           <div className="tch-header-right">
+            <NotificationBell accent={TEACHER_BLUE} viewAllLink="/teacher/notifications" />
             <div className="tch-user-info">
               <div
                 className={`tch-user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}
@@ -192,12 +202,15 @@ const TeacherDashboard = () => {
             <Route path="/" element={<TeacherHome />} />
             <Route path="/journal" element={<ClassJournal />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/substitutions" element={<Substitutions accent={TEACHER_BLUE} />} />
             <Route path="/students" element={<StudentLists />} />
             <Route path="/tests" element={<Tests />} />
+            <Route path="/ai" element={<TeacherAI />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/notifications" element={<NotificationInbox />} />
             <Route path="/reports" element={<TeacherReports />} />
+            <Route path="/coins" element={<TeacherCoins />} />
             <Route path="/salary" element={<TeacherSalary />} />
             <Route path="/profile" element={<TeacherProfile />} />
             <Route path="*" element={<Navigate to="/teacher" replace />} />

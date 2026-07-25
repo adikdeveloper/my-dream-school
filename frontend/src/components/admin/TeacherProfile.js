@@ -15,7 +15,7 @@ const buildImageUrl = (imagePath) => {
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return imagePath;
   }
-  const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
   return `${baseUrl}${imagePath}`;
 };
 
@@ -366,10 +366,20 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
         submitData.append('profileImage', profileImage);
       }
 
+      let savedTeacher = null;
       if (mode === 'add') {
-        await apiService.createUser(submitData);
+        savedTeacher = await apiService.createUser(submitData);
       } else {
-        await apiService.updateUser(teacher._id, submitData);
+        savedTeacher = await apiService.updateUser(teacher._id, submitData);
+      }
+
+      const savedTeacherId = mode === 'add'
+        ? (savedTeacher?.user?._id || savedTeacher?._id)
+        : teacher?._id;
+      const salaryRate = Number(formData.salaryPerLesson);
+
+      if (savedTeacherId && Number.isFinite(salaryRate) && salaryRate >= 0) {
+        await apiService.updateTeacherSalaryRate(savedTeacherId, salaryRate);
       }
 
       onUpdate();

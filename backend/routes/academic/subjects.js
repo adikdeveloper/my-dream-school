@@ -134,7 +134,7 @@ router.get('/:id', auth, async (req, res) => {
 // @route   POST /api/subjects
 // @desc    Create new subject
 // @access  Private/Admin
-router.post('/', auth, authorize('admin'), requirePermission('subject.manage'), createSubjectValidation, async (req, res) => {
+router.post('/', auth, authorize('admin', 'supervisor', 'reception'), requirePermission('subject.manage'), createSubjectValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -183,7 +183,7 @@ router.post('/', auth, authorize('admin'), requirePermission('subject.manage'), 
 // @route   PUT /api/subjects/:id
 // @desc    Update subject
 // @access  Private/Admin
-router.put('/:id', auth, authorize('admin'), requirePermission('subject.manage'), updateSubjectValidation, async (req, res) => {
+router.put('/:id', auth, authorize('admin', 'supervisor', 'reception'), requirePermission('subject.manage'), updateSubjectValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -266,7 +266,7 @@ router.put('/:id', auth, authorize('admin'), requirePermission('subject.manage')
 // @route   DELETE /api/subjects/:id
 // @desc    Delete subject
 // @access  Private/Admin
-router.delete('/:id', auth, authorize('admin'), requirePermission('subject.manage'), async (req, res) => {
+router.delete('/:id', auth, authorize('admin', 'supervisor', 'reception'), requirePermission('subject.manage'), async (req, res) => {
   try {
     const subject = await Subject.findById(req.params.id);
 

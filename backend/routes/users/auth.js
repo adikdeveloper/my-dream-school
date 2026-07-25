@@ -11,6 +11,19 @@ const { hasPermission } = require('../../middleware/permissions');
 
 const router = express.Router();
 
+const parseNonNegativeAmount = (value, fieldLabel) => {
+  if (value === undefined || value === null || value === '') return null;
+
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) {
+    const error = new Error(`${fieldLabel} musbat son bo'lishi kerak`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return amount;
+};
+
 // Generate JWT Token
 const generateToken = (userId) => {
   return jwt.sign(
@@ -60,7 +73,7 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
       });
     }
 
-    let { phone, passportNumber, passportSeriesNumber, jshshir, password, firstName, lastName, role, studentId, teacherId, address, dateOfBirth, parentName, parentPhone, parentJshshir, email, specialty, experience, education, subjects, registrationDate, leftDate, classId, monthlyFee } = req.body;
+    let { phone, passportNumber, passportSeriesNumber, jshshir, password, firstName, lastName, role, studentId, teacherId, address, dateOfBirth, parentName, parentPhone, parentJshshir, email, specialty, experience, education, subjects, registrationDate, leftDate, classId, monthlyFee, salaryPerLesson } = req.body;
 
     // Ruxsat tekshiruvi: birinchi foydalanuvchi bo'lsa - har kim, aks holda ruxsat kerak
     const totalUsers = await User.countDocuments();
@@ -75,6 +88,21 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
         || await hasPermission(req.user, permKey);
       if (!allowed) {
         return res.status(403).json({ message: `${role} yaratish uchun ruxsat yo'q` });
+      }
+
+      // O'qituvchi faqat o'zining sinfiga o'quvchi qo'sha oladi
+      if (req.user.role === 'teacher' && role === 'student') {
+        if (!classId) {
+          return res.status(400).json({ message: 'Sinf tanlanishi shart' });
+        }
+        const owns = await Class.exists({
+          _id: classId,
+          $or: [{ classTeacher: req.user._id }, { 'subjects.teacher': req.user._id }],
+          isActive: true
+        });
+        if (!owns) {
+          return res.status(403).json({ message: "Faqat o'zingizning sinfingizga o'quvchi qo'sha olasiz" });
+        }
       }
     }
 
@@ -140,6 +168,14 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
 
     // Handle subjects array for teachers
     if (role === 'teacher') {
+      if (salaryPerLesson !== undefined) {
+        const salaryRate = parseNonNegativeAmount(salaryPerLesson, 'Maosh miqdori');
+        if (salaryRate === null) {
+          return res.status(400).json({ message: 'Maosh miqdori kiritilishi kerak' });
+        }
+        userData.salaryPerLesson = salaryRate;
+      }
+
       if (req.body['subjects[]']) {
         userData.subjects = Array.isArray(req.body['subjects[]'])
           ? req.body['subjects[]']
@@ -200,6 +236,9 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
       }
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
     // Error is logged by error handling middleware
     res.status(500).json({ message: 'Server error' });
   }
@@ -287,4 +326,3 @@ router.get('/me', auth, async (req, res) => {
 });
 
 module.exports = router;
-

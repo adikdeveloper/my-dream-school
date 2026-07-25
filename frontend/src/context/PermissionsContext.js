@@ -30,12 +30,26 @@ export const PermissionsProvider = ({ children }) => {
     refresh();
   }, [refresh]);
 
+  // Foydalanuvchi tabga qaytganda ruxsatlarni qayta yuklash — admin ruxsatni
+  // o'zgartirgach, boshqa foydalanuvchilar tezroq yangi holatni ko'rishi uchun.
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [isAuthenticated, refresh]);
+
   const can = useCallback((key) => {
     if (!user) return false;
-    // Admin/Director — yopiq qilingan ruxsatlardan tashqari hammasi
-    if (user.role === 'admin' || user.role === 'director') {
-      return permissions[key] !== false;
-    }
+    // Direktor — eng yuqori rol (boshliq): har doim hammasi (backend bilan mos)
+    if (user.role === 'director') return true;
+    // Admin (direktor yordamchisi) va boshqa rollar — katalog asosida (direktor boshqaradi)
     return !!permissions[key];
   }, [user, permissions]);
 

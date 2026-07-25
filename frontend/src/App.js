@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { PermissionsProvider } from './context/PermissionsContext';
 import Login from './pages/auth/Login';
+import LandingPage from './pages/LandingPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import DirectorDashboard from './pages/director/DirectorDashboard';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -96,7 +97,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<LandingPage />} />
             </Routes>
           </div>
         </Router>

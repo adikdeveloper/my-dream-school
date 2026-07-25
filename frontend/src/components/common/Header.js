@@ -8,7 +8,7 @@ const Header = ({ title, subtitle }) => {
   // Generate profile image URL with cache busting (SAME AS ADMIN DASHBOARD)
   const profileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
-    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
     const timestamp = user._updated || Date.now();
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
   }, [user?.profileImage, user?._updated]);

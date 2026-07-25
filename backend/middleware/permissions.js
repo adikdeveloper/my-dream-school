@@ -1,10 +1,13 @@
 const RolePermission = require('../models/permissions/RolePermission');
-const { getDefaultPermissions, PERMISSIONS } = require('../models/permissions/permissionCatalog');
+const { getDefaultPermissions, PERMISSIONS, decodeKey } = require('../models/permissions/permissionCatalog');
 
-// In-memory cache: { role: { key: bool } }, TTL 60s
+// In-memory cache: { role: { key: bool } }, TTL 15s
+// Eslatma: bu jarayon-ichi cache. Ko'p instansli (cluster/PM2/bir nechta pod) deploy'da
+// invalidateCache() faqat yozgan jarayonni tozalaydi — boshqa instanslar eski qiymatni
+// TTL tugaguncha ko'rsatadi. Bitta instansda muammosiz. Tezroq qo'llanishi uchun TTL past.
 let cache = null;
 let cacheLoadedAt = 0;
-const CACHE_TTL = 60 * 1000;
+const CACHE_TTL = 15 * 1000;
 
 const loadAllPermissions = async () => {
   if (cache && Date.now() - cacheLoadedAt < CACHE_TTL) return cache;
@@ -16,7 +19,7 @@ const loadAllPermissions = async () => {
       ? Object.fromEntries(doc.permissions)
       : (doc.permissions || {});
     Object.entries(stored).forEach(([k, v]) => {
-      result[doc.role][k] = !!v;
+      result[doc.role][decodeKey(k)] = !!v; // saqlangan ":" kalitni asl "." holatga qaytaramiz
     });
   });
   cache = result;
@@ -36,12 +39,11 @@ const getUserPermissions = async (user) => {
 // Foydalanuvchida ruxsat bor-yo'qligini tekshirish (boolean)
 const hasPermission = async (user, key) => {
   if (!user) return false;
-  // Admin va Director har doim hammasi (xavfsizlik tarmog'i — UI'da o'chirilishi mumkin lekin xavfsizroq)
-  if (user.role === 'admin' || user.role === 'director') {
-    const perms = await getUserPermissions(user);
-    // Agar yopiq qilingan bo'lsa - hurmat qilamiz (admin o'zi o'chirishi mumkin)
-    return perms[key] !== false;
-  }
+  // Direktor — eng yuqori rol (boshliq): har doim barcha ruxsatlarga ega, hech qachon
+  // qulflanmaydi. Direktor o'zini cheklab qo'ya olmaydi.
+  if (user.role === 'director') return true;
+  // Admin (direktor yordamchisi) va boshqa barcha rollar — katalog/saqlangan qiymat
+  // asosida. Direktor bularning ruxsatlarini dashboarddan boshqaradi.
   const perms = await getUserPermissions(user);
   return !!perms[key];
 };

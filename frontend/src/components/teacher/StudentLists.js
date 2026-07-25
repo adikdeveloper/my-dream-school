@@ -18,11 +18,37 @@ const StudentLists = () => {
   const [saving, setSaving] = useState(false);
   const [editSuccess, setEditSuccess] = useState('');
   const [editError, setEditError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  // Yangi o'quvchi qo'shish
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [myClasses, setMyClasses] = useState([]);
+  const [addForm, setAddForm] = useState({
+    firstName: '', lastName: '', phone: '', password: '', classId: '',
+    dateOfBirth: '', address: '', parentName: '', parentPhone: ''
+  });
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState('');
   const studentsPerPage = 10;
+  const canCreate = can('teacher.create_student');
+  const canDelete = can('teacher.delete_student');
 
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  // O'quvchi qo'shish ruxsati bo'lsa — o'qituvchining sinflarini yuklaymiz
+  useEffect(() => {
+    if (!canCreate) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get('/classes/teacher/my-classes');
+        if (!cancelled) setMyClasses(Array.isArray(res.data) ? res.data : []);
+      } catch (_) { /* sinflar yuklanmadi — qo'shish formasi bo'sh bo'ladi */ }
+    })();
+    return () => { cancelled = true; };
+  }, [canCreate]);
 
   const fetchStudents = async () => {
     try {
@@ -174,6 +200,91 @@ const StudentLists = () => {
     }
   }, [selectedStudent, editForm]);
 
+  const handleDeleteStudent = useCallback(async () => {
+    if (!selectedStudent?._id) return;
+    const ok = window.confirm(
+      `"${selectedStudent.firstName} ${selectedStudent.lastName}" o'quvchisini o'chirishni tasdiqlaysizmi? Bu amalni qaytarib bo'lmaydi.`
+    );
+    if (!ok) return;
+
+    setDeleting(true);
+    setEditError('');
+    try {
+      await api.delete(`/users/${selectedStudent._id}`);
+      setStudents(prev => prev.filter(s => s._id !== selectedStudent._id));
+      handleCloseModal();
+    } catch (err) {
+      setEditError(err.response?.data?.message || "O'chirishda xatolik yuz berdi");
+    } finally {
+      setDeleting(false);
+    }
+  }, [selectedStudent, handleCloseModal]);
+
+  const handleOpenAdd = useCallback(() => {
+    setAddForm({
+      firstName: '', lastName: '', phone: '', password: '',
+      classId: myClasses.length === 1 ? myClasses[0]._id : '',
+      dateOfBirth: '', address: '', parentName: '', parentPhone: ''
+    });
+    setAddError('');
+    setAddSuccess('');
+    setShowAddModal(true);
+  }, [myClasses]);
+
+  const handleAddChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setAddForm(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleAddSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setAddError('');
+    setAddSuccess('');
+
+    if (!addForm.firstName.trim() || !addForm.lastName.trim()) {
+      setAddError('Ism va familiya kiritilishi shart');
+      return;
+    }
+    if (!addForm.classId) {
+      setAddError('Sinf tanlanishi shart');
+      return;
+    }
+    if (!addForm.phone.trim()) {
+      setAddError('Telefon raqami kiritilishi shart');
+      return;
+    }
+    if (!addForm.password || addForm.password.length < 6) {
+      setAddError('Parol kamida 6 ta belgidan iborat bo\'lishi kerak');
+      return;
+    }
+
+    setAdding(true);
+    try {
+      await api.post('/auth/register', {
+        role: 'student',
+        firstName: addForm.firstName.trim(),
+        lastName: addForm.lastName.trim(),
+        phone: addForm.phone.trim(),
+        password: addForm.password,
+        classId: addForm.classId,
+        dateOfBirth: addForm.dateOfBirth || undefined,
+        address: addForm.address || undefined,
+        parentName: addForm.parentName || undefined,
+        parentPhone: addForm.parentPhone || undefined
+      });
+      setAddSuccess('Yangi o\'quvchi qo\'shildi!');
+      setTimeout(() => {
+        setShowAddModal(false);
+        setAddSuccess('');
+        fetchStudents();
+      }, 1200);
+    } catch (err) {
+      setAddError(err.response?.data?.message || 'O\'quvchi qo\'shishda xatolik yuz berdi');
+    } finally {
+      setAdding(false);
+    }
+  }, [addForm]);
+
   if (loading) {
     return (
       <div className={styles.studentLists}>
@@ -208,11 +319,22 @@ const StudentLists = () => {
   return (
     <div className={styles.studentLists}>
       <div className={styles.pageHeader}>
-        <div className={styles.headerContent}>
-          <h1 className={styles.pageTitle}>Mening O'quvchilarim</h1>
-          <p className={styles.pageSubtitle}>
-            Jami {filteredStudents.length} ta o'quvchi
-          </p>
+        <div className={styles.headerContent} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 className={styles.pageTitle}>Mening O'quvchilarim</h1>
+            <p className={styles.pageSubtitle}>
+              Jami {filteredStudents.length} ta o'quvchi
+            </p>
+          </div>
+          {canCreate && (
+            <button
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              onClick={handleOpenAdd}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              ➕ Yangi o'quvchi
+            </button>
+          )}
         </div>
       </div>
 
@@ -308,7 +430,7 @@ const StudentLists = () => {
                           <div className={styles.studentAvatar}>
                             {student.profileImage ? (
                               <img
-                                src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${student.profileImage}`}
+                                src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage}`}
                                 alt={`${student.firstName} ${student.lastName}`}
                                 onError={(e) => {
                                   e.target.style.display = 'none';
@@ -350,7 +472,7 @@ const StudentLists = () => {
                       <div className={styles.studentAvatar}>
                         {student.profileImage ? (
                           <img
-                            src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${student.profileImage}`}
+                            src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage}`}
                             alt={`${student.firstName} ${student.lastName}`}
                             onError={(e) => {
                               e.target.style.display = 'none';
@@ -448,7 +570,7 @@ const StudentLists = () => {
               <div className={styles.profileAvatarLarge}>
                 {selectedStudent.profileImage ? (
                   <img
-                    src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${selectedStudent.profileImage}`}
+                    src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${selectedStudent.profileImage}`}
                     alt={`${selectedStudent.firstName} ${selectedStudent.lastName}`}
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -601,6 +723,16 @@ const StudentLists = () => {
                       ✏️ Tahrirlash
                     </button>
                   )}
+                  {canDelete && (
+                    <button
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      onClick={handleDeleteStudent}
+                      disabled={deleting}
+                      style={{ background: '#ef4444', color: '#fff' }}
+                    >
+                      {deleting ? 'O\'chirilmoqda...' : '🗑️ O\'chirish'}
+                    </button>
+                  )}
                   <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleCloseModal}>
                     Yopish
                   </button>
@@ -620,6 +752,86 @@ const StudentLists = () => {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Yangi o'quvchi qo'shish modali */}
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={() => !adding && setShowAddModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Yangi o'quvchi qo'shish</h2>
+              <button className={styles.modalClose} onClick={() => !adding && setShowAddModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAddSubmit}>
+              <div className={styles.modalBody}>
+                <div className={styles.profileDetails}>
+                  {addSuccess && <div className={styles.successAlert}>✅ {addSuccess}</div>}
+                  {addError && <div className={styles.errorAlert}>⚠️ {addError}</div>}
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Sinf *</label>
+                    <select
+                      name="classId"
+                      value={addForm.classId}
+                      onChange={handleAddChange}
+                      className={styles.formInput}
+                      required
+                    >
+                      <option value="">— Sinfni tanlang —</option>
+                      {myClasses.map((c) => (
+                        <option key={c._id} value={c._id}>{c.name}</option>
+                      ))}
+                    </select>
+                    {myClasses.length === 0 && (
+                      <small style={{ color: '#ef4444' }}>
+                        Sizga biriktirilgan sinf topilmadi. O'quvchi qo'shish uchun avval sinfga biriktirilishingiz kerak.
+                      </small>
+                    )}
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Ism *</label>
+                    <input type="text" name="firstName" value={addForm.firstName} onChange={handleAddChange} className={styles.formInput} required />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Familiya *</label>
+                    <input type="text" name="lastName" value={addForm.lastName} onChange={handleAddChange} className={styles.formInput} required />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Telefon *</label>
+                    <input type="tel" name="phone" value={addForm.phone} onChange={handleAddChange} className={styles.formInput} placeholder="901234567" required />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Parol *</label>
+                    <input type="text" name="password" value={addForm.password} onChange={handleAddChange} className={styles.formInput} placeholder="Kamida 6 ta belgi" required />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Tug'ilgan sana</label>
+                    <input type="date" name="dateOfBirth" value={addForm.dateOfBirth} onChange={handleAddChange} className={styles.formInput} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Manzil</label>
+                    <input type="text" name="address" value={addForm.address} onChange={handleAddChange} className={styles.formInput} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Ota-ona ismi</label>
+                    <input type="text" name="parentName" value={addForm.parentName} onChange={handleAddChange} className={styles.formInput} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Ota-ona telefoni</label>
+                    <input type="tel" name="parentPhone" value={addForm.parentPhone} onChange={handleAddChange} className={styles.formInput} placeholder="901234567" />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modalFooter}>
+                <button type="submit" className={`${styles.btn} ${styles.btnSuccess}`} disabled={adding || myClasses.length === 0}>
+                  {adding ? 'Qo\'shilmoqda...' : '💾 Qo\'shish'}
+                </button>
+                <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowAddModal(false)} disabled={adding}>
+                  Bekor qilish
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

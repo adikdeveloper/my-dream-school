@@ -46,7 +46,7 @@ const StudentPayments = () => {
   }, [loadPaymentData]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('uz-UZ').format(amount || 0) + ' so\'m';
+    return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(Math.round(amount || 0)) + ' so\'m';
   };
 
   const formatMonth = (monthStr) => {
@@ -68,8 +68,10 @@ const StudentPayments = () => {
     });
   };
 
-  // Calculate statistics
-  const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  // Calculate statistics (faqat tasdiqlangan to'lovlar)
+  const totalPaid = payments
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
   const paidMonths = paymentStatus.filter(s => s.status === 'paid').length;
   const unpaidMonths = paymentStatus.filter(s => s.status === 'unpaid').length;
 
@@ -145,7 +147,7 @@ const StudentPayments = () => {
           <div className="month-grid">
             {paymentStatus.map((status, index) => (
               <div
-                key={index}
+                key={status.month || index}
                 className={`month-card ${status.status === 'paid' ? 'paid' : 'unpaid'}`}
               >
                 <div className="month-name">{formatMonth(status.month)}</div>
@@ -191,16 +193,15 @@ const StudentPayments = () => {
               <div className="col-status">Holat</div>
             </div>
             {payments.map((payment, index) => (
-              <div key={index} className="table-row">
+              <div key={payment._id || index} className="table-row">
                 <div className="col-date">{formatDate(payment.paymentDate)}</div>
                 <div className="col-month">{formatMonth(payment.paymentMonth)}</div>
                 <div className="col-amount">{formatCurrency(payment.amount)}</div>
                 <div className="col-method">
-                  <span className={`method-badge ${payment.paymentMethod}`}>
-                    {payment.paymentMethod === 'cash' ? 'Naqd' :
-                      payment.paymentMethod === 'card' ? 'Karta' :
-                        payment.paymentMethod === 'transfer' ? "O'tkazma" :
-                          payment.paymentMethod === 'balance' ? 'Balans' : payment.paymentMethod}
+                  <span className={`method-badge ${payment.paymentType}`}>
+                    {payment.paymentType === 'cash' ? 'Naqd' :
+                      payment.paymentType === 'card' ? 'Karta' :
+                        payment.paymentType === 'bank_transfer' ? "O'tkazma" : payment.paymentType}
                   </span>
                 </div>
                 <div className="col-status">
@@ -478,8 +479,7 @@ const styles = `
 
   .method-badge.cash { background: #dcfce7; color: #166534; }
   .method-badge.card { background: #d1fae5; color: #065f46; }
-  .method-badge.transfer { background: #fef3c7; color: #92400e; }
-  .method-badge.balance { background: #f3e8ff; color: #7c3aed; }
+  .method-badge.bank_transfer { background: #fef3c7; color: #92400e; }
 
   .status-badge {
     display: inline-block;

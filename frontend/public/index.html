@@ -2,11 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/192x192.png" />
+    <link rel="icon" href="%PUBLIC_URL%/assets/images/logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#1e3a8a" />
-    <meta name="description" content="My Dream School - Modern School Management System" />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/192x192.png" />
+    <meta name="description" content="My Dream School - IT va Biznesga ixtisoslashtirilgan, barcha darslar to'liq ingliz tilida olib boriladigan zamonaviy ta'lim markazi." />
+    <meta name="keywords" content="IT maktab, biznes maktab, ingliz tilida ta'lim, dasturlash kurslari, my dream school, toshkent it maktab, xalqaro sertifikat, web dasturlash, biznes analitika" />
+    <meta name="author" content="My Dream School" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://my-dream-school.uz/" />
+    <meta property="og:title" content="My Dream School | IT & Business Academy" />
+    <meta property="og:description" content="O'zbekistonning #1 IT va Biznes maktabi. To'liq ingliz tilida ta'lim oling va xalqaro karyerangizni boshlang." />
+    <meta property="og:image" content="%PUBLIC_URL%/assets/images/logo.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://my-dream-school.uz/" />
+    <meta property="twitter:title" content="My Dream School | IT & Business Academy" />
+    <meta property="twitter:description" content="O'zbekistonning #1 IT va Biznes maktabi. To'liq ingliz tilida ta'lim oling va xalqaro karyerangizni boshlang." />
+    <meta property="twitter:image" content="%PUBLIC_URL%/assets/images/logo.jpg" />
+
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/assets/images/logo.jpg" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
     <!-- Google Fonts -->
@@ -14,17 +32,54 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <title>My Dream School</title>
+    <title>My Dream School | IT & Business Academy</title>
+
+    <!-- Local Business Schema (Google Maps/Knowledge Panel uchun) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "My Dream School | IT & Business Academy",
+      "image": "https://my-dream-school.uz/assets/images/logo.jpg",
+      "url": "https://my-dream-school.uz/",
+      "telephone": "+998901234567",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Beruniy tumani markazi",
+        "addressLocality": "Beruniy",
+        "addressRegion": "Qoraqalpog'iston",
+        "addressCountry": "UZ"
+      },
+      "description": "IT va Biznesga ixtisoslashtirilgan, barcha darslar to'liq ingliz tilida olib boriladigan zamonaviy ta'lim markazi."
+    }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered'))
-            .catch(err => console.log('SW registration failed:', err));
+        window.addEventListener('load', async () => {
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+
+            if ('caches' in window) {
+              const keys = await caches.keys();
+              await Promise.all(
+                keys
+                  .filter((key) => key.startsWith('my-dream-school'))
+                  .map((key) => caches.delete(key))
+              );
+            }
+
+            if (navigator.serviceWorker.controller && !sessionStorage.getItem('sw-cleanup-reloaded')) {
+              sessionStorage.setItem('sw-cleanup-reloaded', '1');
+              window.location.reload();
+            }
+          } catch (err) {
+            console.warn('SW cleanup failed:', err);
+          }
         });
       }
     </script>

@@ -207,6 +207,22 @@
 }
 .cell-empty { color: #cbd5e1; font-weight: 700; }
 
+/* O'rniga o'tgan o'qituvchi */
+.cell-teacher-replaced {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+.cell-substitute {
+  display: block;
+  font-size: 0.68rem;
+  color: #fff;
+  background: #dc2626;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
 /* Joriy / keyingi dars */
 .subject-cell.current-cell {
   background: #d1fae5;

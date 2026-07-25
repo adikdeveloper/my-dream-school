@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/common/Logo';
 import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
+import NotificationBell from '../../components/common/NotificationBell';
 
 const Placeholder = ({ title }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 85px)', flexDirection: 'column', gap: '1rem', background: '#f8fafc' }}>
@@ -34,6 +35,7 @@ const HRDashboard = () => {
             </div>
           </div>
           <div className="header-right">
+            <NotificationBell accent="#8b5cf6" viewAllLink="/hr/notifications" />
             <div className="user-info">
               <div className="user-avatar"><span className="user-initials">{user?.firstName?.charAt(0) || 'H'}{user?.lastName?.charAt(0) || 'R'}</span></div>
               <div className="user-details"><span className="user-name">{user?.firstName} {user?.lastName}</span><span className="user-role">HR</span></div>

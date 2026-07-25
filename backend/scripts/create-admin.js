@@ -5,8 +5,12 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-// MongoDB ga ulanish
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://admin:admin12345@cluster0.47cga1h.mongodb.net/mydreamschool?retryWrites=true&w=majority';
+// MongoDB ga ulanish — maxfiy satr .env dan olinadi (kodga yozilmaydi)
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error('MONGODB_URI environment o\'zgaruvchisi o\'rnatilmagan. backend/.env fayliga qo\'shing.');
+  process.exit(1);
+}
 
 // User schema
 const userSchema = new mongoose.Schema({

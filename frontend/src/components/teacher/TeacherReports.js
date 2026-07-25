@@ -1,186 +1,64 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiService from '../../services/apiService';
 
-// Demo data for faster initial display
-const DEMO_DATA = {
-  classStats: [
-    {
-      classId: 'demo-class-1',
-      className: '9-A sinf',
-      grade: 9,
-      section: 'A',
-      studentCount: 25,
-      subjects: [
-        {
-          subjectId: 'demo-subject-1',
-          subjectName: 'Matematika',
-          average: 87,
-          totalGrades: 120,
-          attendanceRate: 92,
-          excellentCount: 15,
-          goodCount: 8,
-          averageCount: 2,
-          poorCount: 0
-        },
-        {
-          subjectId: 'demo-subject-2',
-          subjectName: 'Fizika',
-          average: 82,
-          totalGrades: 95,
-          attendanceRate: 89,
-          excellentCount: 12,
-          goodCount: 10,
-          averageCount: 3,
-          poorCount: 0
-        }
-      ]
-    }
-  ],
-  studentStats: [
-    {
-      studentId: 'demo-1',
-      firstName: 'Sardor',
-      lastName: 'Karimov',
-      studentNumber: '20241001',
-      average: 92,
-      totalGrades: 12,
-      attendanceRate: 95,
-      assignmentStats: { graded: 8, total: 10, completionRate: 80 }
-    },
-    {
-      studentId: 'demo-2',
-      firstName: 'Nodira',
-      lastName: 'Aliyeva',
-      studentNumber: '20241002',
-      average: 88,
-      totalGrades: 11,
-      attendanceRate: 92,
-      assignmentStats: { graded: 7, total: 10, completionRate: 70 }
-    },
-    {
-      studentId: 'demo-3',
-      firstName: 'Jamshid',
-      lastName: 'Rahimov',
-      studentNumber: '20241003',
-      average: 85,
-      totalGrades: 10,
-      attendanceRate: 88,
-      assignmentStats: { graded: 6, total: 10, completionRate: 60 }
-    }
-  ],
-  attendanceStats: {
-    summary: {
-      presentCount: 450,
-      absentCount: 50,
-      attendanceRate: 90,
-      totalRecords: 500
-    },
-    byDate: [
-      { date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), present: 23, absent: 2, total: 25 },
-      { date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), present: 22, absent: 3, total: 25 },
-      { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), present: 24, absent: 1, total: 25 },
-      { date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), present: 23, absent: 2, total: 25 },
-      { date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), present: 25, absent: 0, total: 25 }
-    ]
-  },
-  assignmentStats: {
-    summary: {
-      total: 8,
-      active: 5,
-      closed: 3,
-      submissions: { submitted: 120, pending: 80, graded: 100 },
-      completionRate: 60,
-      averageGrade: 85
-    },
-    assignments: [
-      {
-        _id: 'demo-assign-1',
-        title: 'Kvadrat tenglamalar',
-        className: '9-A sinf',
-        subjectName: 'Matematika',
-        maxScore: 100,
-        status: 'active',
-        submissions: { total: 25, submitted: 18, pending: 7, graded: 15 }
-      },
-      {
-        _id: 'demo-assign-2',
-        title: 'Newton qonunlari',
-        className: '9-A sinf',
-        subjectName: 'Fizika',
-        maxScore: 100,
-        status: 'active',
-        submissions: { total: 25, submitted: 20, pending: 5, graded: 18 }
-      }
-    ]
-  }
-};
-
 const TeacherReports = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [initialLoading, setInitialLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isDemo, setIsDemo] = useState(true);
-  const [classStats, setClassStats] = useState(DEMO_DATA.classStats);
-  const [studentStats, setStudentStats] = useState(DEMO_DATA.studentStats);
-  const [attendanceStats, setAttendanceStats] = useState(DEMO_DATA.attendanceStats);
-  const [assignmentStats, setAssignmentStats] = useState(DEMO_DATA.assignmentStats);
+  const [classStats, setClassStats] = useState([]);
+  const [studentStats, setStudentStats] = useState([]);
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [assignmentStats, setAssignmentStats] = useState(null);
 
-  // Filters - initialize with demo data
-  const [selectedClass, setSelectedClass] = useState('demo-class-1');
-  const [selectedSubject, setSelectedSubject] = useState('demo-subject-1');
-  const [availableClasses, setAvailableClasses] = useState([
-    { id: 'demo-class-1', name: '9-A sinf', grade: 9, section: 'A' }
-  ]);
-  const [availableSubjects, setAvailableSubjects] = useState(DEMO_DATA.classStats[0].subjects);
+  // Bitta o'quvchining batafsil ko'rsatkichlari (drill-down modal)
+  const [studentDetail, setStudentDetail] = useState(null);
+
+  const openStudentDetail = async (studentMongoId) => {
+    setStudentDetail({ _loading: true });
+    try {
+      const data = await apiService.getStudentDetailStats(studentMongoId);
+      setStudentDetail(data);
+    } catch (e) {
+      setStudentDetail({ _error: true });
+    }
+  };
+
+  // Filters
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [availableClasses, setAvailableClasses] = useState([]);
+  const [availableSubjects, setAvailableSubjects] = useState([]);
 
   // Ref to track if component is mounted (prevent memory leak)
   const isMountedRef = useRef(true);
-  // Ref to cancel ongoing requests
-  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    // Load real data in background, but don't block UI
     fetchClassStats();
-    const currentAbortController = abortControllerRef.current;
-
-    // Cleanup function to prevent memory leaks
     return () => {
       isMountedRef.current = false;
-      if (currentAbortController) {
-        currentAbortController.abort();
-      }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    // Only fetch detailed stats if not in demo mode and filters are selected
-    if (!isDemo && selectedClass && selectedSubject) {
+    if (selectedClass && selectedSubject) {
       fetchDetailedStats();
     }
-    const currentAbortController = abortControllerRef.current;
-
-    // Cleanup on dependency change
-    return () => {
-      if (currentAbortController) {
-        currentAbortController.abort();
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClass, selectedSubject, isDemo]);
+  }, [selectedClass, selectedSubject]);
 
   const fetchClassStats = async () => {
     try {
       setError(null);
+      setInitialLoading(true);
       const data = await apiService.getTeacherClassStats();
 
       if (!isMountedRef.current) return;
 
-      // If we got real data, replace demo data
       if (data && data.length > 0) {
-        setIsDemo(false);
         setClassStats(data);
 
-        // Extract available classes and subjects
         const classes = data.map(c => ({
           id: c.classId,
           name: c.className,
@@ -191,26 +69,24 @@ const TeacherReports = () => {
 
         // Auto-select first class and subject
         setSelectedClass(classes[0].id);
-        const firstClassSubjects = data[0].subjects;
+        const firstClassSubjects = data[0].subjects || [];
         if (firstClassSubjects.length > 0) {
           setSelectedSubject(firstClassSubjects[0].subjectId);
           setAvailableSubjects(firstClassSubjects);
         }
       }
-      // If no data, stay in demo mode (no error)
     } catch (error) {
       if (!isMountedRef.current) return;
-      // Keep demo data on error, just show a subtle info message
+      setError(error.response?.data?.message || "Hisobot ma'lumotlarini yuklashda xatolik yuz berdi");
+    } finally {
+      if (isMountedRef.current) {
+        setInitialLoading(false);
+      }
     }
   };
 
   const fetchDetailedStats = useCallback(async () => {
     if (!selectedClass || !selectedSubject) return;
-
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
 
     try {
       setDataLoading(true);
@@ -231,15 +107,12 @@ const TeacherReports = () => {
 
       if (!isMountedRef.current) return;
 
-      setStudentStats(students);
-      setAttendanceStats(attendance);
-      setAssignmentStats(assignments);
-      setIsDemo(false);
+      setStudentStats(students || []);
+      setAttendanceStats(attendance || null);
+      setAssignmentStats(assignments || null);
     } catch (error) {
       if (!isMountedRef.current) return;
-      if (error.name !== 'AbortError') {
-        // Keep demo data on error
-      }
+      setError(error.response?.data?.message || "Statistikani yuklashda xatolik yuz berdi");
     } finally {
       if (isMountedRef.current) {
         setDataLoading(false);
@@ -276,10 +149,54 @@ const TeacherReports = () => {
     return ((numerator / denominator) * 100).toFixed(1);
   };
 
-  // Remove the blocking loading screen - show demo data immediately
-
   const selectedClassData = classStats.find(c => c.classId === selectedClass);
   const selectedSubjectData = selectedClassData?.subjects.find(s => s.subjectId === selectedSubject);
+
+  // Birinchi yuklanish — real ma'lumot kelguncha spinner
+  if (initialLoading) {
+    return (
+      <div className="teacher-reports">
+        <div className="page-header">
+          <h1 className="page-title">📊 Hisobotlar</h1>
+          <p className="page-subtitle">Sinf va o'quvchilar bo'yicha batafsil statistika</p>
+        </div>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <span>Ma'lumotlar yuklanmoqda...</span>
+        </div>
+        <style>{styles}</style>
+      </div>
+    );
+  }
+
+  // Sinf biriktirilmagan yoki ma'lumot yo'q
+  if (classStats.length === 0) {
+    return (
+      <div className="teacher-reports">
+        <div className="page-header">
+          <h1 className="page-title">📊 Hisobotlar</h1>
+          <p className="page-subtitle">Sinf va o'quvchilar bo'yicha batafsil statistika</p>
+        </div>
+        {error && (
+          <div className="error-banner">
+            <span className="error-icon-small">⚠️</span>
+            <span>{error}</span>
+            <button onClick={fetchClassStats} className="retry-btn-small">
+              Qayta urinish
+            </button>
+          </div>
+        )}
+        <div className="empty-state">
+          <h3>Hozircha hisobot ma'lumotlari yo'q</h3>
+          <p>
+            Sizga sinf va fan biriktirilgach hamda jurnalga baho/davomat kiritilgach,
+            bu yerda real statistika ko'rinadi.
+          </p>
+        </div>
+        <style>{styles}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="teacher-reports">
@@ -287,17 +204,6 @@ const TeacherReports = () => {
         <h1 className="page-title">📊 Hisobotlar</h1>
         <p className="page-subtitle">Sinf va o'quvchilar bo'yicha batafsil statistika</p>
       </div>
-
-      {/* Demo Mode Indicator */}
-      {isDemo && (
-        <div className="demo-banner">
-          <span className="demo-icon">ℹ️</span>
-          <div className="demo-content">
-            <strong>Demo rejim</strong>
-            <span>Namoyish uchun demo ma'lumotlar ko'rsatilmoqda</span>
-          </div>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="filters-section">
@@ -412,9 +318,9 @@ const TeacherReports = () => {
                   </div>
                   <div className="stat-content">
                     <div className="stat-value" style={{color: getGradeColor(selectedSubjectData.average)}}>
-                      {selectedSubjectData.average || 0}
+                      {selectedSubjectData.average || 0}%
                     </div>
-                    <div className="stat-label">O'rtacha ball</div>
+                    <div className="stat-label">O'rtacha o'zlashtirish</div>
                     <div className="stat-meta">{selectedSubjectData.totalGrades || 0} ta baho</div>
                   </div>
                 </div>
@@ -450,7 +356,7 @@ const TeacherReports = () => {
                   <div className="stat-content">
                     <div className="stat-value">{selectedSubjectData.excellentCount || 0}</div>
                     <div className="stat-label">A'lo baholar</div>
-                    <div className="stat-meta">85+ ball</div>
+                    <div className="stat-meta">85%+ o'zlashtirish</div>
                   </div>
                 </div>
               </div>
@@ -536,11 +442,12 @@ const TeacherReports = () => {
                     <tr>
                       <th scope="col">№</th>
                       <th scope="col">O'quvchi</th>
-                      <th scope="col">O'rtacha ball</th>
+                      <th scope="col">O'rtacha %</th>
                       <th scope="col">Baholar soni</th>
                       <th scope="col">Davomat</th>
                       <th scope="col">Vazifalar</th>
                       <th scope="col">Status</th>
+                      <th scope="col">Batafsil</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -563,7 +470,7 @@ const TeacherReports = () => {
                             className="grade-badge"
                             style={{background: getGradeColor(student.average || 0)}}
                           >
-                            {student.average || 0}
+                            {student.average || 0}%
                           </span>
                         </td>
                         <td>{student.totalGrades || 0}</td>
@@ -585,6 +492,15 @@ const TeacherReports = () => {
                           <span className={`status-badge status-${(student.average || 0) >= 85 ? 'excellent' : (student.average || 0) >= 70 ? 'good' : (student.average || 0) >= 60 ? 'average' : 'poor'}`}>
                             {(student.average || 0) >= 85 ? 'A\'lo' : (student.average || 0) >= 70 ? 'Yaxshi' : (student.average || 0) >= 60 ? 'Qoniqarli' : 'Qoniqarsiz'}
                           </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => openStudentDetail(student.studentId)}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', padding: '0.4rem 0.7rem', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            📊 Batafsil
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -805,6 +721,90 @@ const TeacherReports = () => {
           </div>
         )}
       </div>
+
+      {studentDetail && (
+        <div
+          onClick={() => setStudentDetail(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '18px', maxWidth: '560px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: '1.5rem', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
+          >
+            {studentDetail._loading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Yuklanmoqda...</div>
+            ) : studentDetail._error ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#ef4444' }}>
+                Ma'lumotlarni yuklab bo'lmadi
+                <div>
+                  <button type="button" onClick={() => setStudentDetail(null)} style={{ marginTop: '1rem', border: 'none', background: '#f1f5f9', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>Yopish</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>
+                      {studentDetail.student?.firstName} {studentDetail.student?.lastName}
+                    </h2>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>ID: {studentDetail.student?.studentId || '—'}</div>
+                  </div>
+                  <button type="button" onClick={() => setStudentDetail(null)} aria-label="Yopish" style={{ border: 'none', background: '#f1f5f9', width: 34, height: 34, borderRadius: '50%', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                  {[
+                    { label: "O'qish", value: studentDetail.academicPercent, icon: '📚' },
+                    { label: 'Davomat', value: studentDetail.attendancePercent, icon: '✅' },
+                    { label: 'Umumiy', value: studentDetail.overallPercent, icon: '⭐' }
+                  ].map((m) => (
+                    <div key={m.label} style={{ background: '#f8fafc', borderRadius: '12px', padding: '0.9rem', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.3rem' }}>{m.icon}</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: getGradeColor(m.value) }}>{m.value}%</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.6rem' }}>Oylik o'rtacha foiz trendi</div>
+                  {studentDetail.trend?.labels?.length ? (
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '130px', padding: '0.5rem', background: '#f8fafc', borderRadius: '12px' }}>
+                      {studentDetail.trend.labels.map((lbl, i) => {
+                        const v = studentDetail.trend.averages[i] || 0;
+                        return (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: getGradeColor(v) }}>{v}%</div>
+                            <div style={{ width: '100%', maxWidth: '34px', height: `${Math.max(4, v)}%`, background: getGradeColor(v), borderRadius: '6px 6px 0 0' }} />
+                            <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '0.3rem' }}>{lbl}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', padding: '1rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px' }}>Trend uchun ma'lumot yo'q</div>
+                  )}
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.6rem' }}>Fan bo'yicha o'zlashtirish</div>
+                  {studentDetail.subjects?.length ? studentDetail.subjects.map((s) => (
+                    <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                      <div style={{ width: '34%', fontSize: '0.82rem', color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                      <div style={{ flex: 1, height: '10px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
+                        <div style={{ width: `${s.percent}%`, height: '100%', background: getGradeColor(s.percent) }} />
+                      </div>
+                      <div style={{ width: '42px', textAlign: 'right', fontSize: '0.82rem', fontWeight: 700, color: getGradeColor(s.percent) }}>{s.percent}%</div>
+                    </div>
+                  )) : (
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Baholar yo'q</div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <style>{styles}</style>
     </div>
@@ -1509,11 +1509,6 @@ const styles = `
   .empty-state {
     text-align: center;
     padding: 4rem 2rem;
-  }
-
-  .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
   }
 
   .empty-state h3 {

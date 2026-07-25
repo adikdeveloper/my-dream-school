@@ -1,27 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import apiService from '../../services/apiService';
 import styles from './TeacherSalary.module.css';
 
 const TeacherSalary = () => {
   useAuth();
-  const { setLoading, setError } = useData();
   const [salaryData, setSalaryData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
   const loadSalaryData = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await apiService.getTeacherMonthlySalary(selectedYear, selectedMonth);
       setSalaryData(data);
     } catch (error) {
       setError(error.response?.data?.message || 'Maosh ma\'lumotlarini yuklashda xatolik');
+      setSalaryData(null);
     } finally {
       setLoading(false);
     }
-  }, [selectedYear, selectedMonth, setLoading, setError]);
+  }, [selectedYear, selectedMonth]);
 
   useEffect(() => {
     loadSalaryData();
@@ -39,10 +41,11 @@ const TeacherSalary = () => {
     });
   };
 
+  // Kalendar oy nomi (selectedMonth = 1..12, Yanvar=1)
   const getMonthName = (month) => {
     const months = [
-      'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr',
-      'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun'
+      'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
+      'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'
     ];
     return months[month - 1] || 'Noma\'lum';
   };
@@ -97,31 +100,47 @@ const TeacherSalary = () => {
     setSelectedYear(newYear);
   };
 
-  if (!salaryData) {
+  const header = (
+    <div className={styles.salaryHeader}>
+      <h1 className={styles.pageTitle}>💰 Maosh ma'lumotlari</h1>
+      <div className={styles.monthSelector}>
+        <button className={styles.monthNavBtn} onClick={() => handleMonthChange(-1)} aria-label="Oldingi oy">
+          ←
+        </button>
+        <div className={styles.currentMonth}>
+          {getMonthName(selectedMonth)} {selectedYear}
+        </div>
+        <button className={styles.monthNavBtn} onClick={() => handleMonthChange(1)} aria-label="Keyingi oy">
+          →
+        </button>
+      </div>
+    </div>
+  );
+
+  if (loading) {
     return (
       <div className={styles.teacherSalary}>
+        {header}
         <div className={styles.loadingMessage}>Maosh ma'lumotlari yuklanmoqda...</div>
+      </div>
+    );
+  }
+
+  if (error || !salaryData) {
+    return (
+      <div className={styles.teacherSalary}>
+        {header}
+        <div className={styles.errorBox}>
+          <span>⚠️ {error || "Maosh ma'lumotlari topilmadi"}</span>
+          <button className={styles.retryBtn} onClick={loadSalaryData}>Qayta urinish</button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className={`${styles.teacherSalary} ${styles.fadeIn}`}>
-      {/* Header with Month Selector */}
-      <div className={styles.salaryHeader}>
-        <h1 className={styles.pageTitle}>Maosh ma'lumotlari</h1>
-        <div className={styles.monthSelector}>
-          <button className={styles.monthNavBtn} onClick={() => handleMonthChange(-1)}>
-            ←
-          </button>
-          <div className={styles.currentMonth}>
-            {getMonthName(selectedMonth)} {selectedYear}
-          </div>
-          <button className={styles.monthNavBtn} onClick={() => handleMonthChange(1)}>
-            →
-          </button>
-        </div>
-      </div>
+      {header}
 
       {/* Main Salary Card */}
       <div className={styles.salarySummaryCard}>
@@ -144,6 +163,18 @@ const TeacherSalary = () => {
             <span className={styles.breakdownLabel}>Bonuslar</span>
             <span className={styles.breakdownValue}>+{formatCurrency(salaryData.totalBonuses || 0)}</span>
           </div>
+          <div className={styles.breakdownItem}>
+            <span className={styles.breakdownLabel}>Soliqdan oldin</span>
+            <span className={styles.breakdownValue}>
+              {formatCurrency(salaryData.grossSalary != null ? salaryData.grossSalary : ((salaryData.totalEarned || 0) - (salaryData.totalDeductions || 0)))}
+            </span>
+          </div>
+          <div className={`${styles.breakdownItem} ${styles.negative}`}>
+            <span className={styles.breakdownLabel}>
+              Daromad solig'i (JShDS, {Math.round((salaryData.incomeTaxRate != null ? salaryData.incomeTaxRate : 0.12) * 100)}%)
+            </span>
+            <span className={styles.breakdownValue}>-{formatCurrency(salaryData.incomeTaxAmount || 0)}</span>
+          </div>
         </div>
       </div>
 
@@ -153,6 +184,16 @@ const TeacherSalary = () => {
         <div className={styles.infoText}>
           Maosh faqat <strong>baho qo'yilgan</strong> darslar uchun hisoblanadi.
           Baho qo'yilmagan darslarga to'lov hisoblanmaydi.
+        </div>
+      </div>
+
+      {/* Soliq tushuntirishi */}
+      <div className={styles.salaryInfoBanner}>
+        <div className={styles.infoIcon}>📋</div>
+        <div className={styles.infoText}>
+          <strong>Nega 12% olinadi?</strong> O'zbekiston qonunchiligiga ko'ra ish haqidan{' '}
+          <strong>jismoniy shaxslardan olinadigan daromad solig'i (JShDS)</strong> — yagona 12% stavkada ushlab qolinadi.
+          "Sof maosh" — bu soliq ushlangandan keyin qo'lingizga tegadigan summa.
         </div>
       </div>
 
@@ -217,12 +258,12 @@ const TeacherSalary = () => {
                     )}
                     {transaction.coveredForTeacher && (
                       <div className={styles.transactionNote}>
-                        O'rnini bosgan: {transaction.coveredForTeacher.firstName} {transaction.coveredForTeacher.lastName}
+                        Kimning o'rniga: {transaction.coveredForTeacher.firstName} {transaction.coveredForTeacher.lastName}
                       </div>
                     )}
                     {transaction.coveredByTeacher && (
                       <div className={styles.transactionNote}>
-                        O'rnini bosgan: {transaction.coveredByTeacher.firstName} {transaction.coveredByTeacher.lastName}
+                        O'rningizga o'tdi: {transaction.coveredByTeacher.firstName} {transaction.coveredByTeacher.lastName}
                       </div>
                     )}
                   </div>

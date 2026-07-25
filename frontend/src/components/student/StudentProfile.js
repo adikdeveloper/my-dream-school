@@ -32,7 +32,7 @@ const StudentProfile = () => {
       });
 
       if (user.profileImage) {
-        const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+        const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
         setImagePreview(`${baseUrl}${user.profileImage}?t=${Date.now()}`);
       }
     }
@@ -86,7 +86,7 @@ const StudentProfile = () => {
 
       // Update local preview first
       if (response.data.profileImage) {
-        const newImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${response.data.profileImage}?t=${Date.now()}`;
+        const newImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${response.data.profileImage}?t=${Date.now()}`;
         setImagePreview(newImageUrl);
       } else {
         setImagePreview(null);
@@ -125,6 +125,12 @@ const StudentProfile = () => {
       return;
     }
 
+    // Backend bilan bir xil qoida: kamida bitta raqam yoki maxsus belgi
+    if (!/[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passwordData.newPassword)) {
+      setError('Parol xavfsizligi uchun kamida bitta raqam yoki maxsus belgi kiriting');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -155,7 +161,7 @@ const StudentProfile = () => {
       });
 
       if (user.profileImage) {
-        const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+        const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
         setImagePreview(`${baseUrl}${user.profileImage}?t=${Date.now()}`);
       } else {
         setImagePreview(null);

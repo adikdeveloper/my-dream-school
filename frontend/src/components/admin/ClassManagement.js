@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
+import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 import ClassProfile from './ClassProfile';
 import ClassStatistics from './ClassStatistics';
@@ -439,6 +440,17 @@ const ClassManagement = () => {
 
   return (
     <div className="class-management">
+      <header className="classes-page-header">
+        <div>
+          <h1>Sinflar</h1>
+          <p>Sinflar, sinf rahbarlari, o'quvchilar tarkibi va o'quv jarayonini boshqaring.</p>
+        </div>
+        <Can perm="class.create">
+          <button className="classes-primary-action" onClick={handleAddClass}>
+            Yangi sinf
+          </button>
+        </Can>
+      </header>
       {/* Stats Cards */}
       <div className="stats-grid">
         <div className="stat-card stat-total">
@@ -532,10 +544,12 @@ const ClassManagement = () => {
             </div>
           </div>
 
-          <button className="btn-add-compact" onClick={handleAddClass}>
-            <span className="add-icon">➕</span>
-            <span className="add-text">Yangi sinf</span>
-          </button>
+          <Can perm="class.create">
+            <button className="btn-add-compact" onClick={handleAddClass}>
+              <span className="add-icon">➕</span>
+              <span className="add-text">Yangi sinf</span>
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -547,8 +561,8 @@ const ClassManagement = () => {
               <div key={cls._id} className={`class-card ${!cls.isActive ? 'class-inactive' : ''}`}>
                 <div className="class-header">
                   <div className="class-badge">
-                    <span className="grade-badge">{cls.grade}</span>
-                    <span className="section-badge">{cls.section}</span>
+                    {(cls.grade !== null && cls.grade !== undefined && cls.grade !== '') && <span className="grade-badge">{cls.grade}</span>}
+                    {cls.section && <span className="section-badge">{cls.section}</span>}
                     {cls.group && <span className="group-badge">{cls.group}</span>}
                   </div>
                   <div className={`status-indicator ${cls.isActive ? 'active' : 'inactive'}`}>
@@ -557,7 +571,12 @@ const ClassManagement = () => {
                 </div>
 
                 <div className="class-body">
-                  <h3 className="class-name">{cls.name}</h3>
+                  <div className="class-title-row">
+                    <h3 className="class-name">{cls.name}</h3>
+                    <span className={`class-status-badge ${cls.isActive ? 'active' : 'inactive'}`}>
+                      {cls.isActive ? 'Faol' : 'Nofaol'}
+                    </span>
+                  </div>
                   <p className="class-year">{cls.academicYear}</p>
 
                   <div className="class-info-grid">
@@ -623,20 +642,24 @@ const ClassManagement = () => {
                     <span>🔄</span>
                     <span>Ko'chirish</span>
                   </button>
-                  <button
-                    className="class-action-btn edit"
-                    onClick={() => handleEditClass(cls)}
-                  >
-                    <span>✏️</span>
-                    <span>Tahrirlash</span>
-                  </button>
-                  <button
-                    className="class-action-btn delete"
-                    onClick={() => handleDeleteClass(cls)}
-                  >
-                    <span>🗑️</span>
-                    <span>O'chirish</span>
-                  </button>
+                  <Can perm="class.edit">
+                    <button
+                      className="class-action-btn edit"
+                      onClick={() => handleEditClass(cls)}
+                    >
+                      <span>✏️</span>
+                      <span>Tahrirlash</span>
+                    </button>
+                  </Can>
+                  <Can perm="class.delete">
+                    <button
+                      className="class-action-btn delete"
+                      onClick={() => handleDeleteClass(cls)}
+                    >
+                      <span>🗑️</span>
+                      <span>O'chirish</span>
+                    </button>
+                  </Can>
                 </div>
               </div>
             ))}
@@ -696,8 +719,10 @@ const ClassManagement = () => {
             <div className="details-modal-header">
               <div className="header-left">
                 <div className="class-badge-large">
-                  <span className="grade-text">{classForDetails.grade}</span>
-                  <span className="section-text">{classForDetails.section}</span>
+                  {(classForDetails.grade !== null && classForDetails.grade !== undefined && classForDetails.grade !== '')
+                    ? <span className="grade-text">{classForDetails.grade}</span>
+                    : <span className="grade-text">S</span>}
+                  {classForDetails.section && <span className="section-text">{classForDetails.section}</span>}
                 </div>
                 <div className="class-title-info">
                   <h2 className="class-title-main">{classForDetails.name}</h2>
@@ -824,16 +849,18 @@ const ClassManagement = () => {
                 <span>✕</span>
                 <span>Yopish</span>
               </button>
-              <button
-                className="modal-btn-footer edit-btn-footer"
-                onClick={() => {
-                  setShowDetailsModal(false);
-                  handleEditClass(classForDetails);
-                }}
-              >
-                <span>✏️</span>
-                <span>Tahrirlash</span>
-              </button>
+              <Can perm="class.edit">
+                <button
+                  className="modal-btn-footer edit-btn-footer"
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    handleEditClass(classForDetails);
+                  }}
+                >
+                  <span>✏️</span>
+                  <span>Tahrirlash</span>
+                </button>
+              </Can>
             </div>
           </div>
         </div>
@@ -1243,7 +1270,9 @@ const ClassManagement = () => {
                           .filter(c => c._id !== selectedClass?._id && c.isActive)
                           .map(cls => (
                             <option key={cls._id} value={cls._id}>
-                              {cls.name} • {cls.grade}-sinf, {cls.section} bo'lim
+                              {cls.name}
+                              {(cls.grade !== null && cls.grade !== undefined && cls.grade !== '') && ` • ${cls.grade}-sinf`}
+                              {cls.section && `, ${cls.section} bo'lim`}
                               {cls.group && ` • ${cls.group}`}
                               {' '} ({cls.students?.length || 0} o'quvchi)
                             </option>
@@ -1348,7 +1377,8 @@ const ClassManagement = () => {
                   <div>
                     <h2 className="statistics-title">Sinf Statistikasi</h2>
                     <p className="statistics-subtitle">
-                      {classForStatistics.name} • {classForStatistics.grade}-sinf
+                      {classForStatistics.name}
+                      {(classForStatistics.grade !== null && classForStatistics.grade !== undefined && classForStatistics.grade !== '') && ` • ${classForStatistics.grade}-sinf`}
                     </p>
                   </div>
                 </div>
@@ -1392,7 +1422,8 @@ const ClassManagement = () => {
                   <div className="class-info-details">
                     <h3 className="class-info-name">{classToDelete.name}</h3>
                     <p className="class-info-meta">
-                      {classToDelete.grade}-sinf • {classToDelete.section} bo'lim • {classToDelete.academicYear}
+                      {(classToDelete.grade !== null && classToDelete.grade !== undefined && classToDelete.grade !== '') && `${classToDelete.grade}-sinf • `}
+                      {classToDelete.section} bo'lim • {classToDelete.academicYear}
                     </p>
                   </div>
                 </div>

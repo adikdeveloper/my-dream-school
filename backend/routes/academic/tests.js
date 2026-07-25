@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Test = require('../../models/academic/Test');
+const Grade = require('../../models/academic/Grade');
 const { auth, authorize } = require('../../middleware/auth');
 const { requirePermission } = require('../../middleware/permissions');
 
@@ -11,6 +12,34 @@ const sanitizeInput = (str) => {
     .replace(/[<>]/g, '')
     .trim();
 };
+
+// Oylik test natijasini "imtihon" bahosi sifatida Grade kolleksiyasiga yozamiz.
+// Shu tariqa test natijasi o'quvchining umumiy o'zlashtirish foiziga, oylik trendga
+// va o'qituvchi hisobotlariga avtomatik ta'sir qiladi. Bitta test+o'quvchi uchun
+// bitta baho (dublikatsiz) — qayta baholanса yangilanadi.
+async function syncTestGrade(test, studentId, score) {
+  try {
+    const cap = test.totalPoints || test.maxScore || 100;
+    let grade = await Grade.findOne({ test: test._id, student: studentId });
+    if (!grade) {
+      grade = new Grade({ test: test._id, student: studentId });
+    }
+    grade.subject = test.subject;
+    grade.teacher = test.teacher;
+    grade.class = test.class;
+    grade.type = 'exam';
+    grade.isExam = true;
+    grade.score = score;
+    grade.examMaxScore = cap;
+    grade.maxScore = cap;
+    grade.month = test.month;
+    grade.date = test.testDate || new Date(test.year, (test.month || 1) - 1, 15);
+    grade.description = `Oylik test: ${test.title}`;
+    await grade.save();
+  } catch (e) {
+    // Baho sinxronizatsiyasi xato bo'lsa, test natijasi baribir saqlanib qoladi
+  }
+}
 
 // Get test results for a student
 router.get('/student', auth, authorize('student'), async (req, res) => {
@@ -258,11 +287,14 @@ router.post('/student/submit/:testId', auth, authorize('student'), async (req, r
 
     await test.save();
 
+    // Test natijasini imtihon bahosi sifatida sinxronlaymiz (umumiy o'zlashtirishga ta'sir qiladi)
+    await syncTestGrade(test, req.user.id, totalScore);
+
     res.json({
       message: 'Test muvaffaqiyatli topshirildi',
       score: totalScore,
       totalPoints: test.totalPoints,
-      percentage: Math.round((totalScore / test.totalPoints) * 100)
+      percentage: test.totalPoints ? Math.round((totalScore / test.totalPoints) * 100) : 0
     });
   } catch (error) {
     res.status(500).json({ message: 'Testni topshirishda xatolik yuz berdi' });
@@ -571,6 +603,9 @@ router.post('/:testId/results', auth, authorize('teacher'), async (req, res) => 
 
     await test.save();
 
+    // Qo'lda qo'yilgan test bahosini ham umumiy statistikaga sinxronlaymiz
+    await syncTestGrade(test, studentId, score);
+
     const updatedTest = await Test.findById(testId)
       .populate('class', 'name')
       .populate('subject', 'name')
@@ -669,6 +704,8 @@ router.delete('/:id', auth, authorize('teacher'), requirePermission('test.delete
     }
 
     await Test.findByIdAndDelete(req.params.id);
+    // Shu testdan kelib chiqqan baholarni ham olib tashlaymiz (statistika to'g'ri qolishi uchun)
+    await Grade.deleteMany({ test: req.params.id });
 
     res.json({ message: 'Test o\'chirildi' });
   } catch (error) {

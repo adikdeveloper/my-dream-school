@@ -340,7 +340,7 @@ const AIAssistant = () => {
 
   const userProfileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
-    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
     const timestamp = user?._updated || Date.now();
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
   }, [user?.profileImage, user?._updated]);
@@ -841,7 +841,7 @@ const AIAssistant = () => {
       <div className="ai-header">
         <div className="ai-header-top">
           <h1 className="page-title">
-            <div style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div className="ai-title-avatar">
               <AIAvatar isEmbedded={true} scale={0.16} />
             </div>
             <span>AI Yordamchi</span>
@@ -957,8 +957,8 @@ const AIAssistant = () => {
           <div className="ai-chat-main">
             <div className="ai-messages">
               {messages.length === 0 && (
-                <div className="ai-welcome" style={{ paddingTop: '0' }}>
-                  <div className="ai-welcome-icon" style={{ minHeight: '120px' }}><AIAvatar isEmbedded={true} scale={0.5} /></div>
+                <div className="ai-welcome">
+                  <div className="ai-welcome-icon"><AIAvatar isEmbedded={true} scale={0.5} /></div>
                   <h2>Assalomu alaykum{adminName ? `, ${adminName}` : ''}!</h2>
                   <p>Men My Dream School tizimining AI yordamchisiman. Maktab ma'lumotlari asosida javob beraman va ruxsat berilgan amallarni bajaraman.</p>
                   <div className="ai-suggestions">

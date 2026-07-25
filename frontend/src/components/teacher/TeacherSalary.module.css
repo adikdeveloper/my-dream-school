@@ -1,15 +1,17 @@
-/* TeacherSalary Module CSS */
+/* ============================================
+   TEACHER SALARY - KOMPAKT DIZAYN
+   TeacherHome.module.css asosida yaratilgan
+   ============================================ */
 
-/* ==================== BASE STYLES ==================== */
+/* Base Container - Kompakt */
 .teacherSalary {
-    padding: 1.5rem;
+    padding: 1rem;
     max-width: 1400px;
     margin: 0 auto;
-    animation: fadeIn 0.4s ease;
 }
 
 .fadeIn {
-    animation: fadeIn 0.4s ease;
+    animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
@@ -26,9 +28,12 @@
 
 .loadingMessage {
     text-align: center;
-    padding: 2.5rem 1.5rem;
+    padding: 2rem 1rem;
     color: #64748b;
-    font-size: 1rem;
+    font-size: 0.8125rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -44,104 +49,129 @@
     }
 }
 
-/* ==================== HEADER SECTION ==================== */
+/* ==================== HEADER - Kompakt ==================== */
 .salaryHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
     flex-wrap: wrap;
-    gap: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e2e8f0;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .pageTitle {
-    font-size: 1.625rem;
-    font-weight: 800;
+    font-size: 1.125rem;
+    font-weight: 700;
     color: #1e293b;
     margin: 0;
-    letter-spacing: -0.025em;
-    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+}
+
+.errorBox {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 0.75rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.retryBtn {
+    padding: 0.4375rem 0.875rem;
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+}
+
+.retryBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4);
 }
 
 .monthSelector {
     display: flex;
     align-items: center;
-    gap: 0.875rem;
-    background: white;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
+    gap: 0.5rem;
+    background: #f8fafc;
+    padding: 0.25rem 0.375rem;
+    border-radius: 8px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .monthSelector:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #cbd5e1;
 }
 
 .monthNavBtn {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
     color: white;
     border: none;
-    border-radius: 10px;
-    width: 36px;
-    height: 36px;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1.25rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+    transition: all 0.2s ease;
 }
 
 .monthNavBtn:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    transform: scale(1.08);
+    background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+    transform: scale(1.05);
 }
 
 .monthNavBtn:active {
-    transform: scale(0.96);
+    transform: scale(0.95);
 }
 
 .currentMonth {
     font-weight: 700;
     color: #1e293b;
-    min-width: 150px;
+    min-width: 110px;
     text-align: center;
-    font-size: 0.9375rem;
-    letter-spacing: -0.01em;
+    font-size: 0.8125rem;
 }
 
-/* ==================== SALARY INFO BANNER ==================== */
+/* ==================== INFO BANNER - Kompakt ==================== */
 .salaryInfoBanner {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    padding: 0.875rem 1.25rem;
-    border-radius: 12px;
-    margin-bottom: 1.25rem;
-    border: 1px solid #f59e0b;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border: 1px solid #fcd34d;
 }
 
 .infoIcon {
-    font-size: 1.375rem;
+    font-size: 1rem;
     flex-shrink: 0;
 }
 
 .infoText {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: #92400e;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .infoText strong {
@@ -149,14 +179,14 @@
     font-weight: 700;
 }
 
-/* ==================== SALARY SUMMARY CARD ==================== */
+/* ==================== SUMMARY CARD - Kompakt ==================== */
 .salarySummaryCard {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
+    background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 55%, #0ea5e9 100%);
     color: white;
-    padding: 1.75rem 2rem;
-    margin-bottom: 1.5rem;
-    border-radius: 20px;
-    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
     position: relative;
     overflow: hidden;
 }
@@ -165,9 +195,9 @@
     content: '';
     position: absolute;
     top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
+    right: -10%;
+    width: 160px;
+    height: 160px;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
@@ -175,45 +205,32 @@
 
 .salaryAmountSection {
     text-align: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
     position: relative;
     z-index: 1;
 }
 
 .salaryLabel {
-    font-size: 0.875rem;
+    font-size: 0.6875rem;
     opacity: 0.9;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     font-weight: 600;
 }
 
 .salaryAmount {
-    font-size: 2.5rem;
-    font-weight: 900;
-    margin-bottom: 0.375rem;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.125rem;
     letter-spacing: -0.02em;
-    animation: scaleIn 0.5s ease;
-}
-
-@keyframes scaleIn {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
+    line-height: 1.2;
 }
 
 .salaryPeriod {
-    font-size: 0.9375rem;
+    font-size: 0.75rem;
     opacity: 0.85;
     font-weight: 500;
 }
@@ -221,247 +238,195 @@
 .salaryBreakdown {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 0.5rem;
     position: relative;
     z-index: 1;
 }
 
 .breakdownItem {
     background: rgba(255, 255, 255, 0.15);
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
+    padding: 0.5rem 0.625rem;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
-    backdrop-filter: blur(20px);
+    gap: 0.125rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .breakdownItem:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.22);
 }
 
 .positive {
     /* Daromad turi - holder class */
-    content: '';
 }
 
 .negative {
     /* Chegirma turi - holder class */
-    content: '';
 }
 
 .bonus {
     /* Bonus turi - holder class */
-    content: '';
 }
 
 .breakdownLabel {
-    font-size: 0.75rem;
+    font-size: 0.625rem;
     opacity: 0.9;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .breakdownValue {
-    font-size: 1.25rem;
-    font-weight: 800;
+    font-size: 0.875rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* ==================== STATISTICS GRID ==================== */
+/* ==================== STATS GRID - Kompakt ==================== */
 .salaryStatsGrid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .statCard {
     background: white;
-    padding: 1.25rem;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 0.625rem 0.75rem;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s ease;
-    border: 1px solid #e2e8f0;
-    position: relative;
+    gap: 0.625rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid #e2e8f0;
     overflow: hidden;
 }
 
-.statCard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-}
-
 .statCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.statCard:hover::before {
-    transform: scaleX(1);
+.graded {
+    border-left-color: #10b981;
 }
 
-.graded::before {
-    background: linear-gradient(90deg, #10b981, #059669);
+.missed {
+    border-left-color: #ef4444;
 }
 
-.graded:hover {
-    border-color: #10b981;
+.covered {
+    border-left-color: #f59e0b;
 }
 
-.missed::before {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-}
-
-.missed:hover {
-    border-color: #ef4444;
-}
-
-.covered::before {
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-}
-
-.covered:hover {
-    border-color: #f59e0b;
-}
-
-.payment::before {
-    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-}
-
-.payment:hover {
-    border-color: #8b5cf6;
+.payment {
+    border-left-color: #8b5cf6;
 }
 
 .statIcon {
-    font-size: 2rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    font-size: 1rem;
+    background: #f8fafc;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
 }
 
 .statContent {
-    text-align: center;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
 }
 
 .statValue {
-    font-size: 1.5rem;
-    font-weight: 800;
+    font-size: 1.125rem;
+    font-weight: 700;
     color: #1e293b;
-    margin-bottom: 0.25rem;
-    letter-spacing: -0.025em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .statLabel {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     color: #64748b;
-    font-weight: 600;
+    font-weight: 500;
+    line-height: 1.3;
 }
 
-/* ==================== TRANSACTIONS SECTION ==================== */
+/* ==================== TRANSACTIONS - Kompakt ==================== */
 .transactionsSection {
     background: white;
-    padding: 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid #f1f5f9;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .sectionTitle {
-    font-size: 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 700;
     color: #1e293b;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid #e2e8f0;
-    letter-spacing: -0.02em;
 }
 
 .transactionsList {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .transactionItem {
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
     background: #f8fafc;
-    border-radius: 12px;
-    border-left: 4px solid #e2e8f0;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.transactionItem::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    background: inherit;
-    transition: width 0.3s ease;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #e2e8f0;
+    transition: all 0.2s ease;
 }
 
 .transactionItem:hover {
     background: #f1f5f9;
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transform: translateX(3px);
 }
 
 .transactionPositive {
     border-left-color: #10b981;
 }
 
-.transactionPositive:hover {
-    background: linear-gradient(90deg, rgba(16, 185, 129, 0.04) 0%, #f1f5f9 100%);
-}
-
 .transactionNegative {
     border-left-color: #ef4444;
 }
 
-.transactionNegative:hover {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.04) 0%, #f1f5f9 100%);
-}
-
 .transactionIcon {
-    font-size: 1.5rem;
-    width: 44px;
-    height: 44px;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
     background: white;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
 }
 
 .transactionDetails {
@@ -470,46 +435,46 @@
 }
 
 .transactionTitle {
-    font-weight: 700;
+    font-weight: 600;
     color: #1e293b;
-    margin-bottom: 0.25rem;
-    font-size: 0.9375rem;
+    margin-bottom: 0.125rem;
+    font-size: 0.8125rem;
 }
 
 .transactionInfo {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     color: #64748b;
     line-height: 1.4;
 }
 
 .transactionDescription {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     color: #64748b;
-    margin-top: 0.5rem;
+    margin-top: 0.375rem;
     font-style: italic;
-    padding: 0.5rem;
+    padding: 0.375rem 0.5rem;
     background: white;
     border-radius: 6px;
     border-left: 2px solid #cbd5e1;
 }
 
 .transactionNote {
-    font-size: 0.75rem;
-    color: #3b82f6;
-    margin-top: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: #eff6ff;
-    border-radius: 8px;
+    font-size: 0.625rem;
+    color: #0284c7;
+    margin-top: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    background: #e0f2fe;
+    border-radius: 6px;
     font-weight: 600;
-    border: 1px solid #bfdbfe;
+    border: 1px solid #bae6fd;
 }
 
 .transactionAmount {
-    font-size: 1.125rem;
-    font-weight: 800;
+    font-size: 0.9375rem;
+    font-weight: 700;
     flex-shrink: 0;
     text-align: right;
-    letter-spacing: -0.02em;
+    white-space: nowrap;
 }
 
 .amountPositive {
@@ -522,614 +487,440 @@
 
 .noTransactions {
     text-align: center;
-    padding: 2.5rem 1.5rem;
+    padding: 2rem 1rem;
     color: #64748b;
-    font-size: 0.9375rem;
-    font-weight: 500;
+    font-size: 0.8125rem;
 }
 
-/* ==================== KATTA EKRAN / DESKTOP (1025px va undan yuqori) ==================== */
+/* ============================================
+   RESPONSIVE DESIGN - KOMPAKT
+   ============================================ */
+
+/* Katta ekran / Desktop (1025px va undan yuqori) */
 @media (min-width: 1025px) {
     .teacherSalary {
-        padding: 2rem;
-    }
-
-    .salaryHeader {
-        margin-bottom: 1.75rem;
-    }
-
-    .pageTitle {
-        font-size: 1.75rem;
-    }
-
-    .salaryInfoBanner {
-        padding: 1rem 1.5rem;
-    }
-
-    .infoIcon {
-        font-size: 1.5rem;
-    }
-
-    .infoText {
-        font-size: 0.9375rem;
-    }
-
-    .salarySummaryCard {
-        padding: 2rem 2.5rem;
+        padding: 1.5rem;
     }
 
     .salaryAmount {
-        font-size: 3rem;
+        font-size: 2rem;
     }
 
     .salaryBreakdown {
-        gap: 1.25rem;
-    }
-
-    .breakdownItem {
-        padding: 1.25rem 1.5rem;
+        gap: 0.625rem;
     }
 
     .breakdownValue {
-        font-size: 1.375rem;
+        font-size: 0.9375rem;
     }
 
     .salaryStatsGrid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 1.25rem;
-    }
-
-    .statCard {
-        padding: 1.5rem;
-    }
-
-    .statIcon {
-        width: 60px;
-        height: 60px;
-        font-size: 2.25rem;
+        gap: 0.625rem;
     }
 
     .statValue {
-        font-size: 1.75rem;
-    }
-
-    .statLabel {
-        font-size: 0.875rem;
-    }
-
-    .transactionsSection {
-        padding: 1.75rem;
-    }
-
-    .sectionTitle {
-        font-size: 1.375rem;
-    }
-
-    .transactionItem {
-        padding: 1.25rem 1.5rem;
-    }
-
-    .transactionIcon {
-        width: 48px;
-        height: 48px;
-        font-size: 1.625rem;
-    }
-
-    .transactionTitle {
-        font-size: 1rem;
-    }
-
-    .transactionAmount {
         font-size: 1.25rem;
     }
 }
 
-/* ==================== KICHIK DESKTOP / LAPTOP (769px - 1024px) ==================== */
+/* Kichik desktop / Laptop (769px - 1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
     .teacherSalary {
-        padding: 1.5rem 1.25rem;
+        padding: 1rem;
     }
 
-    .salaryInfoBanner {
-        padding: 0.875rem 1rem;
-        margin-bottom: 1.25rem;
-    }
-
-    .infoIcon {
-        font-size: 1.375rem;
-    }
-
-    .infoText {
-        font-size: 0.8125rem;
+    .salaryHeader {
+        padding: 0.75rem 1rem;
     }
 
     .pageTitle {
-        font-size: 1.5rem;
-    }
-
-    .salarySummaryCard {
-        padding: 1.5rem 1.75rem;
-        margin-bottom: 1.25rem;
+        font-size: 1rem;
     }
 
     .salaryAmount {
-        font-size: 2.5rem;
+        font-size: 1.625rem;
     }
 
     .salaryBreakdown {
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.875rem;
-    }
-
-    .breakdownItem {
-        padding: 0.875rem 1rem;
+        gap: 0.5rem;
     }
 
     .breakdownValue {
-        font-size: 1.125rem;
+        font-size: 0.8125rem;
     }
 
     .salaryStatsGrid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.875rem;
-        margin-bottom: 1.25rem;
-    }
-
-    .statCard {
-        padding: 1rem;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
     }
 
     .statIcon {
-        width: 48px;
-        height: 48px;
-        font-size: 1.75rem;
-    }
-
-    .statContent {
-        text-align: center;
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
     }
 
     .statValue {
-        font-size: 1.375rem;
+        font-size: 1.0625rem;
     }
 
     .statLabel {
-        font-size: 0.75rem;
-    }
-
-    .transactionsSection {
-        padding: 1.25rem;
-    }
-
-    .sectionTitle {
-        font-size: 1.125rem;
-    }
-
-    .transactionItem {
-        padding: 0.875rem 1rem;
-        gap: 0.875rem;
-    }
-
-    .transactionIcon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.375rem;
-    }
-
-    .transactionTitle {
-        font-size: 0.875rem;
-    }
-
-    .transactionInfo {
-        font-size: 0.75rem;
-    }
-
-    .transactionAmount {
-        font-size: 1rem;
+        font-size: 0.625rem;
     }
 }
 
-/* ==================== TABLET (481px - 768px) ==================== */
+/* Tablet (481px - 768px) */
 @media (min-width: 481px) and (max-width: 768px) {
     .teacherSalary {
-        padding: 1.5rem 1.25rem;
-    }
-
-    .salaryInfoBanner {
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.5rem;
-        gap: 0.875rem;
-    }
-
-    .infoIcon {
-        font-size: 1.625rem;
-    }
-
-    .infoText {
-        font-size: 0.875rem;
+        padding: 0.875rem;
     }
 
     .salaryHeader {
         flex-direction: column;
         align-items: stretch;
-        gap: 1.25rem;
-        margin-bottom: 1.75rem;
+        gap: 0.625rem;
+        padding: 0.75rem;
     }
 
     .pageTitle {
-        font-size: 1.75rem;
+        font-size: 1rem;
         text-align: center;
     }
 
     .monthSelector {
-        justify-content: center;
-        padding: 0.75rem 1rem;
-    }
-
-    .monthNavBtn {
-        width: 40px;
-        height: 40px;
-        font-size: 1.25rem;
+        justify-content: space-between;
     }
 
     .currentMonth {
-        font-size: 1rem;
-        min-width: 150px;
+        flex: 1;
+        font-size: 0.8125rem;
     }
 
     .salarySummaryCard {
-        padding: 2rem 1.5rem;
-        margin-bottom: 1.75rem;
-        border-radius: 20px;
-    }
-
-    .salaryAmountSection {
-        margin-bottom: 1.75rem;
-        padding-bottom: 1.75rem;
-    }
-
-    .salaryLabel {
-        font-size: 1rem;
+        padding: 0.875rem 1rem;
     }
 
     .salaryAmount {
-        font-size: 3rem;
+        font-size: 1.5rem;
+    }
+
+    .salaryBreakdown {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.375rem;
+    }
+
+    .breakdownItem {
+        padding: 0.5rem;
+    }
+
+    .breakdownLabel {
+        font-size: 0.5625rem;
+    }
+
+    .breakdownValue {
+        font-size: 0.75rem;
+    }
+
+    .salaryStatsGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.375rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .statCard {
+        padding: 0.5rem 0.625rem;
+    }
+
+    .statIcon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+
+    .statValue {
+        font-size: 1rem;
+    }
+
+    .statLabel {
+        font-size: 0.5625rem;
+    }
+
+    .transactionsSection {
+        padding: 0.75rem;
+    }
+
+    .sectionTitle {
+        font-size: 0.875rem;
+    }
+
+    .transactionItem {
+        padding: 0.5rem 0.625rem;
+        gap: 0.5rem;
+    }
+
+    .transactionIcon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+
+    .transactionTitle {
+        font-size: 0.75rem;
+    }
+
+    .transactionInfo {
+        font-size: 0.625rem;
+    }
+
+    .transactionAmount {
+        font-size: 0.875rem;
+    }
+}
+
+/* Mobil (max 480px) */
+@media (max-width: 480px) {
+    .teacherSalary {
+        padding: 0.5rem;
+    }
+
+    .salaryHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.625rem;
+        border-radius: 8px;
+        margin-bottom: 0.625rem;
+    }
+
+    .pageTitle {
+        font-size: 0.9375rem;
+        text-align: center;
+    }
+
+    .monthSelector {
+        justify-content: space-between;
+        padding: 0.25rem 0.375rem;
+    }
+
+    .monthNavBtn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8125rem;
+    }
+
+    .currentMonth {
+        font-size: 0.75rem;
+        min-width: auto;
+        flex: 1;
+    }
+
+    .salaryInfoBanner {
+        padding: 0.5rem 0.625rem;
+        margin-bottom: 0.625rem;
+        gap: 0.375rem;
+        border-radius: 8px;
+    }
+
+    .infoIcon {
+        font-size: 0.875rem;
+    }
+
+    .infoText {
+        font-size: 0.6875rem;
+    }
+
+    .salarySummaryCard {
+        padding: 0.75rem 0.875rem;
+        margin-bottom: 0.625rem;
+        border-radius: 8px;
+    }
+
+    .salaryAmountSection {
+        margin-bottom: 0.625rem;
+        padding-bottom: 0.625rem;
+    }
+
+    .salaryLabel {
+        font-size: 0.625rem;
+    }
+
+    .salaryAmount {
+        font-size: 1.375rem;
     }
 
     .salaryPeriod {
-        font-size: 1.0625rem;
+        font-size: 0.6875rem;
     }
 
     .salaryBreakdown {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 0.375rem;
     }
 
     .breakdownItem {
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
-        padding: 1.25rem;
+        padding: 0.5rem 0.625rem;
     }
 
     .breakdownLabel {
-        font-size: 0.9375rem;
+        font-size: 0.625rem;
     }
 
     .breakdownValue {
-        font-size: 1.5rem;
+        font-size: 0.8125rem;
     }
 
     .salaryStatsGrid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.25rem;
-        margin-bottom: 1.75rem;
+        gap: 0.375rem;
+        margin-bottom: 0.625rem;
     }
 
     .statCard {
-        padding: 1.5rem;
-        flex-direction: column;
-        text-align: center;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        border-radius: 8px;
     }
 
     .statIcon {
-        width: 60px;
-        height: 60px;
-        font-size: 2rem;
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+        border-radius: 6px;
     }
 
     .statValue {
-        font-size: 1.75rem;
+        font-size: 0.9375rem;
     }
 
     .statLabel {
-        font-size: 0.8125rem;
+        font-size: 0.5625rem;
     }
 
     .transactionsSection {
-        padding: 1.5rem;
-        border-radius: 16px;
+        padding: 0.625rem 0.75rem;
+        border-radius: 8px;
     }
 
     .sectionTitle {
-        font-size: 1.375rem;
-        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        margin-bottom: 0.625rem;
+    }
+
+    .transactionsList {
+        gap: 0.375rem;
     }
 
     .transactionItem {
         grid-template-columns: auto 1fr;
         grid-template-rows: auto auto;
-        gap: 0.875rem;
-        padding: 1.25rem;
+        gap: 0.5rem;
+        padding: 0.5rem 0.625rem;
+        border-radius: 8px;
+    }
+
+    .transactionItem:hover {
+        transform: none;
     }
 
     .transactionIcon {
-        width: 48px;
-        height: 48px;
-        font-size: 1.625rem;
-        grid-row: 1 / 2;
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+        border-radius: 6px;
     }
 
     .transactionDetails {
         grid-column: 2 / 3;
-        grid-row: 1 / 2;
     }
 
     .transactionTitle {
-        font-size: 1rem;
+        font-size: 0.75rem;
     }
 
     .transactionInfo {
-        font-size: 0.8125rem;
+        font-size: 0.625rem;
+    }
+
+    .transactionDescription {
+        font-size: 0.625rem;
+    }
+
+    .transactionNote {
+        font-size: 0.5625rem;
     }
 
     .transactionAmount {
         grid-column: 1 / 3;
-        grid-row: 2 / 3;
-        text-align: left;
-        font-size: 1.25rem;
-        padding-top: 0.75rem;
+        text-align: right;
+        font-size: 0.875rem;
+        padding-top: 0.375rem;
         border-top: 1px solid #e2e8f0;
     }
 
     .noTransactions {
-        padding: 2.5rem 1rem;
-        font-size: 1rem;
-    }
-}
-
-/* ==================== MOBIL (max 480px) ==================== */
-@media (max-width: 480px) {
-    .teacherSalary {
-        padding: 1rem 0.75rem;
-    }
-
-    .salaryInfoBanner {
-        padding: 0.875rem;
-        margin-bottom: 1.25rem;
-        gap: 0.625rem;
-        border-radius: 10px;
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .infoIcon {
-        font-size: 1.5rem;
-    }
-
-    .infoText {
-        font-size: 0.8125rem;
-        line-height: 1.5;
-    }
-
-    .salaryHeader {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.875rem;
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.875rem;
-    }
-
-    .pageTitle {
-        font-size: 1.375rem;
-        text-align: center;
-    }
-
-    .monthSelector {
-        justify-content: space-between;
-        padding: 0.625rem 0.75rem;
-        gap: 0.75rem;
-        border-radius: 12px;
-    }
-
-    .monthNavBtn {
-        width: 36px;
-        height: 36px;
-        font-size: 1.125rem;
-        border-radius: 10px;
-    }
-
-    .currentMonth {
-        font-size: 0.9375rem;
-        min-width: auto;
-        flex: 1;
-    }
-
-    .salarySummaryCard {
-        padding: 1.5rem 1rem;
-        margin-bottom: 1.25rem;
-        border-radius: 16px;
-    }
-
-    .salarySummaryCard::before {
-        width: 200px;
-        height: 200px;
-    }
-
-    .salaryAmountSection {
-        margin-bottom: 1.5rem;
-        padding-bottom: 1.5rem;
-    }
-
-    .salaryLabel {
-        font-size: 0.875rem;
-        margin-bottom: 0.375rem;
-    }
-
-    .salaryAmount {
-        font-size: 2rem;
-        margin-bottom: 0.375rem;
-    }
-
-    .salaryPeriod {
-        font-size: 0.9375rem;
-    }
-
-    .salaryBreakdown {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-
-    .breakdownItem {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        border-radius: 12px;
-    }
-
-    .breakdownLabel {
-        font-size: 0.8125rem;
-    }
-
-    .breakdownValue {
-        font-size: 1.125rem;
-    }
-
-    .salaryStatsGrid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        margin-bottom: 1.25rem;
-    }
-
-    .statCard {
-        padding: 1.25rem;
-        flex-direction: row;
-        align-items: center;
-        gap: 1rem;
-        text-align: left;
-        border-radius: 14px;
-    }
-
-    .statCard::before {
-        height: 3px;
-    }
-
-    .statIcon {
-        width: 52px;
-        height: 52px;
-        font-size: 1.625rem;
-        flex-shrink: 0;
-        border-radius: 12px;
-    }
-
-    .statContent {
-        text-align: left;
-        flex: 1;
-    }
-
-    .statValue {
-        font-size: 1.5rem;
-        margin-bottom: 0.125rem;
-    }
-
-    .statLabel {
+        padding: 1.5rem 0.75rem;
         font-size: 0.75rem;
-    }
-
-    .transactionsSection {
-        padding: 1.25rem 1rem;
-        border-radius: 14px;
-    }
-
-    .sectionTitle {
-        font-size: 1.25rem;
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.625rem;
-    }
-
-    .transactionsList {
-        gap: 0.875rem;
-    }
-
-    .transactionItem {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.875rem;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left-width: 4px;
-    }
-
-    .transactionItem:hover {
-        transform: translateX(0) translateY(-2px);
-    }
-
-    .transactionIcon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.375rem;
-        align-self: flex-start;
-        border-radius: 10px;
-    }
-
-    .transactionDetails {
-        width: 100%;
-    }
-
-    .transactionTitle {
-        font-size: 0.9375rem;
-        margin-bottom: 0.375rem;
-    }
-
-    .transactionInfo {
-        font-size: 0.8125rem;
-        line-height: 1.5;
-    }
-
-    .transactionDescription {
-        font-size: 0.8125rem;
-        padding: 0.5rem;
-        margin-top: 0.5rem;
-        border-radius: 6px;
-    }
-
-    .transactionNote {
-        font-size: 0.75rem;
-        padding: 0.5rem 0.75rem;
-        margin-top: 0.5rem;
-        border-radius: 8px;
-    }
-
-    .transactionAmount {
-        width: 100%;
-        text-align: right;
-        font-size: 1.25rem;
-        padding-top: 0.625rem;
-        border-top: 2px solid #e2e8f0;
-    }
-
-    .noTransactions {
-        padding: 2rem 1rem;
-        font-size: 0.9375rem;
     }
 
     .loadingMessage {
-        padding: 2.5rem 1rem;
-        font-size: 0.9375rem;
+        padding: 1.5rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: 8px;
+    }
+
+    .errorBox {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: 8px;
+    }
+}
+
+/* Juda kichik ekranlar (375px gacha) */
+@media (max-width: 375px) {
+    .teacherSalary {
+        padding: 0.375rem;
+    }
+
+    .salaryHeader {
+        padding: 0.5rem;
+    }
+
+    .pageTitle {
+        font-size: 0.8125rem;
+    }
+
+    .salaryAmount {
+        font-size: 1.25rem;
+    }
+
+    .salaryStatsGrid {
+        gap: 0.25rem;
+    }
+
+    .statCard {
+        padding: 0.375rem 0.5rem;
+    }
+
+    .statIcon {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+
+    .statValue {
+        font-size: 0.875rem;
+    }
+
+    .statLabel {
+        font-size: 0.5rem;
+    }
+
+    .breakdownValue {
+        font-size: 0.75rem;
     }
 }

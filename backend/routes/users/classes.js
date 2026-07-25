@@ -95,49 +95,99 @@ router.get('/available-students', auth, authorize('admin', 'accountant'), async 
 });
 
 // @route   GET /api/classes/teacher/students
-// @desc    Get all students for classes where teacher teaches OR is class teacher
+// @desc    Get all students for classes where teacher is curator/class teacher, teaches, or is directly assigned
 // @access  Private/Teacher
 router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => {
   try {
-    // Find classes where teacher is either class teacher OR teaches a subject
-    const classes = await Class.find({
-      $or: [
-        { classTeacher: req.user.id },
-        { 'subjects.teacher': req.user.id }
-      ],
-      isActive: true
-    })
-      .populate('students', 'firstName lastName studentId email phone profileImage')
-      .populate('subjects.subject', 'name code');
+    const teacher = await User.findById(req.user.id).select('classes').lean();
+    const directlyAssignedClassIds = (teacher?.classes || []).filter(Boolean);
+    const classFilters = [
+      { classTeacher: req.user.id },
+      { 'subjects.teacher': req.user.id }
+    ];
 
-    // Extract unique students and calculate their stats
-    const studentsMap = new Map();
-
-    for (const classData of classes) {
-      for (const student of classData.students) {
-        if (!studentsMap.has(student._id.toString())) {
-          studentsMap.set(student._id.toString(), {
-            _id: student._id,
-            firstName: student.firstName,
-            lastName: student.lastName,
-            studentId: student.studentId,
-            email: student.email,
-            phone: student.phone,
-            profileImage: student.profileImage,
-            className: classData.name,
-            classes: [classData.name]
-          });
-        } else {
-          const existing = studentsMap.get(student._id.toString());
-          if (!existing.classes.includes(classData.name)) {
-            existing.classes.push(classData.name);
-            existing.className = existing.classes.join(', ');
-          }
-        }
-      }
+    if (directlyAssignedClassIds.length > 0) {
+      classFilters.push({ _id: { $in: directlyAssignedClassIds } });
     }
 
-    const students = Array.from(studentsMap.values());
+    // Find classes where teacher is curator/class teacher, subject teacher, or directly assigned.
+    const classes = await Class.find({
+      $or: classFilters,
+      isActive: true
+    })
+      .select('name grade section students')
+      .populate('students', 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId')
+      .lean();
+
+    const classIds = classes.map(classData => classData._id);
+    const classMap = new Map(classes.map(classData => [classData._id.toString(), classData]));
+    const studentsByClassId = classIds.length > 0
+      ? await User.find({
+          role: 'student',
+          classId: { $in: classIds }
+        })
+          .select('firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId')
+          .lean()
+      : [];
+
+    // Extract unique students from both Class.students and User.classId.
+    // Some existing records can be synced in only one of those fields.
+    const studentsMap = new Map();
+
+    const getClassName = (classData) => {
+      if (classData.name) return classData.name;
+      return [classData.grade, classData.section]
+        .filter(value => value !== undefined && value !== null && value !== '')
+        .join('-');
+    };
+
+    const addStudent = (student, classData) => {
+      if (!student || !student._id || !classData) return;
+
+      const studentKey = student._id.toString();
+      const className = getClassName(classData);
+
+      if (!studentsMap.has(studentKey)) {
+        studentsMap.set(studentKey, {
+          _id: student._id,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          studentId: student.studentId,
+          email: student.email,
+          phone: student.phone,
+          profileImage: student.profileImage,
+          dateOfBirth: student.dateOfBirth,
+          address: student.address,
+          parentName: student.parentName,
+          parentPhone: student.parentPhone,
+          className,
+          classes: className ? [className] : []
+        });
+        return;
+      }
+
+      const existing = studentsMap.get(studentKey);
+      if (className && !existing.classes.includes(className)) {
+        existing.classes.push(className);
+        existing.className = existing.classes.join(', ');
+      }
+    };
+
+    for (const classData of classes) {
+      (classData.students || []).forEach(student => addStudent(student, classData));
+    }
+
+    studentsByClassId.forEach(student => {
+      const classData = student.classId ? classMap.get(student.classId.toString()) : null;
+      addStudent(student, classData);
+    });
+
+    const students = Array.from(studentsMap.values()).sort((a, b) => {
+      const classCompare = (a.className || '').localeCompare(b.className || '', 'uz');
+      if (classCompare !== 0) return classCompare;
+      return `${a.firstName || ''} ${a.lastName || ''}`.localeCompare(`${b.firstName || ''} ${b.lastName || ''}`, 'uz');
+    });
+
     res.json(students);
   } catch (error) {
     logger.error('Error fetching teacher students', {
@@ -146,6 +196,41 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
       teacherId: req.user?.id
     });
     res.status(500).json({ message: 'O\'quvchilarni yuklashda xatolik yuz berdi' });
+  }
+});
+
+// @route   GET /api/classes/teacher/my-classes
+// @desc    O'qituvchining o'zi kurator/rahbar, dars beradigan yoki bevosita biriktirilgan sinflari (id + nom)
+// @access  Private/Teacher
+router.get('/teacher/my-classes', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const teacher = await User.findById(req.user.id).select('classes').lean();
+    const directlyAssignedClassIds = (teacher?.classes || []).filter(Boolean);
+    const classFilters = [
+      { classTeacher: req.user.id },
+      { 'subjects.teacher': req.user.id }
+    ];
+
+    if (directlyAssignedClassIds.length > 0) {
+      classFilters.push({ _id: { $in: directlyAssignedClassIds } });
+    }
+
+    const classes = await Class.find({
+      $or: classFilters,
+      isActive: true
+    })
+      .select('name grade section')
+      .sort({ grade: 1, section: 1 })
+      .lean();
+
+    res.json(classes);
+  } catch (error) {
+    logger.error('Error fetching teacher classes', {
+      error: error.message,
+      stack: error.stack,
+      teacherId: req.user?.id
+    });
+    res.status(500).json({ message: 'Sinflarni yuklashda xatolik yuz berdi' });
   }
 });
 
@@ -242,9 +327,9 @@ router.get('/:id', auth, async (req, res) => {
 // @route   POST /api/classes
 // @desc    Create new class
 // @access  Private/Admin
-router.post('/', auth, authorize('admin', 'accountant'), requirePermission('class.create'), [
+router.post('/', auth, authorize('admin', 'accountant', 'supervisor'), requirePermission('class.create'), [
   body('name').notEmpty().trim().escape().withMessage('Sinf nomi bo\'sh bo\'lmasligi kerak'),
-  body('grade').isInt({ min: 0, max: 9 }).withMessage('Sinf darajasi 0-9 oralig\'ida bo\'lishi kerak'),
+  body('grade').optional({ checkFalsy: true }).isInt({ min: 0, max: 9 }).withMessage('Sinf darajasi 0-9 oralig\'ida bo\'lishi kerak'),
   body('section').notEmpty().trim().escape().withMessage('Bo\'lim bo\'sh bo\'lmasligi kerak'),
   body('group').optional().custom((value, { req }) => {
     if (!value || value === '') return true;
@@ -271,9 +356,15 @@ router.post('/', auth, authorize('admin', 'accountant'), requirePermission('clas
     // Convert string values to numbers
     const classData = {
       ...req.body,
-      grade: parseInt(req.body.grade),
       maxStudents: req.body.maxStudents ? parseInt(req.body.maxStudents) : 30
     };
+
+    // Sinf darajasi ixtiyoriy - faqat tanlangan bo'lsa raqamga aylantiramiz
+    if (req.body.grade !== undefined && req.body.grade !== null && req.body.grade !== '') {
+      classData.grade = parseInt(req.body.grade);
+    } else {
+      delete classData.grade;
+    }
 
     const newClass = new Class(classData);
     const savedClass = await newClass.save();
@@ -307,9 +398,9 @@ router.post('/', auth, authorize('admin', 'accountant'), requirePermission('clas
 // @route   PUT /api/classes/:id
 // @desc    Update class
 // @access  Private/Admin
-router.put('/:id', auth, authorize('admin', 'accountant'), requirePermission('class.edit'), [
+router.put('/:id', auth, authorize('admin', 'accountant', 'supervisor'), requirePermission('class.edit'), [
   body('name').optional().trim().escape().notEmpty().withMessage('Sinf nomi bo\'sh bo\'lmasligi kerak'),
-  body('grade').optional().isInt({ min: 0, max: 9 }).withMessage('Sinf darajasi 0-9 oralig\'ida bo\'lishi kerak'),
+  body('grade').optional({ checkFalsy: true }).isInt({ min: 0, max: 9 }).withMessage('Sinf darajasi 0-9 oralig\'ida bo\'lishi kerak'),
   body('section').optional().trim().escape().notEmpty().withMessage('Bo\'lim bo\'sh bo\'lmasligi kerak'),
   body('group').optional().custom((value, { req }) => {
     if (!value || value === '') return true;
@@ -497,4 +588,3 @@ router.delete('/:id', auth, authorize('admin', 'accountant'), requirePermission(
 });
 
 module.exports = router;
-

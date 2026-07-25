@@ -67,7 +67,7 @@ const getInitials = (firstName = '', lastName = '') => {
 };
 
 const RoomAvatar = ({ room, displayName, displayAvatar, size }) => {
-  const apiHost = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+  const apiHost = (process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api').replace(/\/api$/, '');
   const style = {};
   let initials = '?';
   if (room.type === 'private') {
@@ -232,7 +232,7 @@ const MessageBubble = ({ message, prevMessage, currentUserId, onReply, onEdit, o
   const isOwn = String(message.sender?._id) === String(currentUserId);
   const showSender = !isOwn && roomType !== 'private' && (!prevMessage || String(prevMessage.sender?._id) !== String(message.sender?._id));
   const sender = message.sender || {};
-  const apiHost = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+  const apiHost = (process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api').replace(/\/api$/, '');
   const menuRef = useRef(null);
   const isMenuOpen = activeMenuMsgId === message._id;
   const isSticker = message.messageType === 'sticker' && message.sticker;

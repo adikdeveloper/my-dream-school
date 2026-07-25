@@ -9,12 +9,8 @@ const FinancialSummary = require('../../models/financial/FinancialSummary');
 const BalanceTransaction = require('../../models/financial/BalanceTransaction');
 
 // Get all payments (Admin only)
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, requirePermission('payment.view_all'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
     const { studentId, month, paymentType, startDate, endDate } = req.query;
     const filter = {};
 
@@ -46,7 +42,7 @@ router.get('/my-payments', auth, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const payments = await Payment.find({ studentId: req.user._id })
+    const payments = await Payment.find({ studentId: req.user._id, isDeleted: { $ne: true } })
       .populate('receivedBy', 'firstName lastName')
       .sort({ paymentDate: -1 });
 
@@ -57,11 +53,8 @@ router.get('/my-payments', auth, async (req, res) => {
 });
 
 // OPTIMIZED: Get all debtors in a single query (Admin only)
-router.get('/all-debtors', auth, async (req, res) => {
+router.get('/all-debtors', auth, requirePermission('payment.view_all'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
     const startTime = Date.now();
 
     // Get all active students with monthlyFee > 0 and registrationDate
@@ -293,12 +286,8 @@ router.get('/unpaid-months/:studentId', auth, async (req, res) => {
 });
 
 // Get payment statistics
-router.get('/statistics', auth, async (req, res) => {
+router.get('/statistics', auth, requirePermission('payment.view_all'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
     const { startDate, endDate } = req.query;
     const matchStage = { status: 'completed' };
 

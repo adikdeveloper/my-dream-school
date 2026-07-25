@@ -33,6 +33,34 @@ const apiService = {
     return response.data;
   },
 
+  // O'quvchini boshqa sinf/guruhga ko'chirish (baholar va tarix saqlanadi)
+  transferStudent: async (studentId, newClassId) => {
+    const response = await api.post(`/users/${studentId}/transfer`, { newClassId });
+    return response.data;
+  },
+
+  // ===== COINS (uy vazifa coinlari) =====
+  getCoinLeaderboard: async (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') qs.append(k, v); });
+    const response = await api.get(`/coins/leaderboard?${qs}`);
+    return response.data;
+  },
+
+  getTeacherCoins: async (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') qs.append(k, v); });
+    const response = await api.get(`/coins/teacher?${qs}`);
+    return response.data;
+  },
+
+  getMyCoins: async (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') qs.append(k, v); });
+    const response = await api.get(`/coins/my?${qs}`);
+    return response.data;
+  },
+
   getStudentStats: async () => {
     const response = await api.get('/users/student/stats');
     return response.data;
@@ -141,6 +169,19 @@ const apiService = {
 
     const response = await api.get(`/grades?${params}`);
     return response.data; // Returns { grades: [], pagination: {} }
+  },
+
+  // Barcha sahifalardagi baholarni yig'ib beradi (to'liq tarix — sinf almashganda ham hammasi).
+  getAllGrades: async (filters = {}) => {
+    let page = 1;
+    let all = [];
+    let data;
+    do {
+      data = await apiService.getGradesPaginated({ ...filters, page, limit: 100 });
+      all = all.concat(data?.grades || []);
+      page += 1;
+    } while (data?.pagination && page <= data.pagination.totalPages && page <= 50);
+    return all;
   },
 
   createGrade: async (gradeData) => {
@@ -416,6 +457,12 @@ const apiService = {
     if (classId) params.append('classId', classId);
     if (subjectId) params.append('subjectId', subjectId);
     const response = await api.get(`/stats/teacher/students?${params}`);
+    return response.data;
+  },
+
+  // Bitta o'quvchining umumiy ko'rsatkichlari (akademik %, davomat %, umumiy %, oylik trend)
+  getStudentDetailStats: async (studentId) => {
+    const response = await api.get(`/stats/teacher/student/${studentId}`);
     return response.data;
   },
 
@@ -825,6 +872,57 @@ const apiService = {
     return response.data;
   },
 
+  // ─── Teacher AI (o'qituvchi AI yordamchi) ───
+  getTeacherAiScope: async () => {
+    const response = await api.get('/ai/teacher/scope');
+    return response.data;
+  },
+
+  sendTeacherAiMessage: async (sessionId, message) => {
+    const response = await api.post('/ai/teacher/chat', { sessionId, message });
+    return response.data;
+  },
+
+  getTeacherAiSessions: async () => {
+    const response = await api.get('/ai/teacher/sessions');
+    return response.data;
+  },
+
+  getTeacherAiChatHistory: async (sessionId) => {
+    const response = await api.get(`/ai/teacher/sessions/${sessionId}`);
+    return response.data;
+  },
+
+  deleteTeacherAiSession: async (sessionId) => {
+    const response = await api.delete(`/ai/teacher/sessions/${sessionId}`);
+    return response.data;
+  },
+
+  teacherAiAnalyzeGrades: async (params) => {
+    const response = await api.post('/ai/teacher/analyze-grades', params);
+    return response.data;
+  },
+
+  teacherAiGenerateSchedule: async (params) => {
+    const response = await api.post('/ai/teacher/generate-schedule', params);
+    return response.data;
+  },
+
+  teacherAiGenerateTest: async (params) => {
+    const response = await api.post('/ai/teacher/generate-test', params);
+    return response.data;
+  },
+
+  teacherAiGenerateLessonPlan: async (params) => {
+    const response = await api.post('/ai/teacher/generate-lesson-plan', params);
+    return response.data;
+  },
+
+  createTest: async (testData) => {
+    const response = await api.post('/tests', testData);
+    return response.data;
+  },
+
   getAiApiKeys: async () => {
     const response = await api.get('/ai/keys');
     return response.data;
@@ -1086,6 +1184,62 @@ const apiService = {
 
   deleteRoom: async (id) => {
     const response = await api.delete(`/inventory/rooms/${id}`);
+    return response.data;
+  },
+
+  // ===== Dars almashtirish (o'rnini bosish) =====
+  getSubstitutions: async (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.keys(params).forEach((k) => { if (params[k]) qs.append(k, params[k]); });
+    const response = await api.get(`/substitutions?${qs}`);
+    return response.data;
+  },
+
+  getMySubstitutions: async (year, month) => {
+    const qs = new URLSearchParams();
+    if (year) qs.append('year', year);
+    if (month) qs.append('month', month);
+    const response = await api.get(`/substitutions/mine?${qs}`);
+    return response.data;
+  },
+
+  getMySubstitutionAccess: async (classId) => {
+    const qs = classId ? `?classId=${classId}` : '';
+    const response = await api.get(`/substitutions/my-access${qs}`);
+    return response.data;
+  },
+
+  getSubstitutionOverlay: async (from, to, classId) => {
+    const qs = new URLSearchParams();
+    if (from) qs.append('from', from);
+    if (to) qs.append('to', to);
+    if (classId) qs.append('classId', classId);
+    const response = await api.get(`/substitutions/overlay?${qs}`);
+    return response.data;
+  },
+
+  getClassDayPeriods: async (classId, date) => {
+    const response = await api.get(`/substitutions/class-day?classId=${classId}&date=${date}`);
+    return response.data;
+  },
+
+  createSubstitution: async (data) => {
+    const response = await api.post('/substitutions', data);
+    return response.data;
+  },
+
+  confirmSubstitution: async (id) => {
+    const response = await api.put(`/substitutions/${id}/confirm`);
+    return response.data;
+  },
+
+  rejectSubstitution: async (id) => {
+    const response = await api.put(`/substitutions/${id}/reject`);
+    return response.data;
+  },
+
+  deleteSubstitution: async (id) => {
+    const response = await api.delete(`/substitutions/${id}`);
     return response.data;
   }
 };

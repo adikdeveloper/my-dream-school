@@ -14,6 +14,7 @@ import Reports from '../../components/admin/Reports';
 import Profile from '../../components/admin/Profile';
 import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
+import NotificationBell from '../../components/common/NotificationBell';
 import apiService from '../../services/apiService';
 
 const SupervisorDashboard = () => {
@@ -41,7 +42,7 @@ const SupervisorDashboard = () => {
 
     const profileImageUrl = useMemo(() => {
         if (!user?.profileImage) return null;
-        const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+        const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
         const timestamp = user._updated || 0;
         return `${baseUrl}${user.profileImage}?t=${timestamp}`;
     }, [user?.profileImage, user?._updated]);
@@ -174,6 +175,7 @@ const SupervisorDashboard = () => {
                         </div>
                     </div>
                     <div className="header-right">
+                        <NotificationBell accent="#10b981" viewAllLink="/supervisor/notifications" />
                         <div className="user-info">
                             <div
                                 className={`user-avatar ${profileImageUrl ? 'has-image' : ''}`}

@@ -7,7 +7,10 @@ import StudentManagement from '../../components/admin/StudentManagement';
 import Profile from '../../components/admin/Profile';
 import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
+import NotificationBell from '../../components/common/NotificationBell';
 import apiService from '../../services/apiService';
+
+const ORANGE = '#ea580c';
 
 // ====================== CALL CENTER BOSH SAHIFA ======================
 const CallCenterHome = () => {
@@ -137,6 +140,7 @@ const CallCenterDashboard = () => {
             </div>
           </div>
           <div className="header-right">
+            <NotificationBell accent={ORANGE} viewAllLink="/call-center/notifications" />
             <div className="user-info">
               <div className="user-avatar">
                 <span className="user-initials">{user?.firstName?.charAt(0) || 'C'}{user?.lastName?.charAt(0) || ''}</span>

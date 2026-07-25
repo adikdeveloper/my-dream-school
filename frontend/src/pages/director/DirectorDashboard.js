@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, NavLink, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/common/Logo';
 import AdminHome from '../../components/admin/AdminHome';
 import StudentManagement from '../../components/admin/StudentManagement';
+import CoinLeaderboard from '../../components/admin/CoinLeaderboard';
 import TeacherManagement from '../../components/admin/TeacherManagement';
 import ClassManagement from '../../components/admin/ClassManagement';
 import SubjectManagement from '../../components/admin/SubjectManagement';
@@ -19,15 +20,28 @@ import apiService from '../../services/apiService';
 import AIAssistant from '../../components/admin/AIAssistant';
 import AIAvatar from '../../components/admin/AIAvatar';
 import StaffPlaceholder from '../../components/admin/StaffPlaceholder';
+import StaffManagement from '../../components/admin/StaffManagement';
 import LeadsManagement from '../../components/admin/LeadsManagement';
 import AccountantManagement from '../../components/admin/AccountantManagement';
+import ReceptionManagement from '../../components/admin/ReceptionManagement';
 import ParentContacts from '../../components/admin/ParentContacts';
 import ChatPage from '../../components/chat/ChatPage';
 import DirectorNotifications from '../../components/admin/DirectorNotifications';
+import Substitutions from '../../components/common/Substitutions';
 import NotificationInbox from '../../components/common/NotificationInbox';
 import DirectorPermissions from '../../components/admin/DirectorPermissions';
 import InventoryManagement from '../../components/admin/InventoryManagement';
-import './DirectorTeachers.css';
+import NotificationBell from '../../components/common/NotificationBell';
+import './DirectorDashboard.css';
+import './DirectorProfile.css';
+import './DirectorStudents.css';
+import './DirectorClasses.css';
+
+// Xodimlar bo'limi: :type o'zgarganda komponent qayta yuklanishi uchun key beramiz
+const StaffRoute = () => {
+  const { type } = useParams();
+  return <StaffManagement key={type} />;
+};
 
 const AiMenuIcon = () => (
   <svg
@@ -63,6 +77,117 @@ const AiMenuIcon = () => (
     <path className="ai-menu-icon-mouth" d="M9 16.6h6" />
   </svg>
 );
+
+const DirectorIcon = ({ name = 'grid', size = 20 }) => {
+  const paths = {
+    grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
+    education: <><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></>,
+    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
+    finance: <><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h3" /></>,
+    report: <><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" /></>,
+    message: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
+    bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
+    substitution: <><path d="M7 7h11l-3-3M17 17H6l3 3" /><path d="M18 7l-3 3M6 17l3-3" /></>,
+    chatAdmin: <><path d="M18 14a4 4 0 0 1-4 4H7l-4 3V8a4 4 0 0 1 4-4h7a4 4 0 0 1 4 4Z" /><path d="M18 8h1a3 3 0 0 1 3 3v8l-3-2" /></>,
+    settings: <><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-4L10 6a8 8 0 0 0-1.7 1L6 6.1 4 9.5 6 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.4 3.1h4l.4-3.1a8 8 0 0 0 1.7-1l2.4 1 2-3.4L19 13a7 7 0 0 0 .1-1Z" /></>,
+    profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+    ai: <><rect x="4" y="7" width="16" height="13" rx="4" /><path d="M12 7V3M9 3h6M8 13h.01M16 13h.01M9 17h6" /></>,
+    refresh: <><path d="M20 6v5h-5" /><path d="M4 18v-5h5" /><path d="M18.5 9A7 7 0 0 0 6.2 6.2L4 9M5.5 15A7 7 0 0 0 17.8 17.8L20 15" /></>,
+    logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></>,
+    teacher: <><circle cx="9" cy="7" r="3" /><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 4h5v10h-5M18 8h3" /></>,
+    student: <><path d="m3 9 9-5 9 5-9 5-9-5Z" /><path d="M6 11v5c3 2 9 2 12 0v-5M21 9v6" /></>,
+    classes: <><path d="M4 21V5l8-3 8 3v16M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01" /></>,
+    subjects: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5Z" /><path d="M4 6.5v13M8 7h8M8 11h6" /></>,
+    grading: <><path d="M4 4h16v16H4zM8 9l2 2 5-5M8 15h8" /></>,
+    exams: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /><path d="m4 15-2 2 2 2" /></>,
+    attendance: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18M8 15l2 2 5-5" /></>,
+    schedule: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2M4 4l2 2M20 4l-2 2" /></>,
+    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
+    coins: <><circle cx="9" cy="12" r="6" /><path d="M9 9v6M7 10h3a1.5 1.5 0 0 1 0 3H8M15 7a5 5 0 1 1 0 10" /></>,
+    management: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="16" cy="12" r="2" /><circle cx="10" cy="18" r="2" /></>,
+    hr: <><circle cx="8" cy="8" r="3" /><path d="M2 20a6 6 0 0 1 12 0M17 8v6M14 11h6M17 17v4" /></>,
+    admin: <><path d="M12 3 4 6v5c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6Z" /><path d="m9 12 2 2 4-5" /></>,
+    accountant: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h2M14 11h2M8 15h2M14 15h2" /></>,
+    hrStaff: <><path d="M5 3h14v18H5zM9 3v4h6V3M8 11h8M8 15h5" /></>,
+    reception: <><path d="M3 18h18M5 18v-3a7 7 0 0 1 14 0v3M12 5V3M9 5h6M2 21h20" /></>,
+    callCenter: <><path d="M4 4h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 1-1 2-2 2C9 21 3 15 2 6c0-1 1-2 2-2Z" /></>,
+    permissions: <><circle cx="8" cy="15" r="4" /><path d="m11 12 9-9M15 8l2 2M18 5l2 2" /><path d="M5 15h6" /></>,
+    inventory: <><path d="m4 7 8-4 8 4-8 4-8-4Z" /><path d="M4 7v10l8 4 8-4V7M12 11v10" /></>,
+    branches: <><path d="M4 21V8h7v13M13 21V3h7v18M2 21h20M7 12h1M7 16h1M16 7h1M16 11h1M16 15h1" /></>,
+    applications: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /><path d="M3 8h6M6 5v6" /></>,
+    financeSection: <><path d="M3 10h18L12 3 3 10ZM5 10v8M9 10v8M15 10v8M19 10v8M3 21h18" /></>,
+    payments: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" /><circle cx="17" cy="15" r="1" /></>,
+    studentPayments: <><circle cx="7" cy="8" r="3" /><path d="M2 20a5 5 0 0 1 10 0M14 7h7v10h-7zM16 11h3M17.5 9.5v3" /></>,
+    salaries: <><path d="M4 5h16v14H4zM8 9h8M8 13h5" /><path d="M17 12v5M15 14.5h4" /></>,
+    transactions: <><path d="M4 7h14l-3-3M20 17H6l3 3M18 7l-3 3M6 17l3-3" /></>,
+    debtors: <><path d="M5 3h14v18l-3-2-4 2-4-2-3 2Z" /><path d="M9 8h6M9 12h4M16 15h.01" /></>,
+    financial: <><path d="M3 20h18M6 17V9M12 17V4M18 17v-6" /><path d="m4 7 6-4 5 3 5-3" /></>,
+    communication: <><path d="M4 4h12a4 4 0 0 1 4 4v7a4 4 0 0 1-4 4H9l-5 3Z" /><path d="M8 9h8M8 13h5" /></>,
+    leads: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /><path d="m19 5 3-3M18 6l4-4" /></>,
+    parents: <><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2 20a6 6 0 0 1 12 0M13 20a5 5 0 0 1 9 0" /></>,
+    broadcast: <><path d="m3 11 15-6v14L3 13ZM8 14l2 7h3l-1-8M18 9a4 4 0 0 1 0 6" /></>,
+    reminders: <><circle cx="12" cy="13" r="8" /><path d="M12 9v4l3 2M9 2h6M12 2v3" /></>
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.grid}
+    </svg>
+  );
+};
+
+const menuIconName = (item = {}) => {
+  if (item.iconKey) return item.iconKey;
+  const iconByPath = {
+    '/director': 'grid',
+    '/director/ai': 'ai',
+    '/director/teachers': 'teacher',
+    '/director/users': 'student',
+    '/director/classes': 'classes',
+    '/director/subjects': 'subjects',
+    '/director/education/grading': 'grading',
+    '/director/education/exams': 'exams',
+    '/director/attendance': 'attendance',
+    '/director/schedule': 'schedule',
+    '/director/journal': 'journal',
+    '/director/coins': 'coins',
+    '/director/substitutions': 'substitution',
+    '/director/staff/admin': 'admin',
+    '/director/staff/accountant': 'accountant',
+    '/director/staff/hr': 'hrStaff',
+    '/director/staff/reception': 'reception',
+    '/director/staff/call-center': 'callCenter',
+    '/director/management/chats': 'chatAdmin',
+    '/director/management/permissions': 'permissions',
+    '/director/inventory': 'inventory',
+    '/director/management/branches': 'branches',
+    '/director/management/applications': 'applications',
+    '/director/payments': 'studentPayments',
+    '/director/finance/salaries': 'salaries',
+    '/director/finance/other': 'transactions',
+    '/director/debtors': 'debtors',
+    '/director/financial': 'financial',
+    '/director/reports': 'report',
+    '/director/chat': 'message',
+    '/director/inbox': 'bell',
+    '/director/communication/leads': 'leads',
+    '/director/communication/parents': 'parents',
+    '/director/communication/notifications': 'broadcast',
+    '/director/communication/reminders': 'reminders',
+    '/director/profile': 'profile'
+  };
+  const iconBySection = {
+    education: 'education',
+    management: 'management',
+    hr: 'hr',
+    finance: 'financeSection',
+    payments: 'payments',
+    communication: 'communication'
+  };
+  if (iconByPath[item.path]) return iconByPath[item.path];
+  if (iconBySection[item.section]) return iconBySection[item.section];
+  return 'grid';
+};
 
 const DirectorDashboard = () => {
   const { user, logout } = useAuth();
@@ -190,7 +315,7 @@ const DirectorDashboard = () => {
   // Generate profile image URL with cache busting
   const profileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
-    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
     // Use _updated timestamp if available, otherwise use a stable default
     const timestamp = user._updated || 0;
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
@@ -204,10 +329,33 @@ const DirectorDashboard = () => {
 
   const isAdminHome = location.pathname === '/director' || location.pathname === '/director/';
 
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const isManagementRoute =
+      currentPath === '/director/substitutions' ||
+      currentPath === '/director/inventory' ||
+      currentPath.startsWith('/director/management/') ||
+      currentPath.startsWith('/director/staff/');
+    const isCommunicationRoute =
+      currentPath === '/director/chat' ||
+      currentPath === '/director/inbox' ||
+      currentPath.startsWith('/director/communication/');
+
+    if (isManagementRoute || isCommunicationRoute) {
+      setOpenSubMenus(prev => ({
+        ...prev,
+        management: isManagementRoute ? true : prev.management,
+        communication: isCommunicationRoute ? true : prev.communication,
+        hr: currentPath.startsWith('/director/staff/') ? true : prev.hr
+      }));
+    }
+  }, [location.pathname]);
+
   const menuItems = [
     {
       path: '/director',
       label: 'Bosh sahifa',
+      iconKey: 'grid',
       icon: '📊',
       end: true,
       badge: null,
@@ -217,20 +365,6 @@ const DirectorDashboard = () => {
       path: '/director/ai',
       label: 'AI Yordamchi',
       icon: <AiMenuIcon />,
-      badge: null,
-      section: null
-    },
-    {
-      path: '/director/chat',
-      label: 'Chat',
-      icon: '💬',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/director/inbox',
-      label: 'Bildirishnomalarim',
-      icon: '📥',
       badge: null,
       section: null
     },
@@ -286,6 +420,11 @@ const DirectorDashboard = () => {
           path: '/director/journal',
           label: 'Sinf jurnali',
           icon: '📖'
+        },
+        {
+          path: '/director/coins',
+          label: 'Coin reytingi',
+          icon: '🪙'
         }
       ]
     },
@@ -295,6 +434,11 @@ const DirectorDashboard = () => {
       section: 'management',
       isParent: true,
       children: [
+        {
+          path: '/director/substitutions',
+          label: 'Dars almashtirish',
+          iconKey: 'substitution'
+        },
         {
           label: 'HR / xodimlar',
           icon: '👥',
@@ -331,6 +475,7 @@ const DirectorDashboard = () => {
         {
           path: '/director/management/chats',
           label: 'Chatlar boshqaruvi',
+          iconKey: 'chatAdmin',
           icon: '💬'
         },
         {
@@ -407,6 +552,16 @@ const DirectorDashboard = () => {
       section: 'communication',
       isParent: true,
       children: [
+        {
+          path: '/director/chat',
+          label: 'Chat xabarlar',
+          iconKey: 'message'
+        },
+        {
+          path: '/director/inbox',
+          label: 'Bildirishnomalarim',
+          iconKey: 'bell'
+        },
         {
           path: '/director/communication/leads',
           label: 'Lidlar',
@@ -487,11 +642,12 @@ const DirectorDashboard = () => {
             </button>
             <Logo />
             <div className="page-info">
-              <h1 className="header-page-title">Direktor paneli</h1>
+              <div className="header-page-title">Direktor paneli</div>
               <p className="page-subtitle">Maktab boshqaruv tizimi</p>
             </div>
           </div>
           <div className="header-right">
+            <NotificationBell accent="#1e3a8a" viewAllLink="/director/inbox" />
             <div className="user-info">
               <div
                 className={`user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}
@@ -516,14 +672,14 @@ const DirectorDashboard = () => {
               aria-label="Sahifani yangilash"
               title="Sahifani yangilash (Hard Refresh)"
             >
-              <span className="refresh-icon">🔄</span>
+              <span className="refresh-icon"><DirectorIcon name="refresh" size={18} /></span>
             </button>
             <button
               onClick={handleLogout}
               className="logout-btn"
               aria-label="Tizimdan chiqish"
             >
-              <span className="logout-icon">🚪</span>
+              <span className="logout-icon"><DirectorIcon name="logout" size={18} /></span>
               <span className="logout-text">Chiqish</span>
             </button>
           </div>
@@ -535,7 +691,7 @@ const DirectorDashboard = () => {
         <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-brand">
-              <span className="brand-icon">👨‍💼</span>
+              <span className="brand-icon"><DirectorIcon name="profile" size={18} /></span>
               <span className="brand-text">Direktor</span>
             </div>
           </div>
@@ -549,7 +705,7 @@ const DirectorDashboard = () => {
                         className={`nav-link submenu-toggle ${openSubMenus[item.section] ? 'open' : ''}`}
                         onClick={() => toggleSubMenu(item.section)}
                       >
-                        <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                        <span className="nav-icon"><DirectorIcon name={menuIconName(item)} /></span>
                         <span className="nav-text">{item.label}</span>
                         <span className="submenu-arrow">▼</span>
                       </button>
@@ -562,7 +718,7 @@ const DirectorDashboard = () => {
                                   className={`submenu-link nested-toggle ${openSubMenus[child.section] ? 'open' : ''}`}
                                   onClick={() => toggleSubMenu(child.section)}
                                 >
-                                  <span className="nav-icon" aria-hidden="true">{child.icon}</span>
+                                  <span className="nav-icon"><DirectorIcon name={menuIconName(child)} size={18} /></span>
                                   <span className="nav-text">{child.label}</span>
                                   <span className="submenu-arrow">▼</span>
                                 </button>
@@ -576,7 +732,7 @@ const DirectorDashboard = () => {
                                         }
                                         onClick={() => handleMenuItemClick(nestedChild.section)}
                                       >
-                                        <span className="nav-icon" aria-hidden="true">{nestedChild.icon}</span>
+                                        <span className="nav-icon"><DirectorIcon name={menuIconName(nestedChild)} size={17} /></span>
                                         <span className="nav-text">{nestedChild.label}</span>
                                       </NavLink>
                                     </li>
@@ -591,7 +747,7 @@ const DirectorDashboard = () => {
                                 }
                                 onClick={() => handleMenuItemClick(child.section)}
                               >
-                                <span className="nav-icon" aria-hidden="true">{child.icon}</span>
+                                <span className="nav-icon"><DirectorIcon name={menuIconName(child)} size={18} /></span>
                                 <span className="nav-text">{child.label}</span>
                               </NavLink>
                             )}
@@ -609,13 +765,12 @@ const DirectorDashboard = () => {
                       onClick={() => handleMenuItemClick(item.section)}
                       aria-label={item.label}
                     >
-                      <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                      <span className="nav-icon"><DirectorIcon name={menuIconName(item)} /></span>
                       <span className="nav-text">
                         {item.label}
                       </span>
                       {item.badge > 0 && (
                         <span className="notification-badge" aria-label={`${item.badge} ta yangi bildirishnoma`}>
-                          <span className="notification-icon" aria-hidden="true">🔔</span>
                           {item.badge}
                         </span>
                       )}
@@ -635,9 +790,11 @@ const DirectorDashboard = () => {
           <Routes>
             <Route path="/" element={<AdminHome />} />
             <Route path="/users" element={<StudentManagement />} />
+            <Route path="/coins" element={<CoinLeaderboard />} />
             <Route path="/teachers" element={<TeacherManagement />} />
             <Route path="/staff/accountant" element={<AccountantManagement />} />
-            <Route path="/staff/:type" element={<StaffPlaceholder />} />
+            <Route path="/staff/reception" element={<ReceptionManagement />} />
+            <Route path="/staff/:type" element={<StaffRoute />} />
             <Route path="/education/:type" element={<StaffPlaceholder />} />
             <Route path="/finance/:type" element={<StaffPlaceholder />} />
             <Route path="/management/permissions" element={<DirectorPermissions />} />
@@ -659,7 +816,8 @@ const DirectorDashboard = () => {
             <Route path="/ai" element={<AIAssistant />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/inbox" element={<NotificationInbox />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/substitutions" element={<Substitutions accent="#1e3a8a" />} />
+            <Route path="/profile" element={<Profile designSystemVariant="director" />} />
             <Route path="*" element={<Navigate to="/director" replace />} />
           </Routes>
         </main>

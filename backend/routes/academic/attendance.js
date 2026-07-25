@@ -108,7 +108,7 @@ router.get('/class/:classId/monthly', auth, authorize('teacher', 'admin'), async
 // @route   POST /api/attendance/bulk
 // @desc    Create or update multiple attendance records
 // @access  Private/Teacher/Admin
-router.post('/bulk', auth, authorize('teacher', 'admin'), requirePermission('attendance.create'), async (req, res) => {
+router.post('/bulk', auth, authorize('teacher', 'admin', 'supervisor'), requirePermission('attendance.create'), async (req, res) => {
   try {
     const { records } = req.body;
 
@@ -202,7 +202,7 @@ router.post('/bulk', auth, authorize('teacher', 'admin'), requirePermission('att
 // @route   POST /api/attendance
 // @desc    Create or update attendance record (upsert)
 // @access  Private/Teacher
-router.post('/', auth, authorize('teacher', 'admin'), requirePermission('attendance.create'), [
+router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermission('attendance.create'), [
   body('student').isMongoId(),
   body('class').isMongoId(),
   body('subject').isMongoId(),

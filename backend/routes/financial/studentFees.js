@@ -4,6 +4,7 @@ const StudentFee = require('../../models/financial/StudentFee');
 const User = require('../../models/users/User');
 const Payment = require('../../models/financial/Payment');
 const { auth } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/permissions');
 
 // Get all student fees
 router.get('/', auth, async (req, res) => {
@@ -114,12 +115,8 @@ router.get('/payment-status/:studentId', auth, async (req, res) => {
 });
 
 // Create or update student fee
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requirePermission('fee.set_and_edit'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
     const { studentId, monthlyFee, discount, discountReason, notes } = req.body;
 
     // Validate student exists
@@ -159,12 +156,8 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Update student fee
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, requirePermission('fee.set_and_edit'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
     const fee = await StudentFee.findById(req.params.id);
     if (!fee) {
       return res.status(404).json({ message: 'Student fee not found' });
@@ -183,12 +176,8 @@ router.put('/:id', auth, async (req, res) => {
 });
 
 // Delete student fee
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requirePermission('fee.set_and_edit'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
     await StudentFee.findByIdAndDelete(req.params.id);
     res.json({ message: 'Student fee deleted successfully' });
   } catch (error) {

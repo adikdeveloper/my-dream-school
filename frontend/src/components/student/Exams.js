@@ -137,12 +137,11 @@ const Exams = () => {
   // Fullscreen functions
   const enterFullscreen = useCallback(() => {
     const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) {
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      elem.msRequestFullscreen();
+    try {
+      const p = elem.requestFullscreen?.() ?? elem.webkitRequestFullscreen?.() ?? elem.msRequestFullscreen?.();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } catch (e) {
+      /* fullscreen rad etildi — bu qoidabuzarlik emas */
     }
   }, []);
 
@@ -158,6 +157,7 @@ const Exams = () => {
         }
       }
     } catch (err) {
+      /* fullscreen'dan chiqishda xatolik — e'tibor bermaymiz */
     }
   }, []);
 
@@ -262,11 +262,14 @@ const Exams = () => {
       }
     };
 
-    // Detect DevTools opening (console)
+    // Detect DevTools opening (console).
+    // Test boshlangandagi oyna chetlarini "baseline" sifatida olamiz, shunda
+    // doimiy brauzer paneli/scrollbar noto'g'ri qoidabuzarlik chiqarmaydi.
+    const baseW = window.outerWidth - window.innerWidth;
+    const baseH = window.outerHeight - window.innerHeight;
     const detectDevTools = () => {
-      const threshold = 160;
-      if (window.outerWidth - window.innerWidth > threshold ||
-          window.outerHeight - window.innerHeight > threshold) {
+      if ((window.outerWidth - window.innerWidth) - baseW > 300 ||
+          (window.outerHeight - window.innerHeight) - baseH > 300) {
         handleViolation();
       }
     };
@@ -393,6 +396,10 @@ const Exams = () => {
       return;
     }
 
+    // Fullscreen'ni foydalanuvchi bosishi paytida (await'dan oldin) so'raymiz —
+    // aks holda brauzer "user gesture" yo'qligi sababli uni rad etadi.
+    enterFullscreen();
+
     try {
       setLoading(true);
       setError(null);
@@ -412,9 +419,6 @@ const Exams = () => {
       const durationSeconds = (testData.duration || 45) * 60;
       const calculatedTime = Math.min(remainingSeconds, durationSeconds);
       setTimeLeft(Math.max(0, calculatedTime));
-
-      // Enter fullscreen mode
-      enterFullscreen();
 
     } catch (err) {
       setError(err.response?.data?.message || 'Testni yuklashda xatolik');
@@ -479,6 +483,10 @@ const Exams = () => {
     if (!viewingResults) return;
 
     const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      setError('Brauzer yangi oynani bloklab qo\'ydi. Iltimos, popup\'larga ruxsat bering.');
+      return;
+    }
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -736,7 +744,7 @@ const Exams = () => {
             <h2>{takingTest.title}</h2>
             <span className="exam-subject">{takingTest.subject?.name}</span>
           </div>
-          <div className="exam-timer" style={{ color: timeLeft < 60 ? '#ef4444' : timeLeft < 300 ? '#f59e0b' : '#10b981' }}>
+          <div className="exam-timer" style={{ color: (timeLeft ?? 0) < 60 ? '#ef4444' : (timeLeft ?? 0) < 300 ? '#f59e0b' : '#10b981' }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
@@ -901,7 +909,7 @@ const Exams = () => {
           <div className="results-modal">
             <div className="results-modal-header">
               <h2>{viewingResults.title}</h2>
-              <button className="close-results-btn" onClick={handleCloseResults}>
+              <button type="button" className="close-results-btn" onClick={handleCloseResults} aria-label="Yopish">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -982,8 +990,8 @@ const Exams = () => {
 
       {/* Date Navigator */}
       <div className="date-navigator">
-        <button className="nav-arrow" onClick={handlePreviousMonth}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <button type="button" className="nav-arrow" onClick={handlePreviousMonth} aria-label="Oldingi oy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
@@ -992,8 +1000,10 @@ const Exams = () => {
           <span className="year-name">{selectedYear}</span>
         </div>
         <button
+          type="button"
           className="nav-arrow"
           onClick={handleNextMonth}
+          aria-label="Keyingi oy"
           disabled={selectedYear === new Date().getFullYear() && selectedMonth >= new Date().getMonth() + 1}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

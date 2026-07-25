@@ -20,6 +20,7 @@ const ParentContact = require('../../models/communication/ParentContact');
 const User = require('../../models/users/User');
 const Class = require('../../models/academic/Class');
 const { auth, authorize } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/permissions');
 
 const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -235,6 +236,7 @@ router.post(
   '/',
   auth,
   authorize('admin', 'accountant', 'teacher'),
+  requirePermission('parent_contact.manage'),
   [
     body('student').notEmpty().withMessage("O'quvchi tanlanishi shart"),
     body('reportMonth').matches(MONTH_REGEX).withMessage('reportMonth YYYY-MM formatida bo\'lishi kerak'),
@@ -290,7 +292,7 @@ router.post(
 );
 
 // ─── PUT /api/parent-contacts/:id ───────────────────────────────────────────
-router.put('/:id', auth, authorize('admin', 'accountant', 'teacher'), async (req, res) => {
+router.put('/:id', auth, authorize('admin', 'accountant', 'teacher'), requirePermission('parent_contact.manage'), async (req, res) => {
   try {
     const contact = await ParentContact.findById(req.params.id);
     if (!contact) return res.status(404).json({ message: 'Yozuv topilmadi' });

@@ -10,6 +10,8 @@ const ClassJournal = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
+  // Vaqtincha (almashtirish orqali) baho qo'yish mumkin bo'lgan sinf+fanlar
+  const [substitutionAccess, setSubstitutionAccess] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [students, setStudents] = useState([]);
@@ -63,14 +65,25 @@ const ClassJournal = () => {
   useEffect(() => {
     fetchClassesCallback();
     fetchHolidays();
+    fetchSubstitutionAccess();
   }, [fetchClassesCallback]);
+
+  // O'qituvchi almashtirish orqali qaysi sinf+fanlarga vaqtincha kira olishini yuklaymiz
+  const fetchSubstitutionAccess = async () => {
+    try {
+      const access = await apiService.getMySubstitutionAccess();
+      setSubstitutionAccess(Array.isArray(access) ? access : []);
+    } catch (e) {
+      setSubstitutionAccess([]);
+    }
+  };
 
   useEffect(() => {
     if (selectedClass) {
       fetchClassData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClass]);
+  }, [selectedClass, substitutionAccess]);
 
   useEffect(() => {
     if (selectedClass && selectedSubject) {
@@ -144,11 +157,30 @@ const ClassJournal = () => {
         const teacherId = subj.teacher?._id || subj.teacher;
         return teacherId === user?._id;
       });
-      setSubjects(teacherSubjects);
 
-      // Auto-select first subject if not already selected and subjects exist
-      if (teacherSubjects.length > 0) {
-        setSelectedSubject(teacherSubjects[0].subject?._id);
+      // Almashtirish orqali shu sinfga vaqtincha kira oladigan fanlarni qo'shamiz
+      // (masalan: ingliz tili o'qituvchisi matematika o'qituvchisi o'rniga o'tgan)
+      const subSubjects = substitutionAccess
+        .filter(a => String(a.classId) === String(selectedClass))
+        .reduce((acc, a) => {
+          const already = teacherSubjects.some(ts => String(ts.subject?._id || ts.subject) === String(a.subjectId))
+            || acc.some(x => String(x.subject._id) === String(a.subjectId));
+          if (!already && a.subjectId) {
+            acc.push({ subject: { _id: a.subjectId, name: a.subjectName }, teacher: { _id: user?._id }, isSubstitution: true });
+          }
+          return acc;
+        }, []);
+
+      const mergedSubjects = [...teacherSubjects, ...subSubjects];
+      setSubjects(mergedSubjects);
+
+      // Tanlangan fan hali ham mavjud bo'lsa saqlaymiz (almashtirish ro'yxati
+      // keyin yuklanib qayta ishga tushganda tanlovni bekorga ketkazmaslik uchun)
+      if (mergedSubjects.length > 0) {
+        setSelectedSubject(prev => {
+          const stillValid = prev && mergedSubjects.some(s => String(s.subject?._id) === String(prev));
+          return stillValid ? prev : (mergedSubjects[0].subject?._id || '');
+        });
       } else {
         setSelectedSubject('');
       }
@@ -677,7 +709,7 @@ const ClassJournal = () => {
             <option value="">Fan tanlang</option>
             {subjects.map((subj, idx) => (
               <option key={`${subj.subject?._id}-${idx}`} value={subj.subject?._id}>
-                {subj.subject?.name}
+                {subj.subject?.name}{subj.isSubstitution ? " (O'rinbosar)" : ''}
               </option>
             ))}
           </select>

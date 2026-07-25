@@ -11,6 +11,7 @@ import apiService from '../../services/apiService';
 import StaffPlaceholder from '../../components/admin/StaffPlaceholder';
 import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
+import NotificationBell from '../../components/common/NotificationBell';
 
 const AccountantDashboard = () => {
   const { user, logout } = useAuth();
@@ -53,7 +54,7 @@ const AccountantDashboard = () => {
 
   const profileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
-    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
     const timestamp = user._updated || 0;
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
   }, [user?.profileImage, user?._updated]);
@@ -103,6 +104,7 @@ const AccountantDashboard = () => {
             </div>
           </div>
           <div className="acc-header-right">
+            <NotificationBell accent="#d97706" viewAllLink="/accountant/notifications" />
             <div className="acc-user-info">
               <div
                 className={`acc-user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}

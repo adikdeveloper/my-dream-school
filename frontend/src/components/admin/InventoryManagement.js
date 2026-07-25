@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../context/DataContext';
+import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 
 // Xona turlari
@@ -282,9 +283,11 @@ const InventoryManagement = () => {
           <h2 className="inv-page-title"><span>🪑</span> Jihozlar va xonalar</h2>
           <p className="inv-page-sub">Maktabdagi barcha jihozlarning qavat va xona bo'yicha joylashuvi</p>
         </div>
-        <button className="inv-btn-add" onClick={openAdd}>
-          <span>➕</span> Yangi xona
-        </button>
+        <Can perm="inventory.manage">
+          <button className="inv-btn-add" onClick={openAdd}>
+            <span>➕</span> Yangi xona
+          </button>
+        </Can>
       </div>
 
       {/* Statistika */}
@@ -409,8 +412,12 @@ const InventoryManagement = () => {
                 {room.note ? <div className="inv-card-note">📝 {room.note}</div> : null}
 
                 <div className="inv-card-foot">
-                  <button className="inv-act inv-act-edit" onClick={() => openEdit(room)}>✏️ Tahrirlash</button>
-                  <button className="inv-act inv-act-del" onClick={() => { setRoomToDelete(room); setShowDeleteModal(true); }}>🗑️ O'chirish</button>
+                  <Can perm="inventory.manage">
+                    <button className="inv-act inv-act-edit" onClick={() => openEdit(room)}>✏️ Tahrirlash</button>
+                  </Can>
+                  <Can perm="inventory.manage">
+                    <button className="inv-act inv-act-del" onClick={() => { setRoomToDelete(room); setShowDeleteModal(true); }}>🗑️ O'chirish</button>
+                  </Can>
                 </div>
               </div>
             );

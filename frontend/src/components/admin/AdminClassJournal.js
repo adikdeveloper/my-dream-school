@@ -365,7 +365,10 @@ const AdminClassJournal = () => {
     const selectedClassData = classes.find(c => c._id === selectedClass);
     if (selectedClassData) {
       // URL ga sinf ID ni qo'shib yuborish
-      window.location.href = `/admin/schedule?classId=${selectedClass}&className=${selectedClassData.grade}-${selectedClassData.section}`;
+      const classLabel = (selectedClassData.grade !== null && selectedClassData.grade !== undefined && selectedClassData.grade !== '')
+        ? `${selectedClassData.grade}-${selectedClassData.section}`
+        : (selectedClassData.name || selectedClassData.section);
+      window.location.href = `/admin/schedule?classId=${selectedClass}&className=${classLabel}`;
     } else {
       window.location.href = '/admin/schedule';
     }
@@ -756,7 +759,7 @@ const AdminClassJournal = () => {
             <option value="" disabled>Sinfni tanlang</option>
             {classes.map(cls => (
               <option key={cls._id} value={cls._id}>
-                {cls.grade}-{cls.section}
+                {(cls.grade !== null && cls.grade !== undefined && cls.grade !== '') ? `${cls.grade}-${cls.section}` : (cls.name || cls.section)}
               </option>
             ))}
           </select>

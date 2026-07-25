@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiService from '../../services/apiService';
 import { useData } from '../../context/DataContext';
 import LoadingOverlay from '../common/LoadingOverlay';
+import { Can } from '../../context/PermissionsContext';
 
 const LeadsManagement = () => {
   const { setLoading, setError } = useData();
@@ -240,14 +241,18 @@ const LeadsManagement = () => {
             <h2 className="section-title" style={{margin:0}}>Mijozlar bilan ishlash (Lidlar)</h2>
           </div>
           <div className="filter-right" style={{display: 'flex', gap: '1rem'}}>
+            <Can perm="lead.manage">
             <button className="btn-integration" onClick={() => setIsIntegrationModalOpen(true)}>
               <span className="add-icon">🔗</span>
               <span className="add-text">Target Integratsiya</span>
             </button>
+            </Can>
+            <Can perm="lead.manage">
             <button className="btn-add-premium" onClick={() => handleOpenModal()}>
               <span className="add-icon">➕</span>
               <span className="add-text">Yangi Lid Qo'shish</span>
             </button>
+            </Can>
           </div>
         </div>
       </div>

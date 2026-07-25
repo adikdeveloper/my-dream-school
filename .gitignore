@@ -17,6 +17,9 @@ frontend/build/
 frontend/dist/
 .next/
 
+# Foydalanuvchi yuklagan fayllar (profil rasmlari, uy vazifa biriktirmalari)
+backend/uploads/
+
 # Logs
 *.log
 *.txt
@@ -32,12 +35,16 @@ Thumbs.db
 .idea/
 .claude/
 
+# Dev scratch papkasi (deploy uchun kerakmas)
+scratch/
+
 # One-time scripts (ortiqcha fayllar)
 clear_mahliyo.js
 clear_balance.js
 backend/add_zero_class.js
 backend/clean_schedules.js
 backend/clear_mahliyo.js
+backend/scripts/reset-database.js
 
 # Deploy config (VPS uchun, Render/Vercel da kerakmas)
 deploy/

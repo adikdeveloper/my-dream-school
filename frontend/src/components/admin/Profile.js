@@ -85,7 +85,7 @@ const ROLE_THEMES = {
 };
 const getTheme = (role) => ROLE_THEMES[role?.toLowerCase()] || ROLE_THEMES.admin;
 
-const Profile = () => {
+const Profile = ({ designSystemVariant = '' }) => {
   const { user, updateUser } = useAuth();
   const theme = getTheme(user?.role);
   const [isEditing, setIsEditing] = useState(false);
@@ -106,7 +106,7 @@ const Profile = () => {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(user?.profileImage ?
-    `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${user.profileImage}?t=${Date.now()}` : null
+    `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${user.profileImage}?t=${Date.now()}` : null
   );
   const [showImageModal, setShowImageModal] = useState(false);
   const [removeProfileImage, setRemoveProfileImage] = useState(false);
@@ -193,7 +193,7 @@ const Profile = () => {
 
       // Update local preview with cache busting
       if (response.data.profileImage) {
-        const newImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${response.data.profileImage}?t=${Date.now()}`;
+        const newImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${response.data.profileImage}?t=${Date.now()}`;
         setImagePreview(newImageUrl);
       } else {
         setImagePreview(null);
@@ -298,7 +298,7 @@ const Profile = () => {
     setRemoveProfileImage(false);
     // Reset image preview to original with cache busting
     if (user?.profileImage) {
-      setImagePreview(`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${user.profileImage}?t=${user._updated || Date.now()}`);
+      setImagePreview(`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${user.profileImage}?t=${user._updated || Date.now()}`);
     } else {
       setImagePreview(null);
     }
@@ -321,7 +321,7 @@ const Profile = () => {
   };
 
   return (
-    <div className={`profile-page profile-theme-${theme.name}`} style={themeVars}>
+    <div className={`profile-page profile-theme-${theme.name} ${designSystemVariant === 'director' ? 'director-profile-page' : ''}`} style={themeVars}>
       {/* Rol bo'yicha rang berilgan header */}
       <div className="profile-hero">
         <div>

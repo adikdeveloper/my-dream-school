@@ -27,6 +27,13 @@ const gradeSchema = new mongoose.Schema({
     required: false,
     index: true
   },
+  // Oylik test natijasidan kelib chiqqan baho bo'lsa, shu testga bog'lanadi (dublikat oldini olish)
+  test: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Test',
+    required: false,
+    index: true
+  },
   type: {
     type: String,
     enum: ['quiz', 'assignment', 'midterm', 'final', 'project', 'participation', 'daily', 'exam'],

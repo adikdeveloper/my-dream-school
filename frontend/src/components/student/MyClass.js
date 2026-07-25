@@ -4,9 +4,9 @@ import { sanitizeText, createSafeImageURL, debounce } from '../../utils/sanitiza
 import { usePermissions } from '../../context/PermissionsContext';
 import './MyClass.css';
 
-// Use consistent base URL configuration
-const BASE_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
-const API_URL = process.env.REACT_APP_API_URL || `${BASE_URL}/api`;
+// Use consistent base URL configuration (matches the rest of the app)
+const API_URL = process.env.REACT_APP_API_URL || 'https://my-dream-school.onrender.com/api';
+const BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
 
 const MyClass = () => {
   const { can } = usePermissions();
@@ -24,6 +24,7 @@ const MyClass = () => {
 
   useEffect(() => {
     fetchMyClass();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Focus management for modal
@@ -86,6 +87,7 @@ const MyClass = () => {
 
   const handleRetry = useCallback(() => {
     fetchMyClass();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatDate = useCallback((dateString) => {
@@ -274,7 +276,8 @@ const MyClass = () => {
           <div className="my-class-header-text">
             <h1>{sanitizeText(classData.name)}</h1>
             <p className="my-class-subtitle">
-              {classData.grade}-sinf • {sanitizeText(classData.academicYear)} o'quv yili
+              {(classData.grade !== null && classData.grade !== undefined && classData.grade !== '') && `${classData.grade}-sinf • `}
+              {sanitizeText(classData.academicYear)} o'quv yili
             </p>
           </div>
         </div>
@@ -345,7 +348,7 @@ const MyClass = () => {
           </h2>
           <div className="my-class-subjects-grid">
             {classData.subjects.map((subjectItem, index) => (
-              <article key={index} className="my-class-subject-card">
+              <article key={subjectItem.subject?._id || index} className="my-class-subject-card">
                 <div className="my-class-subject-header">
                   <span className="my-class-subject-name">
                     {sanitizeText(subjectItem.subject?.name || 'Noma\'lum fan')}

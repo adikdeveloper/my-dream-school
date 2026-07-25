@@ -135,7 +135,11 @@ const DebtorsList = () => {
 
   const getClassInfo = (student) => {
     if (student.classId) {
-      return `${student.classId.grade}-${student.classId.section}`;
+      const { grade, section, name } = student.classId;
+      if (grade !== null && grade !== undefined && grade !== '') {
+        return `${grade}-${section}`;
+      }
+      return name || section || 'Biriktirilmagan';
     }
     return 'Biriktirilmagan';
   };
@@ -300,7 +304,7 @@ const DebtorsList = () => {
                           <div className="student-cell">
                             <div className="student-avatar" style={{
                               backgroundImage: student.profileImage
-                                ? `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${student.profileImage})`
+                                ? `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage})`
                                 : 'none',
                               backgroundSize: 'cover',
                               backgroundPosition: 'center'
@@ -376,7 +380,7 @@ const DebtorsList = () => {
                     <div className="card-header">
                       <div className="card-avatar" style={{
                         backgroundImage: student.profileImage
-                          ? `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3001'}${student.profileImage})`
+                          ? `url(${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${student.profileImage})`
                           : 'none',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'

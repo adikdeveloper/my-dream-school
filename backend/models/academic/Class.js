@@ -7,7 +7,7 @@ const classSchema = new mongoose.Schema({
   },
   grade: {
     type: Number,
-    required: true,
+    required: false,
     min: 0,
     max: 9
   },

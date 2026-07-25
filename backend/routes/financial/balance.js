@@ -5,6 +5,7 @@ const User = require('../../models/users/User');
 const Payment = require('../../models/financial/Payment');
 const FinancialSummary = require('../../models/financial/FinancialSummary');
 const { auth } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/permissions');
 
 // Get student's balance and transaction history
 router.get('/student/:studentId', auth, async (req, res) => {
@@ -39,11 +40,8 @@ router.get('/student/:studentId', auth, async (req, res) => {
 });
 
 // Use balance for monthly payment
-router.post('/use-for-payment', auth, async (req, res) => {
+router.post('/use-for-payment', auth, requirePermission('balance.manage_student'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { studentId, amount, paymentMonth, notes } = req.body;
 
@@ -121,11 +119,8 @@ router.post('/use-for-payment', auth, async (req, res) => {
 });
 
 // Use balance for other purposes (requires mandatory description)
-router.post('/use-for-other', auth, async (req, res) => {
+router.post('/use-for-other', auth, requirePermission('balance.manage_student'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { studentId, amount, description, notes } = req.body;
 
@@ -193,11 +188,8 @@ router.post('/use-for-other', auth, async (req, res) => {
 });
 
 // Transfer balance to next month
-router.post('/transfer-to-next', auth, async (req, res) => {
+router.post('/transfer-to-next', auth, requirePermission('balance.manage_student'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { studentId, amount, targetMonth, notes } = req.body;
 
@@ -275,11 +267,8 @@ router.post('/transfer-to-next', auth, async (req, res) => {
 });
 
 // Refund balance to student
-router.post('/refund', auth, async (req, res) => {
+router.post('/refund', auth, requirePermission('balance.manage_student'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { studentId, amount, notes } = req.body;
 
@@ -337,11 +326,8 @@ router.post('/refund', auth, async (req, res) => {
 });
 
 // Add balance to student account (Admin only)
-router.post('/add', auth, async (req, res) => {
+router.post('/add', auth, requirePermission('balance.manage_student'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { studentId, amount, notes } = req.body;
 
@@ -460,11 +446,8 @@ router.get('/frozen-accounts', auth, async (req, res) => {
 });
 
 // Pay fine from student balance (Fine goes to school cash flow)
-router.post('/pay-fine', auth, async (req, res) => {
+router.post('/pay-fine', auth, requirePermission('balance.manage_student'), async (req, res) => {
   try {
-    if (((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant'))) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     const { studentId, amount, reason, paymentType = 'cash', notes } = req.body;
 

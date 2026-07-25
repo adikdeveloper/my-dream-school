@@ -29,7 +29,7 @@ const TeacherProfile = () => {
   // Update imagePreview when user changes
   useEffect(() => {
     if (user?.profileImage) {
-      const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+      const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
       setImagePreview(`${baseUrl}${user.profileImage}?t=${Date.now()}`);
     } else {
       setImagePreview(null);
@@ -146,7 +146,7 @@ const TeacherProfile = () => {
 
       // Update local preview first
       if (response.data.profileImage) {
-        const newImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${response.data.profileImage}?t=${Date.now()}`;
+        const newImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com'}${response.data.profileImage}?t=${Date.now()}`;
         setImagePreview(newImageUrl);
       } else {
         setImagePreview(null);
@@ -222,7 +222,7 @@ const TeacherProfile = () => {
 
     // Reset image preview to user's current profile image
     if (user?.profileImage) {
-      const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+      const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
       setImagePreview(`${baseUrl}${user.profileImage}?t=${Date.now()}`);
     } else {
       setImagePreview(null);

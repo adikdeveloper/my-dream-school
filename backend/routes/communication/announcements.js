@@ -42,7 +42,7 @@ router.get('/', auth, async (req, res) => {
 // @route   POST /api/announcements
 // @desc    Create announcement
 // @access  Private/Admin
-router.post('/', auth, authorize('admin'), requirePermission('announcement.create'), [
+router.post('/', auth, authorize('admin', 'teacher', 'supervisor', 'hr'), requirePermission('announcement.create'), [
   body('title').notEmpty().trim(),
   body('content').notEmpty().trim(),
   body('targetAudience').isIn(['all', 'students', 'teachers', 'parents', 'class']),

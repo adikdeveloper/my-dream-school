@@ -1,0 +1,1314 @@
+/* ============================================
+   TEACHER CLASS JOURNAL - KOMPAKT DIZAYN
+   AdminHome.module.css asosida yaratilgan
+   ============================================ */
+
+/* Base Container - Kompakt */
+.classJournal {
+    padding: 1rem;
+    background: #f5f7fa;
+    min-height: 100vh;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ========== Toast Notification - Kompakt ========== */
+.toastNotification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out;
+    max-width: 350px;
+    backdrop-filter: blur(10px);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toastIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.toastMessage {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.toastClose {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.toastClose:hover {
+    opacity: 1;
+}
+
+/* Toast types */
+.toastWarning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    color: #92400e;
+}
+
+.toastWarning .toastIcon {
+    background: #f59e0b;
+    color: white;
+}
+
+.toastSuccess {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 1px solid #10b981;
+    color: #065f46;
+}
+
+.toastSuccess .toastIcon {
+    background: #10b981;
+    color: white;
+}
+
+.toastError {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 1px solid #ef4444;
+    color: #991b1b;
+}
+
+.toastError .toastIcon {
+    background: #ef4444;
+    color: white;
+}
+
+.toastInfo {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 1px solid #3b82f6;
+    color: #1e40af;
+}
+
+.toastInfo .toastIcon {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Page Header - Kompakt */
+.pageHeader {
+    background: white;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pageTitle {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.pageSubtitle {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* View Toggle - Kompakt */
+.viewToggle {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0.5rem 0;
+    padding: 0.25rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    width: fit-content;
+    border: 1px solid #e2e8f0;
+}
+
+.viewToggleBtn {
+    padding: 0.375rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.viewToggleBtn:hover {
+    background: #f1f5f9;
+    color: #667eea;
+}
+
+.viewToggleBtnActive {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+/* Journal Controls - Kompakt */
+.journalControls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.controlSelect {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.controlSelect:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.controlSelect:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.controlSelect:disabled {
+    background: #f8fafc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Week Navigation - Kompakt */
+.weekNavigation {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
+}
+
+.weekNavBtn {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #6366f1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.weekNavBtn:hover {
+    background: #f8fafc;
+    border-color: #6366f1;
+    transform: translateY(-1px);
+}
+
+.todayBtn {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: white;
+    border-color: #0284c7;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+}
+
+.todayBtn:hover {
+    background: linear-gradient(135deg, #0284c7 0%, #075985 100%);
+}
+
+.weekDisplay {
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 180px;
+    text-align: center;
+}
+
+/* Empty State - Kompakt */
+.emptyState {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.emptyTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 0.5rem 0;
+}
+
+.emptyText {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin: 0 0 0.375rem 0;
+}
+
+.emptyHint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0.75rem 0 0 0;
+    padding: 0.5rem 0.75rem;
+    background: #f1f5f9;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+/* Trash Animation - Kompakt */
+.trashAnimation {
+    position: relative;
+    width: 80px;
+    height: 90px;
+    margin: 0 auto 1rem auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.trashBin {
+    font-size: 3rem;
+    animation: trashShake 2.5s ease-in-out infinite;
+}
+
+.paperFalling {
+    font-size: 1.5rem;
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: paperFall 2.5s ease-in-out infinite;
+}
+
+@keyframes paperFall {
+    0% {
+        top: -30px;
+        opacity: 0;
+        transform: translateX(-50%) rotate(0deg);
+    }
+
+    15% {
+        opacity: 1;
+        top: -10px;
+        transform: translateX(-50%) rotate(10deg);
+    }
+
+    70% {
+        top: 50px;
+        opacity: 0.8;
+    }
+
+    100% {
+        top: 60px;
+        opacity: 0;
+        transform: translateX(-50%) scale(0.1);
+    }
+}
+
+@keyframes trashShake {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    68% {
+        transform: rotate(0deg);
+    }
+
+    72% {
+        transform: rotate(-4deg);
+    }
+
+    76% {
+        transform: rotate(4deg);
+    }
+
+    88% {
+        transform: rotate(-1deg);
+    }
+
+    92% {
+        transform: rotate(1deg);
+    }
+}
+
+/* Journal Info - Kompakt */
+.journalInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.infoBadge {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.8125rem;
+}
+
+.infoBadge strong {
+    font-size: 0.9375rem;
+    padding-right: 0.5rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.btnPrimary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btnPrimary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btnPrimary:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Journal Table Container - Kompakt */
+.journalTableContainer {
+    overflow-x: auto;
+    background: white;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.08);
+    border: 1px solid #e2e8f0;
+    border-top: none;
+}
+
+.journalTableContainer::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+.journalTableContainer::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+.journalTableContainer::-webkit-scrollbar-thumb {
+    background: #0284c7;
+    border-radius: 8px;
+}
+
+.journalTableContainer::-webkit-scrollbar-thumb:hover {
+    background: #075985;
+}
+
+/* Journal Table - Aniq va chiroyli */
+.journalTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+}
+
+.journalTable thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.journalTable th {
+    padding: 12px 6px;
+    text-align: center;
+    font-weight: 700;
+    color: white;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: linear-gradient(180deg, #0284c7 0%, #075985 100%);
+    border-bottom: 3px solid #0ea5e9;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.thNumber {
+    width: 35px;
+    min-width: 35px;
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    background: #075985 !important;
+}
+
+.thStudent {
+    width: 150px;
+    min-width: 150px;
+    position: sticky;
+    left: 35px;
+    z-index: 11;
+    text-align: left;
+    background: #075985 !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.thDate {
+    width: 55px;
+    min-width: 55px;
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.thAverage {
+    width: 60px;
+    min-width: 60px;
+    background: #0c4a6e !important;
+    color: #fff;
+}
+
+/* Table Body - Aniq */
+.journalTable tbody tr {
+    border-bottom: 1px solid #eef2f7;
+    transition: all 0.15s ease;
+}
+
+.journalTable tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.journalTable tbody tr:hover {
+    background: #f0f9ff !important;
+}
+
+.journalTable td {
+    padding: 8px 6px;
+    text-align: center;
+    vertical-align: middle;
+    border-right: 1px solid #eef2f7;
+}
+
+.tdNumber {
+    width: 35px;
+    min-width: 35px;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    font-weight: 700;
+    color: #075985;
+    font-size: 12px;
+    border-right: 1px solid #e2e8f0;
+    background: #eef4f8 !important;
+}
+
+.tdStudent {
+    width: 150px;
+    min-width: 150px;
+    position: sticky;
+    left: 35px;
+    z-index: 5;
+    text-align: left;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 11.5px;
+    border-right: 2px solid #cbd5e1;
+    background: #f8fafc !important;
+}
+
+.journalTable tbody tr:hover .tdNumber,
+.journalTable tbody tr:hover .tdStudent {
+    background: #e0f2fe !important;
+}
+
+.tdGrade {
+    padding: 6px 4px;
+    background: white;
+}
+
+.tdAverage {
+    background: #e0f2fe;
+    font-size: 13px;
+    font-weight: 800;
+    color: #075985;
+    border-left: 2px solid #0ea5e9;
+}
+
+/* Grade Wrapper - Aniq */
+.gradeWrapper {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.gradeInput {
+    width: 44px;
+    padding: 6px 2px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 7px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #075985;
+    background: white;
+    transition: all 0.15s ease;
+}
+
+.gradeInput::placeholder { color: #cbd5e1; font-weight: 600; }
+
+.gradeInput:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    background: #f0f9ff;
+}
+
+.gradeInput:hover {
+    border-color: #0284c7;
+}
+
+.gradeInputAbsent {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+    cursor: not-allowed;
+}
+
+/* Attendance Button - Aniq */
+.btnAttendance {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 9px;
+    font-weight: 700;
+    margin-top: 2px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btnAttendancePresent {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #10b981;
+}
+
+.btnAttendanceAbsent {
+    background: #fecaca;
+    color: #991b1b;
+    border-color: #ef4444;
+}
+
+.btnAttendanceExcused {
+    background: #e0e7ff;
+    color: #3730a3;
+    border-color: #6366f1;
+}
+
+.btnAttendance:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* Holiday Styles - festiv (sariq emas) */
+.holidayHeader {
+    background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%) !important;
+    color: #9f1239 !important;
+    text-shadow: none !important;
+}
+
+.holidayIconSmall {
+    display: block;
+    font-size: 0.6rem;
+    margin-top: 1px;
+}
+
+.holidayCell {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%) !important;
+}
+
+.holidayMarker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 1rem;
+    cursor: not-allowed;
+}
+
+/* Journal Legend - Kompakt */
+.journalLegend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.legendSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.legendSectionTitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0;
+}
+
+.legendItems {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.legendIcon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 0.625rem;
+}
+
+.legendIconPresent {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.legendIconAbsent {
+    background: #fecaca;
+    color: #991b1b;
+}
+
+.legendIconExcused {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.legendBadge {
+    padding: 0.125rem 0.5rem;
+    background: #f1f5f9;
+    border-radius: 4px;
+    font-weight: 600;
+    color: #075985;
+    border: 1px solid #cbd5e1;
+    font-size: 0.6875rem;
+}
+
+.legendBadgeSecondary {
+    padding: 0.125rem 0.5rem;
+    background: #e0f2fe;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #075985;
+    border: 1px solid #0ea5e9;
+    font-size: 0.6875rem;
+}
+
+.legendNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #eff6ff;
+    border-left: 2px solid #3b82f6;
+    border-radius: 4px;
+}
+
+.noteIcon {
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.noteText {
+    font-size: 0.6875rem;
+    color: #1e40af;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+/* Loading - Kompakt */
+.loadingMessage {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: #64748b;
+    font-size: 0.9375rem;
+}
+
+.noDataMessage {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.noDataMessage p {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0.5rem 0;
+}
+
+/* ========== Daily View - Mobile Friendly ========== */
+.infoStat {
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.dailyView {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 0 0 10px 10px;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+}
+
+.dailyCard {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.dailyCard:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dailyCardAbsent {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.dailyCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.dailyCardAbsent .dailyCardHeader {
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.dailyNum {
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.dailyName {
+    flex: 1;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.dailyAvg {
+    padding: 0.1875rem 0.5rem;
+    background: #e0f2fe;
+    color: #075985;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.dailyCardBody {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+}
+
+.dailyGradeWrap {
+    flex: 1;
+}
+
+.dailyGradeInput {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #075985;
+    background: white;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+    touch-action: manipulation;
+}
+
+.dailyGradeInput:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    background: #f0f9ff;
+}
+
+.dailyGradeInput::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.dailyAttBtn {
+    padding: 0.75rem 1.25rem;
+    border: 2px solid;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    touch-action: manipulation;
+    font-family: inherit;
+    min-width: 120px;
+    text-align: center;
+}
+
+.dailyAttPresent {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #10b981;
+}
+
+.dailyAttPresent:hover {
+    background: #a7f3d0;
+}
+
+.dailyAttAbsent {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #ef4444;
+}
+
+.dailyAttAbsent:hover {
+    background: #fecaca;
+}
+
+.dailyAttExcused {
+    background: #e0e7ff;
+    color: #3730a3;
+    border-color: #6366f1;
+}
+
+.dailyAttExcused:hover {
+    background: #c7d2fe;
+}
+
+.dailyCardExcused {
+    border-color: #c7d2fe;
+    background: #eef2ff;
+}
+
+.dailyCardExcused .dailyCardHeader {
+    background: #e0e7ff;
+    border-color: #c7d2fe;
+}
+
+.dailyHoliday {
+    padding: 1rem;
+    text-align: center;
+    font-size: 1rem;
+    color: #9f1239;
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+}
+
+/* ========== RESPONSIVE - KOMPAKT ========== */
+
+/* Laptop (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .classJournal {
+        padding: 0.75rem;
+    }
+
+    .pageHeader {
+        padding: 0.75rem;
+    }
+
+    .pageTitle {
+        font-size: 1rem;
+    }
+
+    .thNumber,
+    .tdNumber {
+        width: 30px;
+        min-width: 30px;
+    }
+
+    .thStudent,
+    .tdStudent {
+        width: 130px;
+        min-width: 130px;
+        left: 30px;
+        font-size: 10px;
+    }
+
+    .gradeInput {
+        width: 36px;
+        font-size: 11px;
+    }
+
+    .btnAttendance {
+        width: 14px;
+        height: 14px;
+        font-size: 8px;
+    }
+}
+
+/* Tablet (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .classJournal {
+        padding: 0.625rem;
+    }
+
+    .pageHeader {
+        padding: 0.625rem;
+    }
+
+    .pageTitle {
+        font-size: 0.9375rem;
+    }
+
+    .journalControls {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .thNumber,
+    .tdNumber {
+        width: 28px;
+        min-width: 28px;
+    }
+
+    .thStudent,
+    .tdStudent {
+        width: 110px;
+        min-width: 110px;
+        left: 28px;
+        font-size: 10px;
+    }
+
+    .thDate {
+        width: 48px;
+        min-width: 48px;
+        font-size: 10px;
+    }
+
+    .gradeInput {
+        width: 32px;
+        font-size: 10px;
+        padding: 3px 1px;
+    }
+
+    .btnAttendance {
+        width: 13px;
+        height: 13px;
+        font-size: 7px;
+    }
+
+    .tdAverage {
+        font-size: 11px;
+    }
+}
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+    .classJournal {
+        padding: 0.5rem;
+    }
+
+    .pageHeader {
+        padding: 0.5rem;
+    }
+
+    .pageTitle {
+        font-size: 0.875rem;
+    }
+
+    .pageSubtitle {
+        font-size: 0.625rem;
+    }
+
+    .viewToggle {
+        padding: 0.1875rem;
+    }
+
+    .viewToggleBtn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.625rem;
+    }
+
+    .journalControls {
+        grid-template-columns: 1fr;
+        gap: 0.375rem;
+    }
+
+    .controlSelect {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .weekNavBtn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.625rem;
+    }
+
+    .weekDisplay {
+        font-size: 0.6875rem;
+        padding: 0.375rem 0.5rem;
+        min-width: 140px;
+    }
+
+    .journalInfo {
+        padding: 0.5rem 0.75rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .infoBadge {
+        font-size: 0.6875rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .thNumber,
+    .tdNumber {
+        width: 24px;
+        min-width: 24px;
+        font-size: 10px;
+    }
+
+    .thStudent,
+    .tdStudent {
+        width: 90px;
+        min-width: 90px;
+        left: 24px;
+        font-size: 9px;
+    }
+
+    .thDate {
+        width: 42px;
+        min-width: 42px;
+        font-size: 9px;
+    }
+
+    .journalTable th {
+        padding: 6px 3px;
+        font-size: 9px;
+    }
+
+    .journalTable td {
+        padding: 5px 3px;
+    }
+
+    .gradeInput {
+        width: 44px;
+        height: 40px;
+        font-size: 14px;
+        padding: 6px 4px;
+        border-radius: 8px;
+        -webkit-appearance: none;
+        appearance: none;
+        touch-action: manipulation;
+    }
+
+    .gradeInput:focus {
+        background: #f0f9ff;
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    }
+
+    .btnAttendance {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+        border-radius: 6px;
+        touch-action: manipulation;
+    }
+
+    /* Mobil uchun swipe indicator */
+    .journalTableContainer {
+        position: relative;
+    }
+
+    .journalTableContainer::before {
+        content: '← Suring →';
+        display: block;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        text-align: center;
+        padding: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 6px 6px 0 0;
+    }
+
+    .tdAverage {
+        font-size: 10px;
+    }
+
+    .journalLegend {
+        padding: 0.5rem;
+    }
+
+    .legendSectionTitle {
+        font-size: 0.625rem;
+    }
+
+    .legendItem {
+        font-size: 0.5625rem;
+    }
+
+    .legendIcon {
+        width: 14px;
+        height: 14px;
+        font-size: 0.5rem;
+    }
+
+    .noteText {
+        font-size: 0.5625rem;
+    }
+
+    .toastNotification {
+        left: 0.5rem;
+        right: 0.5rem;
+        max-width: none;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .toastMessage {
+        font-size: 0.6875rem;
+    }
+}
+
+/* Very small (max 375px) */
+@media (max-width: 375px) {
+    .classJournal {
+        padding: 0.375rem;
+    }
+
+    .pageTitle {
+        font-size: 0.8125rem;
+    }
+
+    .thStudent,
+    .tdStudent {
+        width: 75px;
+        min-width: 75px;
+        font-size: 8px;
+    }
+
+    .gradeInput {
+        width: 40px;
+        height: 36px;
+        font-size: 13px;
+    }
+}

@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.example
+backend/.env
+frontend/.env
+deploy/.env*
+
+# Build output
+frontend/build/
+frontend/dist/
+.next/
+
+# Logs
+*.log
+*.txt
+npm-debug.log*
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# One-time scripts (ortiqcha fayllar)
+clear_mahliyo.js
+clear_balance.js
+backend/add_zero_class.js
+backend/clean_schedules.js
+backend/clear_mahliyo.js
+
+# Deploy config (VPS uchun, Render/Vercel da kerakmas)
+deploy/
+
+# Local run scripts
+start.bat
+start.sh
+push-to-github.bat
+
+# Firebase (Render/Vercel da kerakmas)
+backend/firebase.json
+backend/.firebaserc
+backend/functions/
+
+# Root-level unused files
+192x192.png
+512x512.png

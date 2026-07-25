@@ -1,0 +1,597 @@
+/* Student Balance - Compact Design */
+
+.student-balance.compact {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #bae6fd;
+}
+
+/* Compact Balance Header */
+.balance-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.balance-info-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.balance-icon-sm {
+  font-size: 1.4rem;
+}
+
+.balance-text-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.balance-label-sm {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-amount-compact {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.balance-amount-compact.positive {
+  color: #10b981;
+}
+
+.balance-amount-compact.zero {
+  color: #6b7280;
+}
+
+.balance-amount-compact.negative {
+  color: #dc2626;
+}
+
+.frozen-badge {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  color: #dc2626;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Compact Action Buttons */
+.balance-actions-compact {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.btn-action-sm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.btn-action-sm span:first-child {
+  font-size: 1rem;
+}
+
+.btn-action-sm span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-action-sm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-action-sm.btn-payment {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.btn-action-sm.btn-transfer {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.btn-action-sm.btn-refund {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.btn-action-sm.btn-other {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.btn-action-sm.btn-fine {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+}
+
+/* Compact Transaction History */
+.balance-history-compact {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.history-title-sm {
+  color: #475569;
+  margin: 0 0 10px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.transactions-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transaction-item-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.transaction-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transaction-icon-sm {
+  font-size: 1rem;
+}
+
+.transaction-info-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.transaction-type-sm {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.transaction-date-sm {
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+
+.transaction-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transaction-amount-sm {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.btn-view-receipt {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.btn-view-receipt:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* Compact Modal */
+.balance-modal-compact {
+  width: 100%;
+  max-width: 400px;
+  margin: 20px;
+}
+
+.modal-header-compact {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  padding: 16px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header-compact h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.close-btn-sm {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-btn-sm:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-body-compact {
+  padding: 16px;
+}
+
+.current-balance-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #0c4a6e;
+}
+
+.current-balance-badge strong {
+  color: #0369a1;
+}
+
+.form-group-compact {
+  margin-bottom: 14px;
+}
+
+.form-group-compact label {
+  display: block;
+  margin-bottom: 6px;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.form-group-compact input,
+.form-group-compact textarea,
+.form-group-compact select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  background: #f9fafb;
+}
+
+.form-group-compact input:focus,
+.form-group-compact textarea:focus,
+.form-group-compact select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group-compact textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.error-message-compact {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-left: 3px solid #ef4444;
+}
+
+.success-message-compact {
+  background: #f0fdf4;
+  color: #166534;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-left: 3px solid #22c55e;
+}
+
+.form-actions-compact {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel-sm,
+.btn-submit-sm {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-sm {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-cancel-sm:hover {
+  background: #e5e7eb;
+}
+
+.btn-submit-sm {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.btn-submit-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-submit-sm:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Receipt Modal */
+.receipt-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.receipt-header {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  padding: 16px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.receipt-body {
+  padding: 16px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 12px;
+}
+
+.receipt-row:last-child {
+  border-bottom: none;
+}
+
+.receipt-label {
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.receipt-value {
+  color: #1f2937;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.receipt-value.amount {
+  font-size: 1rem;
+}
+
+.receipt-value.amount.positive {
+  color: #10b981;
+}
+
+.receipt-value.amount.negative {
+  color: #ef4444;
+}
+
+.receipt-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  text-align: right;
+}
+
+.btn-close-receipt {
+  background: #f3f4f6;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+  transition: all 0.2s ease;
+}
+
+.btn-close-receipt:hover {
+  background: #e5e7eb;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .balance-actions-compact {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .btn-action-sm {
+    padding: 10px 6px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .btn-action-sm span:last-child {
+    font-size: 0.5rem;
+    white-space: normal;
+    line-height: 1.1;
+    text-overflow: clip;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-balance.compact {
+    padding: 12px;
+  }
+
+  .balance-header-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .balance-actions-compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+
+  .btn-action-sm {
+    padding: 8px 4px;
+    font-size: 0.6rem;
+  }
+
+  .btn-action-sm span:first-child {
+    font-size: 1rem;
+  }
+
+  .form-actions-compact {
+    flex-direction: column;
+  }
+
+  .balance-modal-compact,
+  .receipt-modal {
+    margin: 10px;
+    max-width: calc(100% - 20px);
+  }
+}

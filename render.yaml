@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: my-dream-school-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        value: mongodb+srv://adikdasturchi:em8nuAQzUJLFfORc@cluster0.xn4schh.mongodb.net/mydreamschool?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RECAPTCHA_ENABLED
+        value: true
+      - key: RECAPTCHA_REQUIRED
+        value: true
+      - key: RECAPTCHA_SECRET_KEY
+        sync: false
+      - key: RECAPTCHA_MIN_SCORE
+        value: 0.5

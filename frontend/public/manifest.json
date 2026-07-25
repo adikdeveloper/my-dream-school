@@ -1,0 +1,47 @@
+{
+  "id": "my-dream-school-pwa",
+  "short_name": "My Dream School",
+  "name": "My Dream School Management System",
+  "description": "My Dream School - O'quv jarayonini boshqarish tizimi",
+  "lang": "uz",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "My Dream School Dashboard"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "theme_color": "#1e3a8a",
+  "background_color": "#ffffff",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
+}

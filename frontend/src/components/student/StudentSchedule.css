@@ -1,0 +1,309 @@
+/* StudentSchedule.css — Excel uslubidagi haftalik dars jadvali (yashil mavzu) */
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.schedule-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100%;
+}
+
+/* ===== Header ===== */
+.schedule-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.header-info .page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.class-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.85rem;
+}
+
+.class-name { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+.class-details { font-size: 0.8125rem; color: #475569; }
+.academic-year { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+.last-updated {
+  font-size: 0.6875rem;
+  color: #059669;
+  font-weight: 600;
+  background: #ecfdf5;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+/* Validity banner */
+.schedule-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+.schedule-info-banner.schedule-expired { background: #fffbeb; border-color: #fde68a; }
+.schedule-info-banner.schedule-future { background: #eff6ff; border-color: #bfdbfe; }
+.schedule-info-banner .banner-icon { font-size: 1.25rem; }
+.schedule-info-banner .banner-content h3 { margin: 0; font-size: 0.9rem; color: #1e293b; font-weight: 700; }
+.schedule-info-banner .banner-content p { margin: 0.1rem 0 0; font-size: 0.78rem; color: #64748b; }
+
+/* Toolbar */
+.schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.schedule-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #059669;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.schedule-tool-btn:hover { background: #ecfdf5; border-color: #10b981; transform: translateY(-1px); }
+.schedule-tool-btn:active { transform: translateY(0); }
+.schedule-tool-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Excel jadval ===== */
+.excel-wrap {
+  overflow-x: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  -webkit-overflow-scrolling: touch;
+  outline: none;
+}
+
+.excel-schedule {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 660px;
+  table-layout: fixed;
+}
+
+.excel-schedule th,
+.excel-schedule td {
+  border: 1px solid #e5e7eb;
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Sarlavha qatori (kunlar) */
+.excel-schedule thead th {
+  background: #ecfdf5;
+  color: #065f46;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  border-bottom: 2px solid #10b981;
+  white-space: nowrap;
+}
+.excel-schedule thead th .th-day { display: block; }
+.excel-schedule thead th.today-col {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border-bottom-color: #065f46;
+}
+.today-tag {
+  display: inline-block;
+  margin-top: 0.15rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Birinchi ustun: № / Vaqt (yopishqoq) */
+.excel-schedule .time-col-head {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #d1fae5;
+  color: #065f46;
+  width: 84px;
+  min-width: 84px;
+}
+.excel-schedule .time-cell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #f8fafc;
+  width: 84px;
+  min-width: 84px;
+  font-weight: 600;
+}
+.time-cell .lesson-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 0.3rem;
+}
+.time-cell .lesson-time {
+  display: block;
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* Fan kataklari */
+.subject-cell { min-width: 110px; }
+.subject-cell.today-col { background: #f0fdf4; }
+.cell-subject {
+  display: block;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+.cell-teacher {
+  display: block;
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+.cell-empty { color: #cbd5e1; font-weight: 700; }
+
+/* Joriy / keyingi dars */
+.subject-cell.current-cell {
+  background: #d1fae5;
+  box-shadow: inset 0 0 0 2px #10b981;
+}
+.subject-cell.current-cell .cell-subject { color: #065f46; }
+.subject-cell.upcoming-cell {
+  background: #fffbeb;
+  box-shadow: inset 0 0 0 2px #f59e0b;
+}
+.cell-flag {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.cell-flag.cur { background: #10b981; color: #fff; }
+.cell-flag.up { background: #f59e0b; color: #fff; }
+
+/* ===== Holatlar ===== */
+.loading-state,
+.error-state,
+.no-schedule-state,
+.no-classes-day {
+  text-align: center;
+  padding: 3.5rem 2rem;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.error-icon,
+.no-schedule-icon,
+.no-classes-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+.error-state h3,
+.no-schedule-state h3,
+.no-classes-day h4 { color: #1e293b; margin: 0 0 0.5rem; }
+.retry-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.4rem;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+.retry-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .schedule-container { padding: 1.25rem; }
+}
+
+@media (max-width: 767px) {
+  .schedule-container { padding: 1rem; }
+  .header-info .page-title { font-size: 1.25rem; }
+  .excel-schedule th,
+  .excel-schedule td { padding: 0.5rem 0.4rem; }
+  .cell-subject { font-size: 0.78rem; }
+  .excel-schedule { min-width: 600px; }
+}
+
+@media (max-width: 480px) {
+  .schedule-container { padding: 0.75rem; }
+  .header-info .page-title { font-size: 1.15rem; }
+  .class-info { gap: 0.3rem 0.6rem; }
+  .schedule-tool-btn { flex: 1; justify-content: center; }
+  .excel-schedule { min-width: 540px; }
+  .excel-schedule th,
+  .excel-schedule td { padding: 0.45rem 0.35rem; }
+  .excel-schedule .time-col-head,
+  .excel-schedule .time-cell { width: 64px; min-width: 64px; }
+  .time-cell .lesson-num { width: 20px; height: 20px; font-size: 0.68rem; }
+  .time-cell .lesson-time { font-size: 0.6rem; }
+  .cell-subject { font-size: 0.72rem; }
+  .cell-teacher { font-size: 0.62rem; }
+  .subject-cell { min-width: 92px; }
+}
+
+/* Fullscreen test rejimida (agar ishlatilsa) tartibni saqlash */
+body.test-fullscreen-mode .schedule-container { max-width: 100%; }

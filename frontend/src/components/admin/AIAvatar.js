@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const AIAvatar = ({ isEmbedded = false, scale = 1 }) => {
-  const [emotion, setEmotion] = useState('normal'); // normal, happy, sad, wink
+  const [emotion, setEmotion] = useState('normal'); // normal, happy, sad, wink, angry, blush
   const [action, setAction] = useState('floating'); // floating, spin, bounce
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +28,14 @@ const AIAvatar = ({ isEmbedded = false, scale = 1 }) => {
       } else if (chance < 0.40) {
         setEmotion('sad');
         setTimeout(() => setEmotion('normal'), 3000);
+      } else if (chance < 0.48) {
+        setEmotion('angry');
+        setAction('angry-shake');
+        setTimeout(() => setAction('floating'), 1400);
+        setTimeout(() => setEmotion('normal'), 3200);
+      } else if (chance < 0.58) {
+        setEmotion('blush');
+        setTimeout(() => setEmotion('normal'), 3500);
       } else {
         setEmotion('normal');
       }
@@ -81,6 +89,8 @@ const AIAvatar = ({ isEmbedded = false, scale = 1 }) => {
               <div className={`bot-face ${emotion}`}>
                 <div className="bot-eye left"></div>
                 <div className="bot-eye right"></div>
+                <div className="bot-cheek left"></div>
+                <div className="bot-cheek right"></div>
                 <div className="bot-mouth"></div>
               </div>
             </div>
@@ -227,6 +237,15 @@ const AIAvatar = ({ isEmbedded = false, scale = 1 }) => {
           transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .walle-bot-body.angry-shake {
+          animation: angryShake 0.16s ease-in-out 7;
+        }
+        @keyframes angryShake {
+          0%, 100% { transform: translateX(0) rotate(0); }
+          25% { transform: translateX(-4px) rotate(-2deg); }
+          75% { transform: translateX(4px) rotate(2deg); }
+        }
+
         /* Shadow */
         .walle-hover-shadow {
           position: absolute;
@@ -355,6 +374,21 @@ const AIAvatar = ({ isEmbedded = false, scale = 1 }) => {
           transition: all 0.2s;
         }
 
+        .bot-cheek {
+          position: absolute;
+          top: 28px;
+          width: 13px;
+          height: 7px;
+          border-radius: 50%;
+          background: #fb7185;
+          box-shadow: 0 0 8px #fb7185, 0 0 14px rgba(244, 63, 94, 0.65);
+          opacity: 0;
+          transform: scale(0.5);
+          transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .bot-cheek.left { left: 10px; }
+        .bot-cheek.right { right: 10px; }
+
         /* === EMOTIONS === */
         .bot-face.normal .bot-eye { animation: eveBlink 4s infinite; }
         @keyframes eveBlink {
@@ -392,6 +426,83 @@ const AIAvatar = ({ isEmbedded = false, scale = 1 }) => {
         .bot-face.wink .bot-mouth {
            width: 18px;
            transform: rotate(-10deg);
+        }
+
+        /* Angry — red visor, slanted eyes and a tense mouth */
+        .bot-face-screen:has(.bot-face.angry) {
+          background: linear-gradient(135deg, #260506 0%, #450a0a 55%, #7f1d1d 100%);
+          box-shadow:
+            inset 0 4px 6px rgba(255,255,255,0.12),
+            inset 0 -4px 8px rgba(0,0,0,0.85),
+            0 0 14px rgba(239,68,68,0.6);
+          animation: angryScreenPulse 0.55s ease-in-out infinite alternate;
+        }
+        @keyframes angryScreenPulse {
+          from { filter: saturate(1); }
+          to { filter: saturate(1.35) brightness(1.15); }
+        }
+        .bot-face.angry .bot-eye {
+          top: 12px;
+          width: 17px;
+          height: 6px;
+          border-radius: 5px 5px 2px 2px;
+          background: #ef4444;
+          box-shadow: 0 0 9px #f87171, 0 0 18px #dc2626;
+        }
+        .bot-face.angry .bot-eye.left {
+          left: 16px;
+          transform: rotate(18deg);
+        }
+        .bot-face.angry .bot-eye.right {
+          right: 16px;
+          transform: rotate(-18deg);
+        }
+        .bot-face.angry .bot-mouth {
+          width: 18px;
+          height: 7px;
+          left: 31px;
+          bottom: 7px;
+          border: 0;
+          border-top: 3px solid #f87171;
+          border-radius: 14px 14px 0 0;
+          box-shadow: 0 -4px 8px -2px #dc2626;
+        }
+        .bot-face.angry .bot-cheek {
+          background: #ef4444;
+          box-shadow: 0 0 9px #ef4444;
+          opacity: 0.75;
+          transform: scale(1);
+        }
+
+        /* Blush — rosy cheeks and a shy expression */
+        .bot-face-screen:has(.bot-face.blush) {
+          box-shadow:
+            inset 0 4px 6px rgba(255,255,255,0.2),
+            inset 0 -4px 6px rgba(0,0,0,0.8),
+            0 0 12px rgba(244,63,94,0.3);
+        }
+        .bot-face.blush .bot-eye {
+          top: 13px;
+          height: 11px;
+          border-radius: 8px 8px 2px 2px;
+          background: #7dd3fc;
+        }
+        .bot-face.blush .bot-cheek {
+          opacity: 0.95;
+          transform: scale(1);
+          animation: cheekGlow 0.9s ease-in-out infinite alternate;
+        }
+        .bot-face.blush .bot-mouth {
+          width: 10px;
+          height: 6px;
+          left: 35px;
+          bottom: 7px;
+          border-bottom-color: #fb7185;
+          box-shadow: 0 4px 7px -2px #e11d48;
+        }
+        @keyframes cheekGlow {
+          from { opacity: 0.65; transform: scale(0.85); }
+          to { opacity: 1; transform: scale(1.1); }
         }
 
         /* === BODY / TORSO === */

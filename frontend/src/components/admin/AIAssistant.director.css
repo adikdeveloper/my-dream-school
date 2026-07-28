@@ -1,0 +1,612 @@
+/* Director Dashboard design-system layer.
+   Kept separate so the legacy shared assistant behavior remains untouched. */
+
+.admin-dashboard-layout .ai-assistant {
+  --ai-primary-dark: var(--director-primary-700);
+  --ai-primary: var(--director-primary-600);
+  --ai-primary-soft: var(--director-primary-400);
+  --ai-bg-page: var(--director-slate-50);
+  --ai-bg-card: var(--director-white);
+  --ai-bg-muted: var(--director-slate-100);
+  --ai-bg-hover: var(--director-primary-50);
+  --ai-border: var(--director-slate-200);
+  --ai-border-soft: var(--director-slate-100);
+  --ai-text-main: var(--director-slate-900);
+  --ai-text: var(--director-slate-700);
+  --ai-text-muted: var(--director-slate-500);
+  --ai-text-light: var(--director-slate-400);
+  --ai-text-link: var(--director-primary-700);
+  --ai-soft-bg: var(--director-primary-50);
+  --ai-soft-bg-2: var(--director-primary-100);
+  width: 100%;
+  max-width: var(--director-content-max-width);
+  height: calc(100dvh - var(--director-topbar-height));
+  min-height: 560px;
+  margin: 0 auto;
+  overflow: hidden;
+  color: var(--director-slate-700);
+  background: var(--director-slate-50);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.admin-dashboard-layout .ai-header {
+  gap: 16px;
+  padding: 24px var(--director-page-padding-x) 0;
+  background: var(--director-white);
+  border-bottom: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .ai-header-top { gap: 6px; }
+
+.admin-dashboard-layout .ai-header .page-title {
+  gap: 12px;
+  margin: 0;
+  color: var(--director-slate-900);
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+.admin-dashboard-layout .ai-header .page-title span {
+  color: inherit;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.admin-dashboard-layout .ai-title-avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+}
+
+.admin-dashboard-layout .ai-subtitle {
+  max-width: 720px;
+  color: var(--director-slate-500);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.admin-dashboard-layout .ai-tabs { gap: 4px; }
+
+.admin-dashboard-layout .ai-tab {
+  min-height: 40px;
+  padding: 8px 14px;
+  color: var(--director-slate-600);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  transition: color var(--director-transition-fast), background var(--director-transition-fast);
+}
+
+.admin-dashboard-layout .ai-tab:hover {
+  color: var(--director-slate-900);
+  background: var(--director-slate-100);
+}
+
+.admin-dashboard-layout .ai-tab.active {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-bottom-color: var(--director-primary-600);
+}
+
+.admin-dashboard-layout .ai-chat-container {
+  grid-template-columns: 272px minmax(0, 1fr);
+  background: var(--director-slate-50);
+}
+
+.admin-dashboard-layout .ai-sessions {
+  gap: 8px;
+  padding: 12px;
+  background: var(--director-white);
+  border-right: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .btn-new-chat,
+.admin-dashboard-layout .btn-add-key,
+.admin-dashboard-layout .ai-send-btn,
+.admin-dashboard-layout .ai-assistant .btn-save {
+  min-height: 40px;
+  padding: 0 16px;
+  color: var(--director-white);
+  background: var(--director-primary-600);
+  border: 1px solid var(--director-primary-600);
+  border-radius: var(--director-radius-sm);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .btn-new-chat:hover,
+.admin-dashboard-layout .btn-add-key:hover,
+.admin-dashboard-layout .ai-send-btn:hover:not(:disabled),
+.admin-dashboard-layout .ai-assistant .btn-save:hover:not(:disabled) {
+  background: var(--director-primary-700);
+  border-color: var(--director-primary-700);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .btn-delete-all-chats,
+.admin-dashboard-layout .btn-delete {
+  color: var(--director-danger-dark);
+  background: var(--director-danger-soft);
+  border: 1px solid var(--director-danger-soft);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .session-item {
+  min-height: 52px;
+  padding: 10px 12px;
+  background: var(--director-white);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .session-item:hover {
+  background: var(--director-slate-50);
+  border-color: var(--director-slate-200);
+  transform: none;
+}
+
+.admin-dashboard-layout .session-item.active {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-200);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .usage-mini {
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-100);
+}
+
+.admin-dashboard-layout .ai-messages {
+  gap: 20px;
+  padding: 24px var(--director-page-padding-x);
+}
+
+.admin-dashboard-layout .ai-welcome { max-width: 720px; padding: 0 0 24px; }
+.admin-dashboard-layout .ai-welcome-icon { width: 112px; height: 112px; }
+
+.admin-dashboard-layout .ai-welcome h2 {
+  color: var(--director-slate-900);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .ai-welcome p {
+  color: var(--director-slate-500);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.admin-dashboard-layout .ai-suggestions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-dashboard-layout .ai-suggestion-btn {
+  min-height: 48px;
+  padding: 10px 12px;
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-md);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .ai-suggestion-btn:hover {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-200);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .suggestion-icon {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+}
+
+.admin-dashboard-layout .ai-message { max-width: min(82%, 760px); animation-duration: 200ms; }
+
+.admin-dashboard-layout .ai-message.user .message-avatar,
+.admin-dashboard-layout .ai-message.user .message-text {
+  color: var(--director-white);
+  background: var(--director-primary-600);
+}
+
+.admin-dashboard-layout .ai-message.assistant .message-avatar {
+  color: var(--director-primary-700);
+  background: var(--director-slate-100);
+}
+
+.admin-dashboard-layout .ai-message.assistant .message-text {
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  box-shadow: var(--director-shadow-xs);
+}
+
+.admin-dashboard-layout .message-text { font-size: 14px; line-height: 1.55; }
+
+.admin-dashboard-layout .ai-input-area {
+  gap: 8px;
+  padding: 16px var(--director-page-padding-x);
+  background: var(--director-white);
+  border-top: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .ai-input,
+.admin-dashboard-layout .ai-assistant input:not([type="checkbox"]),
+.admin-dashboard-layout .ai-assistant select,
+.admin-dashboard-layout .ai-assistant textarea {
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: var(--director-slate-900);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-300);
+  border-radius: var(--director-radius-sm);
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-dashboard-layout .ai-input:focus,
+.admin-dashboard-layout .ai-assistant input:focus,
+.admin-dashboard-layout .ai-assistant select:focus,
+.admin-dashboard-layout .ai-assistant textarea:focus {
+  border-color: var(--director-primary-400);
+  outline: 3px solid rgba(59, 130, 246, .14);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .ai-mic-btn,
+.admin-dashboard-layout .ai-send-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  border-radius: var(--director-radius-sm);
+}
+
+.admin-dashboard-layout .ai-capabilities-container,
+.admin-dashboard-layout .ai-keys-container,
+.admin-dashboard-layout .ai-usage-container,
+.admin-dashboard-layout .ai-sandbox-container {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 24px var(--director-page-padding-x);
+  overflow-y: auto;
+  background: var(--director-slate-50);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .ai-capabilities-header,
+.admin-dashboard-layout .ai-keys-header,
+.admin-dashboard-layout .ai-sandbox-header {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.admin-dashboard-layout .ai-capabilities-header h2,
+.admin-dashboard-layout .ai-keys-header h2,
+.admin-dashboard-layout .ai-sandbox-header h2,
+.admin-dashboard-layout .ai-usage-container > h2 {
+  color: var(--director-slate-900);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .ai-capabilities-subtitle,
+.admin-dashboard-layout .sandbox-subtitle {
+  max-width: 720px;
+  color: var(--director-slate-500);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.admin-dashboard-layout .ai-capabilities-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.admin-dashboard-layout .capability-card,
+.admin-dashboard-layout .ai-assistant .card {
+  padding: 20px;
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  border-radius: var(--director-radius-lg);
+  box-shadow: var(--director-shadow-sm);
+  transform: none;
+}
+
+.admin-dashboard-layout .capability-card:hover {
+  border-color: var(--director-slate-200);
+  box-shadow: var(--director-shadow-sm);
+  transform: none;
+}
+
+.admin-dashboard-layout .capability-icon,
+.admin-dashboard-layout .usage-card-icon,
+.admin-dashboard-layout .no-keys-icon {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .capability-header h3 {
+  color: var(--director-slate-900);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-dashboard-layout .capability-example-btn {
+  min-height: 40px;
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-200);
+  font-style: normal;
+}
+
+.admin-dashboard-layout .capability-example-btn:hover {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-200);
+  transform: none;
+}
+
+.admin-dashboard-layout .form-group label {
+  color: var(--director-slate-700);
+  font-size: 13px;
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.admin-dashboard-layout .key-form-error,
+.admin-dashboard-layout .sandbox-msg.error {
+  color: var(--director-danger-dark);
+  background: var(--director-danger-bg);
+  border-color: var(--director-danger-soft);
+}
+
+.admin-dashboard-layout .sandbox-msg.success {
+  color: var(--director-success-dark);
+  background: var(--director-success-bg);
+  border-color: var(--director-success-soft);
+}
+
+.admin-dashboard-layout .btn-cancel,
+.admin-dashboard-layout .btn-edit,
+.admin-dashboard-layout .btn-confirm-cancel {
+  min-height: 40px;
+  color: var(--director-slate-700);
+  background: var(--director-white);
+  border: 1px solid var(--director-slate-300);
+  border-radius: var(--director-radius-sm);
+}
+
+.admin-dashboard-layout .btn-edit {
+  min-height: 32px;
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-100);
+}
+
+.admin-dashboard-layout .primary-badge {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+}
+
+.admin-dashboard-layout .status-badge.active {
+  color: var(--director-success-dark);
+  background: var(--director-success-soft);
+}
+
+.admin-dashboard-layout .status-badge.inactive {
+  color: var(--director-danger-dark);
+  background: var(--director-danger-soft);
+}
+
+.admin-dashboard-layout .api-key-card,
+.admin-dashboard-layout .usage-key-card { border-left: 1px solid var(--director-slate-200); }
+
+.admin-dashboard-layout .usage-summary-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-dashboard-layout .usage-card {
+  min-height: 124px;
+  padding: 20px;
+  background: var(--director-white);
+  border-left: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .usage-card-value { font-size: 28px; font-weight: 750; }
+
+.admin-dashboard-layout .usage-card-label {
+  color: var(--director-slate-500);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.admin-dashboard-layout .sandbox-layout {
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.admin-dashboard-layout .sandbox-role-list {
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--director-radius-lg);
+  box-shadow: var(--director-shadow-sm);
+}
+
+.admin-dashboard-layout .sandbox-role-btn {
+  min-height: 44px;
+  color: var(--director-slate-600);
+  border-radius: 10px;
+}
+
+.admin-dashboard-layout .sandbox-role-btn:hover {
+  color: var(--director-slate-900);
+  background: var(--director-slate-100);
+  border-color: transparent;
+}
+
+.admin-dashboard-layout .sandbox-role-btn.active {
+  color: var(--director-primary-700);
+  background: var(--director-primary-50);
+  border-color: var(--director-primary-100);
+}
+
+.admin-dashboard-layout .confirm-overlay {
+  background: rgba(9, 20, 36, .62);
+  backdrop-filter: blur(5px);
+  animation-duration: 200ms;
+}
+
+.admin-dashboard-layout .confirm-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  max-height: 90vh;
+  padding: 24px;
+  border-radius: var(--director-radius-xl);
+  box-shadow: var(--director-shadow-lg);
+  animation: none;
+}
+
+.admin-dashboard-layout .confirm-icon {
+  color: var(--director-danger-dark);
+  background: var(--director-danger-soft);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .btn-confirm-ok {
+  min-height: 40px;
+  color: var(--director-white);
+  background: var(--director-danger);
+  border: 1px solid var(--director-danger);
+  border-radius: var(--director-radius-sm);
+  box-shadow: none;
+}
+
+.admin-dashboard-layout .btn-confirm-ok:hover {
+  background: var(--director-danger-dark);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-dashboard-layout .ai-assistant button:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .2);
+  outline-offset: 2px;
+}
+
+.admin-dashboard-layout .ai-assistant button:disabled,
+.admin-dashboard-layout .ai-assistant input:disabled,
+.admin-dashboard-layout .ai-assistant textarea:disabled {
+  color: var(--director-slate-500);
+  background: var(--director-slate-100);
+  border-color: var(--director-slate-200);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+@media (max-width: 1199px) {
+  .admin-dashboard-layout .ai-chat-container { grid-template-columns: 240px minmax(0, 1fr); }
+  .admin-dashboard-layout .usage-summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 991px) {
+  .admin-dashboard-layout .ai-header { padding: 20px 20px 0; }
+  .admin-dashboard-layout .ai-chat-container { grid-template-columns: 220px minmax(0, 1fr); }
+  .admin-dashboard-layout .ai-messages,
+  .admin-dashboard-layout .ai-input-area,
+  .admin-dashboard-layout .ai-capabilities-container,
+  .admin-dashboard-layout .ai-keys-container,
+  .admin-dashboard-layout .ai-usage-container,
+  .admin-dashboard-layout .ai-sandbox-container { padding-right: 20px; padding-left: 20px; }
+  .admin-dashboard-layout .sandbox-layout { grid-template-columns: 1fr; }
+  .admin-dashboard-layout .sandbox-role-list { flex-flow: row wrap; }
+  .admin-dashboard-layout .sandbox-role-btn { flex: 1 1 calc(33.333% - 4px); }
+}
+
+@media (max-width: 767px) {
+  .admin-dashboard-layout .ai-assistant { min-height: 0; }
+  .admin-dashboard-layout .ai-header { gap: 12px; padding: 16px 14px 0; }
+  .admin-dashboard-layout .ai-header .page-title { font-size: 24px; }
+  .admin-dashboard-layout .ai-chat-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .admin-dashboard-layout .ai-sessions {
+    max-height: 126px;
+    flex-flow: row nowrap;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--director-slate-200);
+  }
+  .admin-dashboard-layout .sessions-list {
+    flex-flow: row nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .admin-dashboard-layout .session-item { min-width: 150px; max-width: 210px; }
+  .admin-dashboard-layout .usage-mini { display: none; }
+  .admin-dashboard-layout .ai-messages,
+  .admin-dashboard-layout .ai-input-area,
+  .admin-dashboard-layout .ai-capabilities-container,
+  .admin-dashboard-layout .ai-keys-container,
+  .admin-dashboard-layout .ai-usage-container,
+  .admin-dashboard-layout .ai-sandbox-container { padding-right: 14px; padding-left: 14px; }
+  .admin-dashboard-layout .ai-message { max-width: 94%; }
+  .admin-dashboard-layout .ai-suggestions,
+  .admin-dashboard-layout .form-row,
+  .admin-dashboard-layout .api-key-card { grid-template-columns: 1fr; }
+  .admin-dashboard-layout .sandbox-role-btn { flex-basis: calc(50% - 4px); }
+}
+
+@media (max-width: 479px) {
+  .admin-dashboard-layout .ai-subtitle { display: block; font-size: 12px; }
+  .admin-dashboard-layout .ai-tabs { margin: 0 -14px; padding: 0 14px; }
+  .admin-dashboard-layout .ai-tab span { display: inline; }
+  .admin-dashboard-layout .btn-new-chat span,
+  .admin-dashboard-layout .btn-delete-all-chats span { display: none; }
+  .admin-dashboard-layout .ai-message { max-width: 100%; }
+  .admin-dashboard-layout .usage-summary-cards { grid-template-columns: 1fr; }
+  .admin-dashboard-layout .key-actions,
+  .admin-dashboard-layout .form-actions,
+  .admin-dashboard-layout .sandbox-actions,
+  .admin-dashboard-layout .confirm-footer { flex-direction: column-reverse; }
+  .admin-dashboard-layout .key-actions button,
+  .admin-dashboard-layout .form-actions button,
+  .admin-dashboard-layout .sandbox-actions button,
+  .admin-dashboard-layout .confirm-footer button { width: 100%; justify-content: center; }
+  .admin-dashboard-layout .sandbox-role-btn { flex-basis: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-layout .ai-assistant *,
+  .admin-dashboard-layout .ai-assistant *::before,
+  .admin-dashboard-layout .ai-assistant *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

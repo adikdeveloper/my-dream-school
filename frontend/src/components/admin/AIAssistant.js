@@ -3,6 +3,7 @@ import apiService from '../../services/apiService';
 import { useAuth } from '../../context/AuthContext';
 import AIAvatar from './AIAvatar';
 import './AIAssistant.css';
+import './AIAssistant.director.css';
 
 
 const createSessionId = () => 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
@@ -852,6 +853,7 @@ const AIAssistant = () => {
           <button
             className={`ai-tab ${activeTab === 'chat' ? 'active' : ''}`}
             onClick={() => setActiveTab('chat')}
+            aria-pressed={activeTab === 'chat'}
           >
             <Icon name="chat" />
             <span>Suhbat</span>
@@ -859,6 +861,7 @@ const AIAssistant = () => {
           <button
             className={`ai-tab ${activeTab === 'capabilities' ? 'active' : ''}`}
             onClick={() => setActiveTab('capabilities')}
+            aria-pressed={activeTab === 'capabilities'}
             title="AI imkoniyatlari va misol buyruqlar"
           >
             <Icon name="trophy" />
@@ -867,6 +870,7 @@ const AIAssistant = () => {
           <button
             className={`ai-tab ${activeTab === 'keys' ? 'active' : ''}`}
             onClick={() => setActiveTab('keys')}
+            aria-pressed={activeTab === 'keys'}
           >
             <Icon name="key" />
             <span>API kalitlar</span>
@@ -874,6 +878,7 @@ const AIAssistant = () => {
           <button
             className={`ai-tab ${activeTab === 'usage' ? 'active' : ''}`}
             onClick={() => setActiveTab('usage')}
+            aria-pressed={activeTab === 'usage'}
           >
             <Icon name="usage" />
             <span>Limitlar</span>
@@ -881,6 +886,7 @@ const AIAssistant = () => {
           <button
             className={`ai-tab ${activeTab === 'sandbox' ? 'active' : ''}`}
             onClick={() => setActiveTab('sandbox')}
+            aria-pressed={activeTab === 'sandbox'}
             title="Har bir rol uchun AI qoidalarini sozlash"
           >
             <Icon name="edit" />

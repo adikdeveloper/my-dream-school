@@ -18,8 +18,9 @@ import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
 import NotificationBell from '../../components/common/NotificationBell';
 import apiService from '../../services/apiService';
+import './TeacherDashboard.css';
 
-const TEACHER_BLUE = '#075985';
+const TEACHER_BLUE = '#0d9488';
 
 const TeacherDashboard = () => {
   const { user, logout } = useAuth();

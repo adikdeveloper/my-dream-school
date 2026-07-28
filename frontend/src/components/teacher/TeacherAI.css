@@ -4,11 +4,11 @@
    ═══════════════════════════════════════════════════════════ */
 
 .tai-page {
-  --tai-primary:  #075985;
-  --tai-accent:   #0284c7;
-  --tai-accent-2: #0ea5e9;
-  --tai-soft:     #e0f2fe;
-  --tai-soft-2:   #bae6fd;
+  --tai-primary:  #115e59;
+  --tai-accent:   #0f766e;
+  --tai-accent-2: #0d9488;
+  --tai-soft:     #ccfbf1;
+  --tai-soft-2:   #99f6e4;
   --tai-deep:     #0c4a6e;
   --tai-border:   #e2e8f0;
   --tai-text:     #1e293b;
@@ -538,7 +538,7 @@
   margin-bottom: 1rem;
 }
 .tai-stat-card {
-  background: linear-gradient(135deg, var(--tai-soft) 0%, #f0f9ff 100%);
+  background: linear-gradient(135deg, var(--tai-soft) 0%, #f0fdfa 100%);
   border: 1px solid var(--tai-soft-2);
   border-radius: 14px;
   padding: 0.9rem 1rem;

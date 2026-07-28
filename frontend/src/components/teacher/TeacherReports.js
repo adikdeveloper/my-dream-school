@@ -131,14 +131,14 @@ const TeacherReports = () => {
 
   const getGradeColor = (average) => {
     if (average >= 85) return '#10b981';
-    if (average >= 70) return '#3b82f6';
+    if (average >= 70) return '#0d9488';
     if (average >= 60) return '#f59e0b';
     return '#ef4444';
   };
 
   const getAttendanceColor = (rate) => {
     if (rate >= 90) return '#10b981';
-    if (rate >= 75) return '#3b82f6';
+    if (rate >= 75) return '#0d9488';
     if (rate >= 60) return '#f59e0b';
     return '#ef4444';
   };
@@ -313,7 +313,7 @@ const TeacherReports = () => {
             {selectedSubjectData && (
               <div className="stats-grid">
                 <div className="stat-card">
-                  <div className="stat-icon" style={{background: 'linear-gradient(135deg, #3b82f6, #2563eb)'}}>
+                  <div className="stat-icon" style={{background: 'linear-gradient(135deg, #0d9488, #0f766e)'}}>
                     📊
                   </div>
                   <div className="stat-content">
@@ -379,14 +379,14 @@ const TeacherReports = () => {
                   <div className="distribution-value">{selectedSubjectData.excellentCount || 0} ta</div>
                 </div>
 
-                <div className="distribution-item" style={{borderLeft: '4px solid #3b82f6'}}>
+                <div className="distribution-item" style={{borderLeft: '4px solid #0d9488'}}>
                   <div className="distribution-label">Yaxshi (70-84)</div>
                   <div className="distribution-bar">
                     <div
                       className="distribution-fill"
                       style={{
                         width: `${calculatePercentage(selectedSubjectData.goodCount, selectedSubjectData.totalGrades)}%`,
-                        background: '#3b82f6'
+                        background: '#0d9488'
                       }}
                     ></div>
                   </div>
@@ -543,11 +543,11 @@ const TeacherReports = () => {
                   </div>
 
                   <div className="stat-card">
-                    <div className="stat-icon" style={{background: 'linear-gradient(135deg, #3b82f6, #2563eb)'}}>
+                    <div className="stat-icon" style={{background: 'linear-gradient(135deg, #0d9488, #0f766e)'}}>
                       📊
                     </div>
                     <div className="stat-content">
-                      <div className="stat-value" style={{color: '#3b82f6'}}>
+                      <div className="stat-value" style={{color: '#0d9488'}}>
                         {attendanceStats.summary.attendanceRate || 0}%
                       </div>
                       <div className="stat-label">Umumiy davomat</div>
@@ -609,7 +609,7 @@ const TeacherReports = () => {
               <>
                 <div className="stats-grid">
                   <div className="stat-card">
-                    <div className="stat-icon" style={{background: 'linear-gradient(135deg, #3b82f6, #2563eb)'}}>
+                    <div className="stat-icon" style={{background: 'linear-gradient(135deg, #0d9488, #0f766e)'}}>
                       📝
                     </div>
                     <div className="stat-content">
@@ -831,7 +831,7 @@ const styles = `
     width: 48px;
     height: 48px;
     border: 4px solid #e2e8f0;
-    border-top-color: #3b82f6;
+    border-top-color: #0d9488;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -840,7 +840,7 @@ const styles = `
     width: 20px;
     height: 20px;
     border: 3px solid #e2e8f0;
-    border-top-color: #3b82f6;
+    border-top-color: #0d9488;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -854,11 +854,11 @@ const styles = `
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
     border-radius: 8px;
     margin-bottom: 1rem;
-    color: #1e40af;
+    color: #115e59;
     font-size: 0.875rem;
   }
 
@@ -959,9 +959,9 @@ const styles = `
   }
 
   .demo-banner {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
     border: 1px solid #93c5fd;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #0d9488;
     border-radius: 12px;
     padding: 1rem 1.25rem;
     margin-bottom: 1.5rem;
@@ -996,13 +996,13 @@ const styles = `
   }
 
   .demo-content strong {
-    color: #1e40af;
+    color: #115e59;
     font-size: 0.9375rem;
     font-weight: 600;
   }
 
   .demo-content span {
-    color: #1e40af;
+    color: #115e59;
     font-size: 0.8125rem;
   }
 
@@ -1042,7 +1042,7 @@ const styles = `
 
   .filter-select:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: #0d9488;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
@@ -1082,12 +1082,12 @@ const styles = `
   }
 
   .tab-button:focus {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid #0d9488;
     outline-offset: 2px;
   }
 
   .tab-button.active {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
     color: white;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
   }
@@ -1258,7 +1258,7 @@ const styles = `
 
   .rank-cell {
     font-weight: 700;
-    color: #3b82f6;
+    color: #0d9488;
     font-size: 1.125rem;
   }
 
@@ -1276,7 +1276,7 @@ const styles = `
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
     color: white;
     display: flex;
     align-items: center;
@@ -1329,8 +1329,8 @@ const styles = `
   }
 
   .status-good {
-    background: #dbeafe;
-    color: #1e40af;
+    background: #ccfbf1;
+    color: #115e59;
   }
 
   .status-average {

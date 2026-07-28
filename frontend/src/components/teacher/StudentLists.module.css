@@ -56,7 +56,7 @@
     width: 36px;
     height: 36px;
     border: 3px solid #e2e8f0;
-    border-top-color: #3b82f6;
+    border-top-color: #0d9488;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -163,7 +163,7 @@
 
 .searchInput:focus {
     outline: none;
-    border-color: #6366f1;
+    border-color: #0d9488;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
@@ -212,14 +212,14 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #1e3a8a 0%, #fbbf24 100%);
+    background: linear-gradient(90deg, #134e4a 0%, #fbbf24 100%);
     transform: scaleX(0);
     transition: transform 0.2s ease;
 }
 
 .classBox:hover {
     transform: translateY(-2px);
-    border-color: #1e3a8a;
+    border-color: #134e4a;
     box-shadow: 0 4px 12px rgba(30, 58, 138, 0.1);
 }
 
@@ -228,8 +228,8 @@
 }
 
 .classBoxActive {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    border-color: #1e3a8a;
+    background: linear-gradient(135deg, #134e4a 0%, #0f766e 100%);
+    border-color: #134e4a;
     box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
     transform: translateY(-2px);
 }
@@ -257,7 +257,7 @@
 .classBoxLabel {
     font-size: 0.6875rem;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #134e4a;
     margin-bottom: 0.25rem;
     transition: color 0.2s ease;
 }
@@ -315,7 +315,7 @@
 }
 
 .studentsTable thead {
-    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    background: linear-gradient(135deg, #134e4a, #115e59);
     color: white;
 }
 
@@ -350,7 +350,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
     color: white;
     display: flex;
     align-items: center;
@@ -368,7 +368,7 @@
 
 .studentId {
     font-weight: 600;
-    color: #3b82f6;
+    color: #0d9488;
     font-size: 0.75rem;
 }
 
@@ -431,8 +431,8 @@
 .studentIdBadge {
     display: inline-block;
     padding: 0.125rem 0.5rem;
-    background: #dbeafe;
-    color: #1e40af;
+    background: #ccfbf1;
+    color: #115e59;
     border-radius: 4px;
     font-size: 0.625rem;
     font-weight: 600;
@@ -484,7 +484,7 @@
 }
 
 .btnPrimary {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
     color: white;
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
@@ -505,12 +505,12 @@
 
 .btnOutline {
     background: white;
-    color: #3b82f6;
-    border: 1px solid #3b82f6;
+    color: #0d9488;
+    border: 1px solid #0d9488;
 }
 
 .btnOutline:hover {
-    background: #3b82f6;
+    background: #0d9488;
     color: white;
 }
 
@@ -551,9 +551,9 @@
 }
 
 .paginationBtn:hover:not(:disabled) {
-    border-color: #3b82f6;
-    color: #3b82f6;
-    background: #f0f9ff;
+    border-color: #0d9488;
+    color: #0d9488;
+    background: #f0fdfa;
 }
 
 .paginationBtn:disabled {
@@ -584,15 +584,15 @@
 }
 
 .paginationNumber:hover {
-    border-color: #3b82f6;
-    color: #3b82f6;
-    background: #f0f9ff;
+    border-color: #0d9488;
+    color: #0d9488;
+    background: #f0fdfa;
 }
 
 .paginationNumberActive {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
     color: white;
-    border-color: #3b82f6;
+    border-color: #0d9488;
 }
 
 .paginationDots {
@@ -649,7 +649,7 @@
 .modalHeader h2 {
     margin: 0;
     font-size: 1rem;
-    color: #1e3a8a;
+    color: #134e4a;
 }
 
 .modalClose {
@@ -683,7 +683,7 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
     color: white;
     display: flex;
     align-items: center;
@@ -941,7 +941,7 @@
 
 .formInput:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: #0d9488;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 

@@ -111,13 +111,13 @@
 }
 
 .toastInfo {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    border: 1px solid #3b82f6;
-    color: #1e40af;
+    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+    border: 1px solid #0d9488;
+    color: #115e59;
 }
 
 .toastInfo .toastIcon {
-    background: #3b82f6;
+    background: #0d9488;
     color: white;
 }
 
@@ -174,7 +174,7 @@
 }
 
 .viewToggleBtnActive {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
     color: white;
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
 }
@@ -207,7 +207,7 @@
 
 .controlSelect:focus {
     outline: none;
-    border-color: #6366f1;
+    border-color: #0d9488;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
@@ -230,7 +230,7 @@
     padding: 0.5rem 0.75rem;
     border: 1px solid #e2e8f0;
     background: white;
-    color: #6366f1;
+    color: #0d9488;
     font-size: 0.75rem;
     font-weight: 600;
     border-radius: 8px;
@@ -241,24 +241,24 @@
 
 .weekNavBtn:hover {
     background: #f8fafc;
-    border-color: #6366f1;
+    border-color: #0d9488;
     transform: translateY(-1px);
 }
 
 .todayBtn {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
     color: white;
-    border-color: #0284c7;
+    border-color: #0f766e;
     box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
 }
 
 .todayBtn:hover {
-    background: linear-gradient(135deg, #0284c7 0%, #075985 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
 }
 
 .weekDisplay {
     padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
     color: white;
     font-size: 0.8125rem;
     font-weight: 700;
@@ -281,7 +281,7 @@
 .emptyTitle {
     font-size: 1rem;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #134e4a;
     margin: 0 0 0.5rem 0;
 }
 
@@ -384,7 +384,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
     color: white;
     padding: 0.75rem 1rem;
     border-radius: 10px 10px 0 0;
@@ -452,12 +452,12 @@
 }
 
 .journalTableContainer::-webkit-scrollbar-thumb {
-    background: #0284c7;
+    background: #0f766e;
     border-radius: 8px;
 }
 
 .journalTableContainer::-webkit-scrollbar-thumb:hover {
-    background: #075985;
+    background: #115e59;
 }
 
 /* Journal Table - Aniq va chiroyli */
@@ -482,8 +482,8 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    background: linear-gradient(180deg, #0284c7 0%, #075985 100%);
-    border-bottom: 3px solid #0ea5e9;
+    background: linear-gradient(180deg, #0f766e 0%, #115e59 100%);
+    border-bottom: 3px solid #0d9488;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
@@ -493,7 +493,7 @@
     position: sticky;
     left: 0;
     z-index: 11;
-    background: #075985 !important;
+    background: #115e59 !important;
 }
 
 .thStudent {
@@ -503,14 +503,14 @@
     left: 35px;
     z-index: 11;
     text-align: left;
-    background: #075985 !important;
+    background: #115e59 !important;
     border-right: 2px solid rgba(255, 255, 255, 0.35);
 }
 
 .thDate {
     width: 55px;
     min-width: 55px;
-    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%) !important;
+    background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.18);
 }
 
@@ -532,7 +532,7 @@
 }
 
 .journalTable tbody tr:hover {
-    background: #f0f9ff !important;
+    background: #f0fdfa !important;
 }
 
 .journalTable td {
@@ -549,7 +549,7 @@
     left: 0;
     z-index: 5;
     font-weight: 700;
-    color: #075985;
+    color: #115e59;
     font-size: 12px;
     border-right: 1px solid #e2e8f0;
     background: #eef4f8 !important;
@@ -571,7 +571,7 @@
 
 .journalTable tbody tr:hover .tdNumber,
 .journalTable tbody tr:hover .tdStudent {
-    background: #e0f2fe !important;
+    background: #ccfbf1 !important;
 }
 
 .tdGrade {
@@ -580,11 +580,11 @@
 }
 
 .tdAverage {
-    background: #e0f2fe;
+    background: #ccfbf1;
     font-size: 13px;
     font-weight: 800;
-    color: #075985;
-    border-left: 2px solid #0ea5e9;
+    color: #115e59;
+    border-left: 2px solid #0d9488;
 }
 
 /* Grade Wrapper - Aniq */
@@ -604,7 +604,7 @@
     text-align: center;
     font-size: 13px;
     font-weight: 800;
-    color: #075985;
+    color: #115e59;
     background: white;
     transition: all 0.15s ease;
 }
@@ -613,13 +613,13 @@
 
 .gradeInput:focus {
     outline: none;
-    border-color: #0ea5e9;
+    border-color: #0d9488;
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
-    background: #f0f9ff;
+    background: #f0fdfa;
 }
 
 .gradeInput:hover {
-    border-color: #0284c7;
+    border-color: #0f766e;
 }
 
 .gradeInputAbsent {
@@ -661,7 +661,7 @@
 .btnAttendanceExcused {
     background: #e0e7ff;
     color: #3730a3;
-    border-color: #6366f1;
+    border-color: #0d9488;
 }
 
 .btnAttendance:hover {
@@ -717,7 +717,7 @@
 .legendSectionTitle {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #134e4a;
     margin: 0;
 }
 
@@ -767,18 +767,18 @@
     background: #f1f5f9;
     border-radius: 4px;
     font-weight: 600;
-    color: #075985;
+    color: #115e59;
     border: 1px solid #cbd5e1;
     font-size: 0.6875rem;
 }
 
 .legendBadgeSecondary {
     padding: 0.125rem 0.5rem;
-    background: #e0f2fe;
+    background: #ccfbf1;
     border-radius: 4px;
     font-weight: 700;
-    color: #075985;
-    border: 1px solid #0ea5e9;
+    color: #115e59;
+    border: 1px solid #0d9488;
     font-size: 0.6875rem;
 }
 
@@ -787,8 +787,8 @@
     align-items: flex-start;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    background: #eff6ff;
-    border-left: 2px solid #3b82f6;
+    background: #f0fdfa;
+    border-left: 2px solid #0d9488;
     border-radius: 4px;
 }
 
@@ -799,7 +799,7 @@
 
 .noteText {
     font-size: 0.6875rem;
-    color: #1e40af;
+    color: #115e59;
     line-height: 1.4;
     font-weight: 500;
 }
@@ -885,7 +885,7 @@
 .dailyNum {
     width: 26px;
     height: 26px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #0d9488, #8b5cf6);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -905,8 +905,8 @@
 
 .dailyAvg {
     padding: 0.1875rem 0.5rem;
-    background: #e0f2fe;
-    color: #075985;
+    background: #ccfbf1;
+    color: #115e59;
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 700;
@@ -932,7 +932,7 @@
     text-align: center;
     font-size: 1.25rem;
     font-weight: 800;
-    color: #075985;
+    color: #115e59;
     background: white;
     transition: all 0.2s ease;
     -webkit-appearance: none;
@@ -943,9 +943,9 @@
 
 .dailyGradeInput:focus {
     outline: none;
-    border-color: #0ea5e9;
+    border-color: #0d9488;
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
-    background: #f0f9ff;
+    background: #f0fdfa;
 }
 
 .dailyGradeInput::placeholder {
@@ -991,7 +991,7 @@
 .dailyAttExcused {
     background: #e0e7ff;
     color: #3730a3;
-    border-color: #6366f1;
+    border-color: #0d9488;
 }
 
 .dailyAttExcused:hover {
@@ -1221,8 +1221,8 @@
     }
 
     .gradeInput:focus {
-        background: #f0f9ff;
-        border-color: #0ea5e9;
+        background: #f0fdfa;
+        border-color: #0d9488;
         box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
     }
 
@@ -1242,7 +1242,7 @@
     .journalTableContainer::before {
         content: '← Suring →';
         display: block;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
         color: white;
         text-align: center;
         padding: 6px;

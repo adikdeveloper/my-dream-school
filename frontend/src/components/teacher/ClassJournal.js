@@ -801,7 +801,7 @@ const ClassJournal = () => {
               <strong>{selectedClassData?.name}</strong>
               <span>{subjects.find(s => s.subject?._id === selectedSubject)?.subject?.name}</span>
               <span>{viewType === 'day' ? `${selectedDay.getDate()} ${months[selectedDay.getMonth()]}` : viewType === 'week' ? formatWeekRange() : `${months[selectedMonth]} ${selectedYear}`}</span>
-              <span className={styles.infoStat} style={{ background: '#dbeafe', color: '#1e40af' }}>📊 O'rtacha: {calculateSubjectAvgPercent()}%</span>
+              <span className={styles.infoStat} style={{ background: '#ccfbf1', color: '#115e59' }}>📊 O'rtacha: {calculateSubjectAvgPercent()}%</span>
               <span className={styles.infoStat} style={{ background: '#d1fae5', color: '#065f46' }}>📋 Davomat: {calculateAttendanceRate()}%</span>
             </div>
             <button

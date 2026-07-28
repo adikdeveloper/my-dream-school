@@ -43,7 +43,7 @@
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -94,7 +94,7 @@
 .filterGroup label svg {
     width: 12px;
     height: 12px;
-    color: #1e3a8a;
+    color: #134e4a;
 }
 
 .filterGroup select {
@@ -111,12 +111,12 @@
 }
 
 .filterGroup select:hover {
-    border-color: #3b82f6;
+    border-color: #0d9488;
 }
 
 .filterGroup select:focus {
     outline: none;
-    border-color: #1e3a8a;
+    border-color: #134e4a;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
@@ -194,7 +194,7 @@
     width: 32px;
     height: 32px;
     border: 3px solid #e5e7eb;
-    border-top-color: #1e3a8a;
+    border-top-color: #134e4a;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -237,7 +237,7 @@
 
 .btnPrimary {
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -310,7 +310,7 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.25rem 0.5rem;
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%);
     color: white;
     border-radius: 6px;
     font-size: 0.625rem;
@@ -525,7 +525,7 @@
     justify-content: space-between;
     align-items: flex-start;
     padding: 0.875rem 1rem;
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%);
     border-radius: 12px 12px 0 0;
 }
 
@@ -596,7 +596,7 @@
 
 .stepActive .stepNum {
     background: #ffffff;
-    color: #1e3a8a;
+    color: #134e4a;
 }
 
 .stepText {
@@ -700,7 +700,7 @@
 .formGroup select:focus,
 .formGroup textarea:focus {
     outline: none;
-    border-color: #1e3a8a;
+    border-color: #134e4a;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
@@ -772,7 +772,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1e3a8a;
+    background: #134e4a;
     color: white;
     border-radius: 50%;
     font-size: 0.625rem;
@@ -866,7 +866,7 @@
 
 .questionBody>textarea:focus {
     outline: none;
-    border-color: #1e3a8a;
+    border-color: #134e4a;
 }
 
 /* Image Upload - Kompakt */
@@ -892,7 +892,7 @@
 }
 
 .uploadPlaceholder:hover {
-    border-color: #3b82f6;
+    border-color: #0d9488;
     background: rgba(59, 130, 246, 0.05);
 }
 
@@ -1042,7 +1042,7 @@
 }
 
 .optionCheck:hover .checkmark:not(.correct) {
-    border-color: #1e3a8a;
+    border-color: #134e4a;
     background: rgba(59, 130, 246, 0.1);
 }
 
@@ -1063,7 +1063,7 @@
 
 .optionItem input[type="text"]:focus {
     outline: none;
-    border-color: #1e3a8a;
+    border-color: #134e4a;
 }
 
 .removeOption {
@@ -1100,8 +1100,8 @@
 }
 
 .addOption:hover {
-    border-color: #1e3a8a;
-    color: #1e3a8a;
+    border-color: #134e4a;
+    color: #134e4a;
 }
 
 /* Text Answer - Kompakt */
@@ -1130,7 +1130,7 @@
 
 .textAnswer input:focus {
     outline: none;
-    border-color: #1e3a8a;
+    border-color: #134e4a;
 }
 
 /* Add Question Button - Kompakt */
@@ -1152,8 +1152,8 @@
 }
 
 .addQuestion:hover {
-    border-color: #1e3a8a;
-    color: #1e3a8a;
+    border-color: #134e4a;
+    color: #134e4a;
     background: rgba(59, 130, 246, 0.05);
 }
 
@@ -1220,7 +1220,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1e3a8a;
+    background: #134e4a;
     color: white;
     border-radius: 50%;
     font-size: 0.5625rem;
@@ -1236,7 +1236,7 @@
     margin-left: auto;
     font-size: 0.625rem;
     font-weight: 600;
-    color: #1e3a8a;
+    color: #134e4a;
 }
 
 .previewText {
@@ -1419,7 +1419,7 @@
 
 .resultInputGroup input:focus {
     outline: none;
-    border-color: #1e3a8a;
+    border-color: #134e4a;
 }
 
 .btnSave {
@@ -1428,7 +1428,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1e3a8a;
+    background: #134e4a;
     color: white;
     border: none;
     border-radius: 6px;
@@ -1438,7 +1438,7 @@
 }
 
 .btnSave:hover {
-    background: #1e40af;
+    background: #115e59;
 }
 
 .emptyRow {

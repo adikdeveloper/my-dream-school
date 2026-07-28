@@ -328,7 +328,7 @@ const Assignments = () => {
                                   href={`${FILE_BASE}${submission.attachmentUrl}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', fontWeight: 600, color: '#2563eb', textDecoration: 'none', background: '#eff6ff', padding: '0.35rem 0.7rem', borderRadius: '8px', marginBottom: '0.4rem' }}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', fontWeight: 600, color: '#0f766e', textDecoration: 'none', background: '#f0fdfa', padding: '0.35rem 0.7rem', borderRadius: '8px', marginBottom: '0.4rem' }}
                                 >
                                   📎 {submission.attachmentName || 'Biriktirilgan fayl'}
                                 </a>

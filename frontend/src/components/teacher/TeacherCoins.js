@@ -76,21 +76,21 @@ const TeacherCoins = () => {
 
       <style>{`
         .tc-page { padding: 1.5rem; background: #f8fafc; min-height: calc(100vh - 85px); }
-        .tc-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: #fff; padding: 1.5rem 1.75rem; border-radius: 18px; margin-bottom: 1.25rem; box-shadow: 0 10px 30px rgba(37,99,235,0.25); }
+        .tc-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: #fff; padding: 1.5rem 1.75rem; border-radius: 18px; margin-bottom: 1.25rem; box-shadow: 0 10px 30px rgba(37,99,235,0.25); }
         .tc-header h1 { margin: 0 0 0.25rem; font-size: 1.35rem; font-weight: 800; }
         .tc-header p { margin: 0; opacity: 0.95; font-size: 0.85rem; }
         .tc-total { font-size: 2rem; font-weight: 800; line-height: 1; }
         .tc-total span { font-size: 0.9rem; font-weight: 600; opacity: 0.9; }
         .tc-filters { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
         .tc-tab { padding: 0.5rem 1.1rem; border-radius: 10px; border: 2px solid #e2e8f0; background: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: #475569; }
-        .tc-tab.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+        .tc-tab.active { background: #0f766e; border-color: #0f766e; color: #fff; }
         .tc-filters select { padding: 0.5rem 0.9rem; border: 2px solid #e2e8f0; border-radius: 10px; background: #fff; font-weight: 500; cursor: pointer; }
         .tc-empty { text-align: center; padding: 3rem; color: #94a3b8; background: #fff; border-radius: 14px; }
         .tc-list { display: flex; flex-direction: column; gap: 0.5rem; }
         .tc-row { display: flex; align-items: center; gap: 1rem; background: #fff; border-radius: 14px; padding: 0.75rem 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
-        .tc-row.top { border-color: #93c5fd; background: linear-gradient(135deg, #eff6ff 0%, #fff 60%); }
+        .tc-row.top { border-color: #93c5fd; background: linear-gradient(135deg, #f0fdfa 0%, #fff 60%); }
         .tc-rank { width: 36px; text-align: center; font-size: 1.25rem; font-weight: 800; color: #64748b; }
-        .tc-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .tc-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #0f766e, #115e59); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
         .tc-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
         .tc-name { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
         .tc-meta { font-size: 0.78rem; color: #94a3b8; }

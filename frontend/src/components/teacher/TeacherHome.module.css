@@ -64,7 +64,7 @@
 .currentTime {
     text-align: right;
     padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
     border-radius: 8px;
     color: white;
 }
@@ -284,7 +284,7 @@
 
 .scheduleTime {
     font-weight: 700;
-    color: #6366f1;
+    color: #0d9488;
     min-width: 80px;
     font-size: 0.75rem;
 }
@@ -451,7 +451,7 @@
 }
 
 .btnGoJournal {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
     color: white;
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }

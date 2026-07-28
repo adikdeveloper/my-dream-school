@@ -538,8 +538,8 @@ const TeacherProfile = () => {
         }
 
         .upload-progress-container {
-          background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
-          border: 1px solid #bae6fd;
+          background: linear-gradient(135deg, #ccfbf1, #f0fdfa);
+          border: 1px solid #99f6e4;
           border-radius: 12px;
           padding: 1rem 1.5rem;
           margin-bottom: 1.5rem;
@@ -548,7 +548,7 @@ const TeacherProfile = () => {
         .upload-progress-bar {
           width: 100%;
           height: 8px;
-          background: #e0f2fe;
+          background: #ccfbf1;
           border-radius: 8px;
           overflow: hidden;
           margin-bottom: 0.5rem;
@@ -556,7 +556,7 @@ const TeacherProfile = () => {
 
         .upload-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #3b82f6, #2563eb);
+          background: linear-gradient(90deg, #0d9488, #0f766e);
           border-radius: 8px;
           transition: width 0.3s ease;
           box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
@@ -565,7 +565,7 @@ const TeacherProfile = () => {
         .upload-progress-text {
           font-size: 0.875rem;
           font-weight: 600;
-          color: #1e40af;
+          color: #115e59;
         }
 
         .profile-card {
@@ -631,7 +631,7 @@ const TeacherProfile = () => {
           right: -4px;
           width: 40px;
           height: 40px;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          background: linear-gradient(135deg, #0d9488, #0f766e);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -680,7 +680,7 @@ const TeacherProfile = () => {
         .icon-wrapper {
           width: 80px;
           height: 80px;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          background: linear-gradient(135deg, #0d9488, #0f766e);
           color: white;
           border-radius: 20px;
           display: flex;
@@ -709,7 +709,7 @@ const TeacherProfile = () => {
           align-items: center;
           gap: 0.5rem;
           padding: 0.75rem 1.5rem;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          background: linear-gradient(135deg, #0d9488, #0f766e);
           color: white;
           border: none;
           border-radius: 12px;
@@ -762,7 +762,7 @@ const TeacherProfile = () => {
 
         .form-input:focus {
           outline: none;
-          border-color: #3b82f6;
+          border-color: #0d9488;
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 

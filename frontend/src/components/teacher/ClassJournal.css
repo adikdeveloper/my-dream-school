@@ -114,13 +114,13 @@
 }
 
 .toast-info {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border: 2px solid #3b82f6;
-  color: #1e40af;
+  background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+  border: 2px solid #0d9488;
+  color: #115e59;
 }
 
 .toast-info .toast-icon {
-  background: #3b82f6;
+  background: #0d9488;
   color: white;
 }
 
@@ -302,7 +302,7 @@
 .empty-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #134e4a;
   margin: 0 0 0.75rem 0;
 }
 
@@ -468,12 +468,12 @@
 }
 
 .journal-table-container::-webkit-scrollbar-thumb {
-  background: #1e3a8a;
+  background: #134e4a;
   border-radius: 10px;
 }
 
 .journal-table-container::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
+  background: #0d9488;
 }
 
 /* Journal Table */
@@ -499,7 +499,7 @@
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: #1e3a8a;
+  background: #134e4a;
   border-bottom: 3px solid rgba(255,255,255,0.2);
 }
 
@@ -509,7 +509,7 @@
   position: sticky;
   left: 0;
   z-index: 11;
-  background: #1e3a8a !important;
+  background: #134e4a !important;
 }
 
 .th-student {
@@ -519,14 +519,14 @@
   left: 50px;
   z-index: 11;
   text-align: left;
-  background: #1e3a8a !important;
+  background: #134e4a !important;
   border-right: 3px solid rgba(255,255,255,0.3);
 }
 
 .th-date {
   width: 70px;
   min-width: 70px;
-  background: #3b82f6 !important;
+  background: #0d9488 !important;
 }
 
 .th-average {
@@ -547,7 +547,7 @@
 }
 
 .journal-table tbody tr:hover {
-  background: #f0f9ff !important;
+  background: #f0fdfa !important;
 }
 
 .journal-table td {
@@ -563,7 +563,7 @@
   left: 0;
   z-index: 5;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #134e4a;
   font-size: 15px;
   border-right: 2px solid #e2e8f0;
   background: #f1f5f9 !important;
@@ -584,7 +584,7 @@
 
 .journal-table tbody tr:hover .td-number,
 .journal-table tbody tr:hover .td-student {
-  background: #f0f9ff !important;
+  background: #f0fdfa !important;
 }
 
 .td-grade {
@@ -617,7 +617,7 @@
   text-align: center;
   font-size: 14px;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #134e4a;
   background: white;
   transition: all 0.2s ease;
 }
@@ -725,7 +725,7 @@
 .legend-section-title {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #134e4a;
   margin: 0;
 }
 
@@ -770,7 +770,7 @@
   background: #f1f5f9;
   border-radius: 4px;
   font-weight: 600;
-  color: #1e3a8a;
+  color: #134e4a;
   border: 1px solid #cbd5e1;
   font-size: 0.8rem;
 }
@@ -790,8 +790,8 @@
   align-items: flex-start;
   gap: 0.625rem;
   padding: 0.75rem 1rem;
-  background: #eff6ff;
-  border-left: 3px solid #3b82f6;
+  background: #f0fdfa;
+  border-left: 3px solid #0d9488;
   border-radius: 6px;
 }
 
@@ -802,7 +802,7 @@
 
 .note-text {
   font-size: 0.8125rem;
-  color: #1e40af;
+  color: #115e59;
   line-height: 1.5;
   font-weight: 500;
 }

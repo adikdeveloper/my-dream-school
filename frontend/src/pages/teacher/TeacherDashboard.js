@@ -23,6 +23,29 @@ import './TeacherDashboard.css';
 
 const TEACHER_BLUE = '#3b82f6';
 
+const TeacherNavIcon = ({ name, size = 20 }) => {
+  const paths = {
+    home: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
+    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
+    schedule: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
+    list: <><path d="M9 6h12M9 12h12M9 18h12" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></>,
+    substitution: <><path d="M7 7h11l-3-3M17 17H6l3 3" /><path d="M18 7l-3 3M6 17l3-3" /></>,
+    students: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    tests: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /><path d="m3 15 2 2 3-4" /></>,
+    ai: <><rect x="4" y="7" width="16" height="13" rx="4" /><path d="M12 7V3M9 3h6M8 13h.01M16 13h.01M9 17h6" /></>,
+    assignments: <><path d="M5 4h14v17H5zM9 4V2h6v2M9 10h6M9 14h6M9 18h4" /></>,
+    chat: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
+    notifications: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
+    reports: <><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" /></>,
+    coins: <><circle cx="9" cy="12" r="6" /><path d="M9 9v6M7 10h3a1.5 1.5 0 0 1 0 3H8M15 7a5 5 0 1 1 0 10" /></>,
+    salary: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" /><circle cx="17" cy="15" r="1" /></>,
+    profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+    refresh: <><path d="M20 6v5h-5M4 18v-5h5" /><path d="M18.5 9A7 7 0 0 0 6.2 6.2L4 9M5.5 15A7 7 0 0 0 17.8 17.8L20 15" /></>,
+    logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></>
+  };
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.home}</svg>;
+};
+
 const TeacherDashboard = () => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -61,21 +84,21 @@ const TeacherDashboard = () => {
   }, [user?.firstName, user?.lastName, user?.username]);
 
   const menuItems = [
-    { path: '/teacher',             label: 'Bosh sahifa',     icon: '🏠', end: true, badge: null, section: null },
-    { path: '/teacher/journal',     label: 'Sinf jurnali',    icon: '📖', badge: null, section: null },
-    { path: '/teacher/schedule',    label: 'Dars jadvali',    icon: '📅', badge: null, section: null },
-    { path: '/teacher/lesson-list', label: "Dars ro'yxati",  icon: '☷', badge: null, section: null },
-    { path: '/teacher/substitutions', label: 'Almashtirish',  icon: '🔄', badge: null, section: null },
-    { path: '/teacher/students',    label: "O'quvchilar",     icon: '👥', badge: null, section: null },
-    { path: '/teacher/tests',       label: 'Testlar',         icon: '📋', badge: null, section: null },
-    { path: '/teacher/ai',          label: 'AI Yordamchi',    icon: '🤖', badge: null, section: null },
-    { path: '/teacher/assignments', label: 'Vazifalar',       icon: '📝', badge: notificationCounts.pendingGrading, section: 'assignments' },
-    { path: '/teacher/chat',        label: 'Chat',            icon: '💬', badge: null, section: null },
-    { path: '/teacher/notifications', label: 'Bildirishnomalar', icon: '📥', badge: null, section: null },
-    { path: '/teacher/reports',     label: 'Hisobotlar',      icon: '📊', badge: null, section: null },
-    { path: '/teacher/coins',       label: 'Coinlar',         icon: '🪙', badge: null, section: null },
-    { path: '/teacher/salary',      label: 'Maosh',           icon: '💰', badge: null, section: null },
-    { path: '/teacher/profile',     label: 'Profil',          icon: '👤', badge: null, section: null }
+    { path: '/teacher',             label: 'Bosh sahifa',     icon: 'home', end: true, badge: null, section: null },
+    { path: '/teacher/journal',     label: 'Sinf jurnali',    icon: 'journal', badge: null, section: null },
+    { path: '/teacher/schedule',    label: 'Dars jadvali',    icon: 'schedule', badge: null, section: null },
+    { path: '/teacher/lesson-list', label: "Dars ro'yxati",  icon: 'list', badge: null, section: null },
+    { path: '/teacher/substitutions', label: 'Almashtirish',  icon: 'substitution', badge: null, section: null },
+    { path: '/teacher/students',    label: "O'quvchilar",     icon: 'students', badge: null, section: null },
+    { path: '/teacher/tests',       label: 'Testlar',         icon: 'tests', badge: null, section: null },
+    { path: '/teacher/ai',          label: 'AI Yordamchi',    icon: 'ai', badge: null, section: null },
+    { path: '/teacher/assignments', label: 'Vazifalar',       icon: 'assignments', badge: notificationCounts.pendingGrading, section: 'assignments' },
+    { path: '/teacher/chat',        label: 'Chat',            icon: 'chat', badge: null, section: null },
+    { path: '/teacher/notifications', label: 'Bildirishnomalar', icon: 'notifications', badge: null, section: null },
+    { path: '/teacher/reports',     label: 'Hisobotlar',      icon: 'reports', badge: null, section: null },
+    { path: '/teacher/coins',       label: 'Coinlar',         icon: 'coins', badge: null, section: null },
+    { path: '/teacher/salary',      label: 'Maosh',           icon: 'salary', badge: null, section: null },
+    { path: '/teacher/profile',     label: 'Profil',          icon: 'profile', badge: null, section: null }
   ];
 
   const handleMenuItemClick = async (section) => {
@@ -139,14 +162,14 @@ const TeacherDashboard = () => {
               aria-label="Sahifani yangilash"
               title="Sahifani yangilash"
             >
-              <span className="tch-refresh-icon">🔄</span>
+              <span className="tch-refresh-icon"><TeacherNavIcon name="refresh" /></span>
             </button>
             <button
               onClick={handleLogout}
               className="tch-logout-btn"
               aria-label="Tizimdan chiqish"
             >
-              <span className="tch-logout-icon">🚪</span>
+              <span className="tch-logout-icon"><TeacherNavIcon name="logout" size={18} /></span>
               <span className="tch-logout-text">Chiqish</span>
             </button>
           </div>
@@ -187,7 +210,7 @@ const TeacherDashboard = () => {
                     onClick={() => handleMenuItemClick(item.section)}
                     aria-label={item.label}
                   >
-                    <span className="tch-nav-icon" aria-hidden="true">{item.icon}</span>
+                    <span className="tch-nav-icon" aria-hidden="true"><TeacherNavIcon name={item.icon} /></span>
                     <span className="tch-nav-text">{item.label}</span>
                     {item.badge > 0 && <span className="tch-nav-badge">{item.badge}</span>}
                   </NavLink>

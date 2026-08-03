@@ -533,6 +533,9 @@
 .tch-layout .tch-nav-link:hover { color: #fff; background: var(--tch-shell-hover); border-color: transparent; }
 .tch-layout .tch-nav-link.tch-nav-active { color: #fff !important; background: var(--tch-primary) !important; border: 0 !important; font-weight: 650; }
 .tch-layout .tch-nav-icon { width: 20px; min-width: 20px; font-size: 18px; }
+.tch-layout .tch-nav-icon svg,
+.tch-layout .tch-refresh-icon svg,
+.tch-layout .tch-logout-icon svg { display: block; }
 .tch-layout .tch-nav-badge { color: #991b1b; background: #fee2e2; }
 .tch-layout .tch-main { margin-left: 272px; }
 

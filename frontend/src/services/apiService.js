@@ -295,6 +295,31 @@ const apiService = {
     return response.data;
   },
 
+  getTeacherLessonOptions: async () => {
+    const response = await api.get('/schedule/teacher/lesson-list/options');
+    return response.data;
+  },
+
+  getTeacherLessonList: async () => {
+    const response = await api.get('/schedule/teacher/lesson-list');
+    return response.data;
+  },
+
+  createTeacherLesson: async (lessonData) => {
+    const response = await api.post('/schedule/teacher/lesson-list', lessonData);
+    return response.data;
+  },
+
+  updateTeacherLesson: async (lessonId, lessonData) => {
+    const response = await api.put(`/schedule/teacher/lesson-list/${lessonId}`, lessonData);
+    return response.data;
+  },
+
+  deleteTeacherLesson: async (lessonId) => {
+    const response = await api.delete(`/schedule/teacher/lesson-list/${lessonId}`);
+    return response.data;
+  },
+
   // Get student's schedule
   getStudentSchedule: async () => {
     const response = await api.get('/schedule/student');

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Class = require('../../models/academic/Class');
 const Schedule = require('../../models/scheduling/Schedule');
+const TeacherLesson = require('../../models/scheduling/TeacherLesson');
 const Holiday = require('../../models/scheduling/Holiday');
 const { auth, authorize } = require('../../middleware/auth');
 const { requirePermission } = require('../../middleware/permissions');
@@ -38,6 +39,121 @@ const isValidDay = (day) => {
   const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   return validDays.includes(day);
 };
+
+const teacherLessonPopulate = [
+  { path: 'classId', select: 'name grade section room' },
+  { path: 'subject', select: 'name code color' }
+];
+
+const getTeacherLessonAccess = async (teacherId) => {
+  const classes = await Class.find({
+    isActive: true,
+    subjects: { $elemMatch: { teacher: teacherId } }
+  }).select('name grade section room subjects').populate('subjects.subject', 'name code color').lean();
+
+  return classes.map(cls => ({
+    _id: cls._id,
+    name: cls.name,
+    grade: cls.grade,
+    section: cls.section,
+    room: cls.room || '',
+    subjects: (cls.subjects || [])
+      .filter(item => String(item.teacher) === String(teacherId) && item.subject)
+      .map(item => item.subject)
+  }));
+};
+
+// Teacher-managed personal lesson list
+router.get('/teacher/lesson-list/options', rateLimiters.api, auth, authorize('teacher'), async (req, res) => {
+  try {
+    res.json(await getTeacherLessonAccess(req.user._id));
+  } catch (error) {
+    logError('GET /schedule/teacher/lesson-list/options', error, req.user?.id);
+    res.status(500).json({ message: 'Sinf va fanlarni yuklashda xatolik' });
+  }
+});
+
+router.get('/teacher/lesson-list', rateLimiters.api, auth, authorize('teacher'), async (req, res) => {
+  try {
+    const lessons = await TeacherLesson.find({ teacher: req.user._id })
+      .populate(teacherLessonPopulate)
+      .sort({ day: 1, startTime: 1 });
+    res.json(lessons);
+  } catch (error) {
+    logError('GET /schedule/teacher/lesson-list', error, req.user?.id);
+    res.status(500).json({ message: 'Darslar ro\'yxatini yuklashda xatolik' });
+  }
+});
+
+router.post('/teacher/lesson-list', rateLimiters.api, auth, authorize('teacher'), async (req, res) => {
+  try {
+    const { classId, subject, day, startTime, endTime, room = '', note = '' } = req.body;
+    if (!classId || !subject || !isValidDay(day) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime || '') || !/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime || '')) {
+      return res.status(400).json({ message: 'Dars ma\'lumotlarini to\'liq va to\'g\'ri kiriting' });
+    }
+    if (startTime >= endTime) return res.status(400).json({ message: 'Tugash vaqti boshlanish vaqtidan keyin bo\'lishi kerak' });
+
+    const allowedClass = await Class.exists({
+      _id: classId,
+      isActive: true,
+      subjects: { $elemMatch: { subject, teacher: req.user._id } }
+    });
+    if (!allowedClass) return res.status(403).json({ message: 'Bu sinf va fan sizga biriktirilmagan' });
+
+    const conflict = await TeacherLesson.exists({
+      teacher: req.user._id,
+      day,
+      startTime: { $lt: endTime },
+      endTime: { $gt: startTime }
+    });
+    if (conflict) return res.status(409).json({ message: 'Bu vaqtda boshqa dars mavjud' });
+
+    const lesson = await TeacherLesson.create({
+      teacher: req.user._id, classId, subject, day, startTime, endTime,
+      room: sanitizeString(String(room)).slice(0, 60),
+      note: sanitizeString(String(note)).slice(0, 300)
+    });
+    await lesson.populate(teacherLessonPopulate);
+    res.status(201).json(lesson);
+  } catch (error) {
+    logError('POST /schedule/teacher/lesson-list', error, req.user?.id);
+    const duplicate = error?.code === 11000;
+    res.status(duplicate ? 409 : 500).json({ message: duplicate ? 'Bu dars ro\'yxatda mavjud' : 'Darsni saqlashda xatolik' });
+  }
+});
+
+router.put('/teacher/lesson-list/:id', rateLimiters.api, auth, authorize('teacher'), async (req, res) => {
+  try {
+    const lesson = await TeacherLesson.findOne({ _id: req.params.id, teacher: req.user._id });
+    if (!lesson) return res.status(404).json({ message: 'Dars topilmadi' });
+    const { classId, subject, day, startTime, endTime, room = '', note = '' } = req.body;
+    if (!classId || !subject || !isValidDay(day) || !startTime || !endTime || startTime >= endTime) {
+      return res.status(400).json({ message: 'Dars ma\'lumotlarini to\'g\'ri kiriting' });
+    }
+    const allowedClass = await Class.exists({ _id: classId, isActive: true, subjects: { $elemMatch: { subject, teacher: req.user._id } } });
+    if (!allowedClass) return res.status(403).json({ message: 'Bu sinf va fan sizga biriktirilmagan' });
+    const conflict = await TeacherLesson.exists({ _id: { $ne: lesson._id }, teacher: req.user._id, day, startTime: { $lt: endTime }, endTime: { $gt: startTime } });
+    if (conflict) return res.status(409).json({ message: 'Bu vaqtda boshqa dars mavjud' });
+    Object.assign(lesson, { classId, subject, day, startTime, endTime, room: sanitizeString(String(room)).slice(0, 60), note: sanitizeString(String(note)).slice(0, 300) });
+    await lesson.save();
+    await lesson.populate(teacherLessonPopulate);
+    res.json(lesson);
+  } catch (error) {
+    logError('PUT /schedule/teacher/lesson-list', error, req.user?.id);
+    res.status(500).json({ message: 'Darsni yangilashda xatolik' });
+  }
+});
+
+router.delete('/teacher/lesson-list/:id', rateLimiters.api, auth, authorize('teacher'), async (req, res) => {
+  try {
+    const lesson = await TeacherLesson.findOneAndDelete({ _id: req.params.id, teacher: req.user._id });
+    if (!lesson) return res.status(404).json({ message: 'Dars topilmadi' });
+    res.json({ message: 'Dars o\'chirildi' });
+  } catch (error) {
+    logError('DELETE /schedule/teacher/lesson-list', error, req.user?.id);
+    res.status(500).json({ message: 'Darsni o\'chirishda xatolik' });
+  }
+});
 
 // Get student's schedule
 router.get('/student', rateLimiters.api, auth, async (req, res) => {

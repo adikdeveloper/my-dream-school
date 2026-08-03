@@ -5,6 +5,7 @@ import Logo from '../../components/common/Logo';
 import TeacherHome from '../../components/teacher/TeacherHome';
 import ClassJournal from '../../components/teacher/ClassJournal';
 import Schedule from '../../components/teacher/Schedule';
+import TeacherLessonList from '../../components/teacher/TeacherLessonList';
 import StudentLists from '../../components/teacher/StudentLists';
 import Tests from '../../components/teacher/Tests';
 import Assignments from '../../components/teacher/Assignments';
@@ -63,6 +64,7 @@ const TeacherDashboard = () => {
     { path: '/teacher',             label: 'Bosh sahifa',     icon: '🏠', end: true, badge: null, section: null },
     { path: '/teacher/journal',     label: 'Sinf jurnali',    icon: '📖', badge: null, section: null },
     { path: '/teacher/schedule',    label: 'Dars jadvali',    icon: '📅', badge: null, section: null },
+    { path: '/teacher/lesson-list', label: "Dars ro'yxati",  icon: '☷', badge: null, section: null },
     { path: '/teacher/substitutions', label: 'Almashtirish',  icon: '🔄', badge: null, section: null },
     { path: '/teacher/students',    label: "O'quvchilar",     icon: '👥', badge: null, section: null },
     { path: '/teacher/tests',       label: 'Testlar',         icon: '📋', badge: null, section: null },
@@ -203,6 +205,7 @@ const TeacherDashboard = () => {
             <Route path="/" element={<TeacherHome />} />
             <Route path="/journal" element={<ClassJournal />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/lesson-list" element={<TeacherLessonList />} />
             <Route path="/substitutions" element={<Substitutions accent={TEACHER_BLUE} />} />
             <Route path="/students" element={<StudentLists />} />
             <Route path="/tests" element={<Tests />} />

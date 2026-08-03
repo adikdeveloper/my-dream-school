@@ -1424,6 +1424,47 @@
 .toastInfo { color: #1e40af; background: #eff6ff; border-color: #93c5fd; }
 .toastClose { display: grid; width: 28px; height: 28px; place-items: center; color: currentColor; border-radius: 7px; }
 
+/* Director journal column proportions */
+@media (min-width: 769px) {
+    .journalTable {
+        width: max-content;
+        min-width: 0;
+        table-layout: fixed;
+    }
+
+    .thNumber,
+    .tdNumber {
+        width: 66px;
+        min-width: 66px;
+        max-width: 66px;
+    }
+
+    .thStudent,
+    .tdStudent {
+        left: 66px;
+        width: 288px;
+        min-width: 288px;
+        max-width: 288px;
+        padding-left: 22px;
+        padding-right: 16px;
+        text-align: left;
+    }
+
+    .thDate,
+    .tdGrade {
+        width: 110px;
+        min-width: 110px;
+        max-width: 110px;
+    }
+
+    .thAverage,
+    .tdAverage {
+        width: 90px;
+        min-width: 90px;
+        max-width: 90px;
+    }
+}
+
 @media (max-width: 1023px) { .classJournal { padding: 20px 16px; } }
 @media (max-width: 639px) {
     .classJournal { padding: 14px 12px; }

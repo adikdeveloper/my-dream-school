@@ -52,6 +52,7 @@
 .wave {
     display: inline-block;
     font-size: 1rem;
+    color: #2563eb;
 }
 
 .pageDescription {
@@ -207,7 +208,18 @@
 
 .titleIcon {
     font-size: 1rem;
+    display: inline-flex;
+    color: #2563eb;
 }
+
+.modalTitle,
+.lessonDetails span {
+    align-items: center;
+}
+
+.modalTitle { display: flex; gap: 8px; }
+.lessonDetails span { display: inline-flex; gap: 5px; }
+.statIcon svg, .actionIcon svg, .titleIcon svg, .wave svg { display: block; }
 
 /* Action Grid - Kompakt */
 .actionGrid {

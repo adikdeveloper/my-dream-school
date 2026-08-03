@@ -5,6 +5,24 @@ import { useData } from '../../context/DataContext';
 import apiService from '../../services/apiService';
 import styles from './TeacherHome.module.css';
 
+const HomeIcon = ({ name, size = 20 }) => {
+  const paths = {
+    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    attendance: <><circle cx="9" cy="7" r="4" /><path d="M2 21a7 7 0 0 1 14 0M16 11l2 2 4-5" /></>,
+    grading: <><path d="M5 4h14v17H5zM9 4V2h6v2M9 10h6M9 14h6" /><path d="m9 18 1.5 1.5L14 16" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
+    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
+    assignment: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /></>,
+    test: <><path d="M5 3h14v18H5zM9 7h6M9 11h6M9 15h3" /><path d="m14 16 1.5 1.5L19 14" /></>,
+    warning: <><path d="M12 3 2 21h20Z" /><path d="M12 9v5M12 17h.01" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    close: <path d="m6 6 12 12M18 6 6 18" />,
+    welcome: <><path d="M8 12V5a2 2 0 0 1 4 0v6M12 10V4a2 2 0 0 1 4 0v7M16 10V6a2 2 0 0 1 4 0v8a8 8 0 0 1-8 8h-1a8 8 0 0 1-8-8v-3a2 2 0 0 1 4 0v2" /></>,
+    lightning: <path d="m13 2-9 12h8l-1 8 9-12h-8Z" />
+  };
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.calendar}</svg>;
+};
+
 const TeacherHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -143,7 +161,7 @@ const TeacherHome = () => {
     {
       title: 'Jami o\'quvchilar',
       value: classStats.totalStudents,
-      icon: '👥',
+      icon: 'users',
       gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       change: '0%',
       changeType: 'neutral'
@@ -151,7 +169,7 @@ const TeacherHome = () => {
     {
       title: 'Bugun kelganlar',
       value: classStats.presentToday,
-      icon: '✅',
+      icon: 'attendance',
       gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       change: '0%',
       changeType: 'neutral'
@@ -159,7 +177,7 @@ const TeacherHome = () => {
     {
       title: 'Kutilayotgan baholar',
       value: classStats.pendingGrades,
-      icon: '📝',
+      icon: 'grading',
       gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
       change: '0%',
       changeType: 'neutral'
@@ -167,7 +185,7 @@ const TeacherHome = () => {
     {
       title: 'Topshiriqlar soni',
       value: classStats.upcomingAssignments,
-      icon: '📅',
+      icon: 'calendar',
       gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       change: '0%',
       changeType: 'neutral'
@@ -175,10 +193,10 @@ const TeacherHome = () => {
   ];
 
   const quickActions = [
-    { icon: '📖', label: 'Sinf jurnalini ochish', color: '#667eea', handler: () => navigate('/teacher/journal') },
-    { icon: '✅', label: 'Davomat olish', color: '#43e97b', handler: () => navigate('/teacher/journal') },
-    { icon: '📝', label: 'Topshiriq berish', color: '#f093fb', handler: () => navigate('/teacher/assignments') },
-    { icon: '📋', label: 'Test yaratish', color: '#fbbf24', handler: () => navigate('/teacher/tests') }
+    { icon: 'journal', label: 'Sinf jurnalini ochish', color: '#667eea', handler: () => navigate('/teacher/journal') },
+    { icon: 'attendance', label: 'Davomat olish', color: '#43e97b', handler: () => navigate('/teacher/journal') },
+    { icon: 'assignment', label: 'Topshiriq berish', color: '#f093fb', handler: () => navigate('/teacher/assignments') },
+    { icon: 'test', label: 'Test yaratish', color: '#fbbf24', handler: () => navigate('/teacher/tests') }
   ];
 
   return (
@@ -188,8 +206,8 @@ const TeacherHome = () => {
         <div className={styles.modalOverlay} onClick={() => setShowUngradedModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>⚠️ Bahosiz darslar</h2>
-              <button className={styles.modalClose} onClick={() => setShowUngradedModal(false)}>×</button>
+              <h2 className={styles.modalTitle}><HomeIcon name="warning" size={21} /> Bahosiz darslar</h2>
+              <button className={styles.modalClose} onClick={() => setShowUngradedModal(false)}><HomeIcon name="close" size={18} /></button>
             </div>
             <div className={styles.modalBody}>
               <p className={styles.modalDescription}>
@@ -203,7 +221,7 @@ const TeacherHome = () => {
                       <span className={styles.lessonSeparator}>•</span>
                       <span>{lesson.class}</span>
                       <span className={styles.lessonSeparator}>•</span>
-                      <span>🕐 {lesson.time}</span>
+                      <span><HomeIcon name="clock" size={15} /> {lesson.time}</span>
                     </div>
                   </div>
                 ))}
@@ -224,7 +242,7 @@ const TeacherHome = () => {
       <div className={styles.welcomeSection}>
         <div className={styles.welcomeContent}>
           <h1 className={styles.pageTitle}>
-            <span className={styles.wave}>👋</span>
+            <span className={styles.wave}><HomeIcon name="welcome" size={28} /></span>
             Xush kelibsiz, {user?.firstName}!
           </h1>
           <p className={styles.pageDescription}>
@@ -246,7 +264,7 @@ const TeacherHome = () => {
         {statCards.map((stat, index) => (
           <div key={index} className={styles.statCard} style={{ background: stat.gradient }}>
             <div className={styles.statIconWrapper}>
-              <div className={styles.statIcon}>{stat.icon}</div>
+              <div className={styles.statIcon}><HomeIcon name={stat.icon} size={25} /></div>
             </div>
             <div className={styles.statContent}>
               <div className={styles.statNumber}>{stat.value}</div>
@@ -268,7 +286,7 @@ const TeacherHome = () => {
         <div className={styles.quickActionsCard}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>⚡</span>
+              <span className={styles.titleIcon}><HomeIcon name="lightning" size={19} /></span>
               Tezkor amallar
             </h2>
           </div>
@@ -281,7 +299,7 @@ const TeacherHome = () => {
                 aria-label={action.label}
               >
                 <div className={styles.actionIcon} style={{ background: action.color }}>
-                  {action.icon}
+                  <HomeIcon name={action.icon} size={22} />
                 </div>
                 <span className={styles.actionLabel}>{action.label}</span>
               </button>
@@ -293,7 +311,7 @@ const TeacherHome = () => {
         <div className={styles.scheduleCard}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>📅</span>
+              <span className={styles.titleIcon}><HomeIcon name="calendar" size={19} /></span>
               Bugungi dars jadvali
             </h2>
           </div>

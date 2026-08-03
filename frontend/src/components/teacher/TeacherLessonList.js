@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import apiService from '../../services/apiService';
+import { useAuth } from '../../context/AuthContext';
 import styles from './TeacherLessonList.module.css';
 
 const DAYS = [
@@ -23,6 +24,7 @@ const Icon = ({ name, size = 18 }) => {
 const EMPTY_FORM = { classId: '', subject: '', day: 'Monday', startTime: '08:00', endTime: '08:45', room: '', note: '' };
 
 const TeacherLessonList = () => {
+  const { user } = useAuth();
   const [lessons, setLessons] = useState([]);
   const [options, setOptions] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -39,11 +41,33 @@ const TeacherLessonList = () => {
     try {
       setLoading(true);
       setError('');
-      const [lessonData, optionData] = await Promise.all([
+      const [lessonResult, optionResult] = await Promise.allSettled([
         apiService.getTeacherLessonList(), apiService.getTeacherLessonOptions()
       ]);
-      setLessons(Array.isArray(lessonData) ? lessonData : []);
-      setOptions(Array.isArray(optionData) ? optionData : []);
+      setLessons(lessonResult.status === 'fulfilled' && Array.isArray(lessonResult.value) ? lessonResult.value : []);
+
+      if (optionResult.status === 'fulfilled') {
+        setOptions(Array.isArray(optionResult.value) ? optionResult.value : []);
+      } else {
+        // Vercel frontend Render backenddan oldin deploy bo'lsa, mavjud sinflar
+        // endpointidan vaqtinchalik foydalanamiz. Yangi endpoint ishga tushgach
+        // keyingi yuklashda avtomatik ravishda asosiy API ishlaydi.
+        const classResponse = await apiService.getClasses();
+        const allClasses = classResponse?.classes || [];
+        const teacherId = String(user?._id || '');
+        const fallbackOptions = allClasses.map(cls => ({
+          ...cls,
+          subjects: (cls.subjects || [])
+            .filter(item => String(item.teacher?._id || item.teacher || '') === teacherId)
+            .map(item => item.subject)
+            .filter(Boolean)
+        })).filter(cls => cls.subjects.length > 0);
+        setOptions(fallbackOptions);
+      }
+
+      if (lessonResult.status === 'rejected' && lessonResult.reason?.response?.status !== 404) {
+        setError(lessonResult.reason?.response?.data?.message || "Darslar ro'yxatini yuklashda xatolik");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Ma'lumotlarni yuklashda xatolik");
     } finally {
@@ -51,7 +75,7 @@ const TeacherLessonList = () => {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [user?._id]);
 
   const resetForm = () => { setForm(EMPTY_FORM); setEditingId(null); setError(''); };
 

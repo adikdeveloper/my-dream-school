@@ -28,12 +28,12 @@ const WEEK_DAYS = [
 ];
 
 const CHAT_SUGGESTIONS = [
-  { icon: '📊', text: "Sinflarimdagi o'quvchilarning umumiy ahvolini tahlil qilib ber" },
+  { icon: 'report', text: "Sinflarimdagi o'quvchilarning umumiy ahvolini tahlil qilib ber" },
   { icon: '🏆', text: "Eng yaxshi natija ko'rsatayotgan o'quvchilarim kimlar?" },
-  { icon: '⚠️', text: "Qaysi o'quvchilarimga ko'proq e'tibor berishim kerak?" },
-  { icon: '📝', text: "Keyingi darsim uchun qiziqarli metodika tavsiya qil" },
-  { icon: '📅', text: "Bu haftadagi darslarim jadvalini eslatib yubor" },
-  { icon: '💡', text: "O'quvchilarni darsga qiziqtirish bo'yicha maslahat ber" }
+  { icon: 'warning', text: "Qaysi o'quvchilarimga ko'proq e'tibor berishim kerak?" },
+  { icon: 'assignment', text: "Keyingi darsim uchun qiziqarli metodika tavsiya qil" },
+  { icon: 'calendar', text: "Bu haftadagi darslarim jadvalini eslatib yubor" },
+  { icon: 'lightbulb', text: "O'quvchilarni darsga qiziqtirish bo'yicha maslahat ber" }
 ];
 
 /** AI javobini xavfsiz render qiladi (markdown qoldiqlarini tozalab). */
@@ -76,11 +76,11 @@ const formatDateTimeLocal = (date) => {
 };
 
 const TABS = [
-  { id: 'chat', icon: '💬', label: 'AI Suhbat' },
-  { id: 'analysis', icon: '📊', label: 'Baholar tahlili' },
-  { id: 'schedule', icon: '📅', label: 'Jadval generatori' },
-  { id: 'test', icon: '📝', label: 'Test generatori' },
-  { id: 'plan', icon: '📖', label: 'Dars reja' }
+  { id: 'chat', icon: 'chat', label: 'AI Suhbat' },
+  { id: 'analysis', icon: 'report', label: 'Baholar tahlili' },
+  { id: 'schedule', icon: 'calendar', label: 'Jadval generatori' },
+  { id: 'test', icon: 'test', label: 'Test generatori' },
+  { id: 'plan', icon: 'book', label: 'Dars reja' }
 ];
 
 const TeacherAI = () => {
@@ -348,7 +348,7 @@ const TeacherAI = () => {
         duration: Number(tsSaveForm.duration) || 45,
         questions: tsResult.questions
       });
-      setTsSaveSuccess("✅ Test muvaffaqiyatli saqlandi! Uni \"Testlar\" bo'limida ko'rishingiz mumkin.");
+      setTsSaveSuccess("Test muvaffaqiyatli saqlandi! Uni \"Testlar\" bo'limida ko'rishingiz mumkin.");
       setTsSaveOpen(false);
     } catch (error) {
       setTsSaveError(error.response?.data?.message || 'Testni saqlashda xato yuz berdi');
@@ -449,7 +449,7 @@ const TeacherAI = () => {
             className={`tai-tab ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span className="tai-tab-icon">{tab.icon}</span>
+            <span className="tai-tab-icon"><TeacherUiIcon name={tab.icon} size={17} /></span>
             <span className="tai-tab-label">{tab.label}</span>
           </button>
         ))}
@@ -490,8 +490,8 @@ const TeacherAI = () => {
             <div className="tai-messages">
               {messages.length === 0 && (
                 <div className="tai-welcome">
-                  <div className="tai-welcome-bot">🤖</div>
-                  <h2>Assalomu alaykum{firstName ? `, ${firstName}` : ''}! 👋</h2>
+                  <div className="tai-welcome-bot"><TeacherUiIcon name="ai" size={28} /></div>
+                  <h2>Assalomu alaykum{firstName ? `, ${firstName}` : ''}!</h2>
                   <p>
                     Men sizning AI yordamchingizman. Sinflaringiz va o'quvchilaringiz
                     bo'yicha tahlil qilaman, metodik maslahatlar beraman.
@@ -500,7 +500,7 @@ const TeacherAI = () => {
                   <div className="tai-suggestions">
                     {CHAT_SUGGESTIONS.map((q, i) => (
                       <button key={i} className="tai-suggestion" onClick={() => sendMessage(q.text)}>
-                        <span className="tai-sug-icon">{q.icon}</span>
+                        <span className="tai-sug-icon"><TeacherUiIcon name={q.icon} size={17} /></span>
                         <span>{q.text}</span>
                       </button>
                     ))}
@@ -510,14 +510,14 @@ const TeacherAI = () => {
 
               {messages.map((msg, idx) => (
                 <div key={idx} className={`tai-msg ${msg.role}`}>
-                  <div className="tai-avatar">{msg.role === 'assistant' ? '🤖' : '👨‍🏫'}</div>
+                  <div className="tai-avatar"><TeacherUiIcon name={msg.role === 'assistant' ? 'ai' : 'profile'} size={18} /></div>
                   <div className="tai-bubble">{renderAiText(msg.content)}</div>
                 </div>
               ))}
 
               {chatLoading && (
                 <div className="tai-msg assistant">
-                  <div className="tai-avatar">🤖</div>
+                  <div className="tai-avatar"><TeacherUiIcon name="ai" size={18} /></div>
                   <div className="tai-bubble">
                     <div className="tai-typing"><span></span><span></span><span></span></div>
                   </div>
@@ -551,7 +551,7 @@ const TeacherAI = () => {
       {activeTab === 'analysis' && (
         <div className="tai-panel">
           <div className="tai-panel-head">
-            <h2>📊 Baholar tahlili</h2>
+            <h2><TeacherUiIcon name="report" /> Baholar tahlili</h2>
             <p>O'quvchilaringiz baholarini AI yordamida chuqur tahlil qiling</p>
           </div>
 
@@ -646,7 +646,7 @@ const TeacherAI = () => {
               )}
 
               <div className="tai-ai-box">
-                <div className="tai-ai-box-head">🤖 AI tahlili</div>
+                <div className="tai-ai-box-head"><TeacherUiIcon name="ai" size={17} /> AI tahlili</div>
                 <div className="tai-ai-box-body">{renderAiText(anResult.analysis)}</div>
               </div>
             </div>
@@ -658,7 +658,7 @@ const TeacherAI = () => {
       {activeTab === 'schedule' && (
         <div className="tai-panel">
           <div className="tai-panel-head">
-            <h2>📅 Dars jadvali generatori</h2>
+            <h2><TeacherUiIcon name="calendar" /> Dars jadvali generatori</h2>
             <p>Sinfingiz fanlari asosida AI optimal haftalik jadval loyihasini tuzib beradi</p>
           </div>
 
@@ -730,7 +730,7 @@ const TeacherAI = () => {
 
           {schResult?.draft && (
             <div className="tai-result">
-              <div className="tai-note">ℹ️ {schResult.note}</div>
+              <div className="tai-note"><TeacherUiIcon name="info" size={16} /> {schResult.note}</div>
               <div className="tai-table-wrap">
                 <table className="tai-table tai-sch-table">
                   <thead>
@@ -767,7 +767,7 @@ const TeacherAI = () => {
       {activeTab === 'test' && (
         <div className="tai-panel">
           <div className="tai-panel-head">
-            <h2>📝 Oylik test generatori</h2>
+            <h2><TeacherUiIcon name="test" /> Oylik test generatori</h2>
             <p>AI siz o'qitadigan fan bo'yicha sinf darajasiga mos test savollarini tuzib beradi</p>
           </div>
 
@@ -843,7 +843,7 @@ const TeacherAI = () => {
                   <p>{tsResult.subjectName} • {tsResult.className} • {tsResult.questions.length} ta savol • {tsResult.totalPoints} ball</p>
                 </div>
                 <button className="tai-save-btn" onClick={() => { setTsSaveOpen(!tsSaveOpen); setTsSaveError(''); }}>
-                  💾 Testlarga saqlash
+                  <TeacherUiIcon name="save" size={16} /> Testlarga saqlash
                 </button>
               </div>
 
@@ -900,7 +900,7 @@ const TeacherAI = () => {
                   </div>
                   {tsSaveError && <div className="tai-error">{tsSaveError}</div>}
                   <button className="tai-action-btn" onClick={saveTest} disabled={tsSaving}>
-                    {tsSaving ? <span className="tai-spinner" /> : '💾'} {tsSaving ? 'Saqlanmoqda...' : 'Saqlash'}
+                    {tsSaving ? <span className="tai-spinner" /> : <TeacherUiIcon name="save" size={16} />} {tsSaving ? 'Saqlanmoqda...' : 'Saqlash'}
                   </button>
                 </div>
               )}
@@ -942,7 +942,7 @@ const TeacherAI = () => {
       {activeTab === 'plan' && (
         <div className="tai-panel">
           <div className="tai-panel-head">
-            <h2>📖 Dars reja generatori</h2>
+            <h2><TeacherUiIcon name="book" /> Dars reja generatori</h2>
             <p>Darslaringizni oldindan rejalashtiring — AI professional dars ishlanmasini tuzib beradi</p>
           </div>
 
@@ -1000,12 +1000,12 @@ const TeacherAI = () => {
             <div className="tai-result">
               <div className="tai-test-head">
                 <div>
-                  <h3>📖 {plResult.topic}</h3>
+                  <h3><TeacherUiIcon name="book" size={18} /> {plResult.topic}</h3>
                   <p>{plResult.subjectName} • {plResult.className} • {plResult.duration} daqiqa • {plResult.lessonsCount} ta dars</p>
                 </div>
                 <div className="tai-plan-actions">
                   <button className="tai-plan-btn" onClick={copyPlan}>
-                    {plCopied ? '✅ Nusxalandi' : '📋 Nusxalash'}
+                    <TeacherUiIcon name={plCopied ? 'check' : 'copy'} size={16} /> {plCopied ? 'Nusxalandi' : 'Nusxalash'}
                   </button>
                   <button className="tai-plan-btn" onClick={downloadPlan}>
                     ⬇️ Yuklab olish
@@ -1013,7 +1013,7 @@ const TeacherAI = () => {
                 </div>
               </div>
               <div className="tai-ai-box">
-                <div className="tai-ai-box-head">📖 Dars ishlanmasi</div>
+                <div className="tai-ai-box-head"><TeacherUiIcon name="book" size={17} /> Dars ishlanmasi</div>
                 <div className="tai-ai-box-body">{renderAiText(plResult.plan)}</div>
               </div>
             </div>

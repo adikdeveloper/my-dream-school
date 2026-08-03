@@ -54,17 +54,17 @@ const TeacherSalary = () => {
   const getTransactionIcon = (type) => {
     switch (type) {
       case 'lesson_taught':
-        return '📝';
+        return <TeacherUiIcon name="assignment" size={18} />;
       case 'lesson_missed':
-        return '❌';
+        return <TeacherUiIcon name="close" size={18} />;
       case 'lesson_covered':
-        return '⭐';
+        return <TeacherUiIcon name="star" size={18} />;
       case 'bonus':
-        return '🎁';
+        return <TeacherUiIcon name="coins" size={18} />;
       case 'deduction':
-        return '⚠️';
+        return <TeacherUiIcon name="warning" size={18} />;
       default:
-        return '📋';
+        return <TeacherUiIcon name="test" size={18} />;
     }
   };
 

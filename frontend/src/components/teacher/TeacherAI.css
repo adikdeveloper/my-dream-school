@@ -839,3 +839,21 @@
 @media (max-width: 420px) {
   .tai-form-grid { grid-template-columns: 1fr; }
 }
+.tai-tab-icon,
+.tai-sug-icon,
+.tai-avatar,
+.tai-welcome-bot,
+.tai-ai-box-head,
+.tai-note,
+.tai-panel-head h2,
+.tai-result h3 {
+  align-items: center;
+}
+.tai-tab-icon,
+.tai-sug-icon,
+.tai-avatar,
+.tai-welcome-bot { display: inline-flex; justify-content: center; }
+.tai-ai-box-head,
+.tai-note,
+.tai-panel-head h2,
+.tai-result h3 { display: flex; gap: 7px; }

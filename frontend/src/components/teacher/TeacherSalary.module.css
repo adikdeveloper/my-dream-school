@@ -64,6 +64,9 @@
 }
 
 .pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
     font-size: 1.125rem;
     font-weight: 700;
     color: #1e293b;
@@ -71,6 +74,9 @@
 }
 
 .errorBox {
+  display: flex;
+  align-items: center;
+  gap: 7px;
     display: flex;
     align-items: center;
     justify-content: space-between;

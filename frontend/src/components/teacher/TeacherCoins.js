@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../../services/apiService';
+import TeacherUiIcon from './TeacherUiIcon';
 
 const MONTHS = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
-const medal = (rank) => (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`);
 
 const TeacherCoins = () => {
   const now = new Date();
@@ -33,7 +33,7 @@ const TeacherCoins = () => {
     <div className="tc-page">
       <div className="tc-header">
         <div>
-          <h1>🪙 Mening coinlarim</h1>
+          <h1><TeacherUiIcon name="coins" size={24} /> Mening coinlarim</h1>
           <p>Siz o'z faningizdan bergan coinlar (boshqa o'qituvchilarning coinlari bu yerga aralashmaydi)</p>
         </div>
         <div className="tc-total">{total} <span>coin</span></div>
@@ -62,13 +62,13 @@ const TeacherCoins = () => {
         <div className="tc-list">
           {rows.map((r, i) => (
             <div key={r._id} className={`tc-row ${i < 3 ? 'top' : ''}`}>
-              <div className="tc-rank">{medal(i + 1)}</div>
+              <div className="tc-rank">{i === 0 ? <TeacherUiIcon name="star" size={18} /> : i + 1}</div>
               <div className="tc-avatar"><span>{r.firstName?.[0]}{r.lastName?.[0]}</span></div>
               <div className="tc-info">
                 <span className="tc-name">{r.firstName} {r.lastName}</span>
                 {r.studentNumber && <span className="tc-meta">{r.studentNumber}</span>}
               </div>
-              <div className="tc-count">🪙 {r.totalCoins}</div>
+              <div className="tc-count"><TeacherUiIcon name="coins" size={16} /> {r.totalCoins}</div>
             </div>
           ))}
         </div>
@@ -77,7 +77,7 @@ const TeacherCoins = () => {
       <style>{`
         .tc-page { padding: 1.5rem; background: #f8fafc; min-height: calc(100vh - 85px); }
         .tc-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: #fff; padding: 1.5rem 1.75rem; border-radius: 18px; margin-bottom: 1.25rem; box-shadow: 0 10px 30px rgba(37,99,235,0.25); }
-        .tc-header h1 { margin: 0 0 0.25rem; font-size: 1.35rem; font-weight: 800; }
+        .tc-header h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 0.25rem; font-size: 1.35rem; font-weight: 800; }
         .tc-header p { margin: 0; opacity: 0.95; font-size: 0.85rem; }
         .tc-total { font-size: 2rem; font-weight: 800; line-height: 1; }
         .tc-total span { font-size: 0.9rem; font-weight: 600; opacity: 0.9; }
@@ -94,7 +94,7 @@ const TeacherCoins = () => {
         .tc-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
         .tc-name { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
         .tc-meta { font-size: 0.78rem; color: #94a3b8; }
-        .tc-count { font-weight: 800; color: #1d4ed8; font-size: 1.05rem; white-space: nowrap; }
+        .tc-count { display: flex; align-items: center; gap: 5px; font-weight: 800; color: #1d4ed8; font-size: 1.05rem; white-space: nowrap; }
         @media (max-width: 480px) { .tc-page { padding: 1rem; } .tc-header { flex-direction: column; align-items: flex-start; } }
       `}</style>
     </div>

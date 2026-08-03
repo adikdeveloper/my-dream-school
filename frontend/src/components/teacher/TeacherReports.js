@@ -180,7 +180,7 @@ const TeacherReports = () => {
         </div>
         {error && (
           <div className="error-banner">
-            <span className="error-icon-small">⚠️</span>
+            <span className="error-icon-small"><TeacherUiIcon name="warning" size={17} /></span>
             <span>{error}</span>
             <button onClick={fetchClassStats} className="retry-btn-small">
               Qayta urinish
@@ -253,7 +253,7 @@ const TeacherReports = () => {
       {/* Error message */}
       {error && (
         <div className="error-banner">
-          <span className="error-icon-small">⚠️</span>
+          <span className="error-icon-small"><TeacherUiIcon name="warning" size={17} /></span>
           <span>{error}</span>
           <button onClick={fetchDetailedStats} className="retry-btn-small">
             Qayta urinish
@@ -270,7 +270,7 @@ const TeacherReports = () => {
           className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          <span className="tab-icon">📈</span>
+          <span className="tab-icon"><TeacherUiIcon name="report" size={17} /></span>
           Umumiy ko'rinish
         </button>
         <button
@@ -280,7 +280,7 @@ const TeacherReports = () => {
           className={`tab-button ${activeTab === 'students' ? 'active' : ''}`}
           onClick={() => setActiveTab('students')}
         >
-          <span className="tab-icon">👥</span>
+          <span className="tab-icon"><TeacherUiIcon name="users" size={17} /></span>
           O'quvchilar
         </button>
         <button
@@ -290,7 +290,7 @@ const TeacherReports = () => {
           className={`tab-button ${activeTab === 'attendance' ? 'active' : ''}`}
           onClick={() => setActiveTab('attendance')}
         >
-          <span className="tab-icon">📅</span>
+          <span className="tab-icon"><TeacherUiIcon name="calendar" size={17} /></span>
           Davomat
         </button>
         <button
@@ -300,7 +300,7 @@ const TeacherReports = () => {
           className={`tab-button ${activeTab === 'assignments' ? 'active' : ''}`}
           onClick={() => setActiveTab('assignments')}
         >
-          <span className="tab-icon">📝</span>
+          <span className="tab-icon"><TeacherUiIcon name="assignment" size={17} /></span>
           Vazifalar
         </button>
       </div>
@@ -309,13 +309,13 @@ const TeacherReports = () => {
       <div className="tab-content">
         {activeTab === 'overview' && (
           <div id="overview-panel" role="tabpanel" className="overview-tab">
-            <h2 className="section-title">📊 Sinf ko'rsatkichlari</h2>
+            <h2 className="section-title"><TeacherUiIcon name="report" /> Sinf ko'rsatkichlari</h2>
 
             {selectedSubjectData && (
               <div className="stats-grid">
                 <div className="stat-card">
                   <div className="stat-icon" style={{background: 'linear-gradient(135deg, #0d9488, #0f766e)'}}>
-                    📊
+                    <TeacherUiIcon name="report" size={22} />
                   </div>
                   <div className="stat-content">
                     <div className="stat-value" style={{color: getGradeColor(selectedSubjectData.average)}}>
@@ -328,7 +328,7 @@ const TeacherReports = () => {
 
                 <div className="stat-card">
                   <div className="stat-icon" style={{background: 'linear-gradient(135deg, #10b981, #059669)'}}>
-                    ✅
+                    <TeacherUiIcon name="check" size={22} />
                   </div>
                   <div className="stat-content">
                     <div className="stat-value" style={{color: getAttendanceColor(selectedSubjectData.attendanceRate)}}>
@@ -341,7 +341,7 @@ const TeacherReports = () => {
 
                 <div className="stat-card">
                   <div className="stat-icon" style={{background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)'}}>
-                    👥
+                    <TeacherUiIcon name="users" size={22} />
                   </div>
                   <div className="stat-content">
                     <div className="stat-value">{selectedClassData.studentCount || 0}</div>
@@ -363,7 +363,7 @@ const TeacherReports = () => {
               </div>
             )}
 
-            <h3 className="subsection-title">📈 Baholar taqsimoti</h3>
+            <h3 className="subsection-title"><TeacherUiIcon name="report" size={18} /> Baholar taqsimoti</h3>
             {selectedSubjectData && (
               <div className="grade-distribution">
                 <div className="distribution-item" style={{borderLeft: '4px solid #10b981'}}>
@@ -428,11 +428,11 @@ const TeacherReports = () => {
 
         {activeTab === 'students' && (
           <div id="students-panel" role="tabpanel" className="students-tab">
-            <h2 className="section-title">👥 O'quvchilar bo'yicha hisobot</h2>
+            <h2 className="section-title"><TeacherUiIcon name="users" /> O'quvchilar bo'yicha hisobot</h2>
 
             {studentStats.length === 0 ? (
               <div className="empty-message">
-                <div className="empty-icon-small">📊</div>
+                <div className="empty-icon-small"><TeacherUiIcon name="report" size={24} /></div>
                 <p>Hali statistika ma'lumotlari yo'q</p>
                 <small>O'quvchilarga baholar va davomat kiritganingizdan keyin bu yerda statistika ko'rinadi</small>
               </div>
@@ -500,7 +500,7 @@ const TeacherReports = () => {
                             onClick={() => openStudentDetail(student.studentId)}
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', padding: '0.4rem 0.7rem', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                           >
-                            📊 Batafsil
+                            <TeacherUiIcon name="report" size={14} /> Batafsil
                           </button>
                         </td>
                       </tr>
@@ -514,14 +514,14 @@ const TeacherReports = () => {
 
         {activeTab === 'attendance' && (
           <div id="attendance-panel" role="tabpanel" className="attendance-tab">
-            <h2 className="section-title">📅 Davomat statistikasi</h2>
+            <h2 className="section-title"><TeacherUiIcon name="calendar" /> Davomat statistikasi</h2>
 
             {attendanceStats && attendanceStats.summary ? (
               <>
                 <div className="stats-grid">
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #10b981, #059669)'}}>
-                      ✅
+                      <TeacherUiIcon name="check" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value" style={{color: '#10b981'}}>
@@ -533,7 +533,7 @@ const TeacherReports = () => {
 
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #ef4444, #dc2626)'}}>
-                      ❌
+                      <TeacherUiIcon name="close" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value" style={{color: '#ef4444'}}>
@@ -545,7 +545,7 @@ const TeacherReports = () => {
 
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #0d9488, #0f766e)'}}>
-                      📊
+                      <TeacherUiIcon name="report" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value" style={{color: '#0d9488'}}>
@@ -557,7 +557,7 @@ const TeacherReports = () => {
 
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)'}}>
-                      📝
+                      <TeacherUiIcon name="assignment" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value">{attendanceStats.summary.totalRecords || 0}</div>
@@ -566,7 +566,7 @@ const TeacherReports = () => {
                   </div>
                 </div>
 
-                <h3 className="subsection-title">📆 Kunlik davomat (oxirgi 30 kun)</h3>
+                <h3 className="subsection-title"><TeacherUiIcon name="calendar" size={18} /> Kunlik davomat (oxirgi 30 kun)</h3>
                 <div className="attendance-chart">
                   {attendanceStats.byDate && attendanceStats.byDate.length > 0 ? (
                     attendanceStats.byDate.slice(0, 10).map(day => (
@@ -594,7 +594,7 @@ const TeacherReports = () => {
               </>
             ) : (
               <div className="empty-message">
-                <div className="empty-icon-small">📅</div>
+                <div className="empty-icon-small"><TeacherUiIcon name="calendar" size={24} /></div>
                 <p>Davomat ma'lumotlari yo'q</p>
                 <small>O'quvchilar davomat kiritganingizdan keyin bu yerda statistika ko'rinadi</small>
               </div>
@@ -604,14 +604,14 @@ const TeacherReports = () => {
 
         {activeTab === 'assignments' && (
           <div id="assignments-panel" role="tabpanel" className="assignments-tab">
-            <h2 className="section-title">📝 Vazifalar statistikasi</h2>
+            <h2 className="section-title"><TeacherUiIcon name="assignment" /> Vazifalar statistikasi</h2>
 
             {assignmentStats && assignmentStats.summary ? (
               <>
                 <div className="stats-grid">
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #0d9488, #0f766e)'}}>
-                      📝
+                      <TeacherUiIcon name="assignment" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value">{assignmentStats.summary.total || 0}</div>
@@ -637,7 +637,7 @@ const TeacherReports = () => {
 
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #10b981, #059669)'}}>
-                      ✅
+                      <TeacherUiIcon name="check" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value">{assignmentStats.summary.submissions?.graded || 0}</div>
@@ -650,7 +650,7 @@ const TeacherReports = () => {
 
                   <div className="stat-card">
                     <div className="stat-icon" style={{background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)'}}>
-                      📊
+                      <TeacherUiIcon name="report" size={22} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-value">{assignmentStats.summary.averageGrade || 0}</div>
@@ -660,7 +660,7 @@ const TeacherReports = () => {
                   </div>
                 </div>
 
-                <h3 className="subsection-title">📋 Vazifalar ro'yxati</h3>
+                <h3 className="subsection-title"><TeacherUiIcon name="assignment" size={18} /> Vazifalar ro'yxati</h3>
                 <div className="assignments-list">
                   {assignmentStats.assignments && assignmentStats.assignments.length > 0 ? (
                     assignmentStats.assignments.map(assignment => (
@@ -691,7 +691,7 @@ const TeacherReports = () => {
                         </div>
                         <div className="assignment-stats-row">
                           <div className="stat-item">
-                            <span className="stat-icon-small">✅</span>
+                            <span className="stat-icon-small"><TeacherUiIcon name="check" size={13} /></span>
                             <span>Baholangan: {assignment.submissions.graded || 0}</span>
                           </div>
                           <div className="stat-item">
@@ -714,7 +714,7 @@ const TeacherReports = () => {
               </>
             ) : (
               <div className="empty-message">
-                <div className="empty-icon-small">📝</div>
+                <div className="empty-icon-small"><TeacherUiIcon name="assignment" size={24} /></div>
                 <p>Vazifalar statistikasi yo'q</p>
                 <small>Vazifa yaratganingizdan keyin bu yerda statistika ko'rinadi</small>
               </div>
@@ -755,12 +755,12 @@ const TeacherReports = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
                   {[
-                    { label: "O'qish", value: studentDetail.academicPercent, icon: '📚' },
-                    { label: 'Davomat', value: studentDetail.attendancePercent, icon: '✅' },
-                    { label: 'Umumiy', value: studentDetail.overallPercent, icon: '⭐' }
+                    { label: "O'qish", value: studentDetail.academicPercent, icon: 'book' },
+                    { label: 'Davomat', value: studentDetail.attendancePercent, icon: 'check' },
+                    { label: 'Umumiy', value: studentDetail.overallPercent, icon: 'star' }
                   ].map((m) => (
                     <div key={m.label} style={{ background: '#f8fafc', borderRadius: '12px', padding: '0.9rem', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.3rem' }}>{m.icon}</div>
+                      <div><TeacherUiIcon name={m.icon} size={21} /></div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 800, color: getGradeColor(m.value) }}>{m.value}%</div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{m.label}</div>
                     </div>
@@ -947,6 +947,9 @@ const styles = `
   }
 
   .page-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
     font-size: 1.75rem;
     font-weight: 700;
     color: #1e293b;
@@ -1106,6 +1109,9 @@ const styles = `
   }
 
   .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 1.375rem;
     font-weight: 700;
     color: #1e293b;
@@ -1115,6 +1121,9 @@ const styles = `
   }
 
   .subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     font-size: 1.125rem;
     font-weight: 600;
     color: #1e293b;

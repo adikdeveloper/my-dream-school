@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import styles from './Tests.module.css';
+import TeacherUiIcon from './TeacherUiIcon';
 import { Can } from '../../context/PermissionsContext';
 
 const Tests = () => {
@@ -97,10 +98,10 @@ const Tests = () => {
   ], []);
 
   const questionTypes = [
-    { value: 'single', label: 'Bir variantli', icon: '○' },
-    { value: 'multiple', label: 'Ko\'p variantli', icon: '☐' },
-    { value: 'text', label: 'Yozma javob', icon: '✎' },
-    { value: 'image', label: 'Rasmli savol', icon: '🖼' }
+    { value: 'single', label: 'Bir variantli', icon: 'check' },
+    { value: 'multiple', label: 'Ko\'p variantli', icon: 'test' },
+    { value: 'text', label: 'Yozma javob', icon: 'edit' },
+    { value: 'image', label: 'Rasmli savol', icon: 'image' }
   ];
 
   // API calls
@@ -1042,7 +1043,7 @@ const Tests = () => {
                           >
                             {questionTypes.map(type => (
                               <option key={type.value} value={type.value}>
-                                {type.icon} {type.label}
+                                <TeacherUiIcon name={type.icon} size={15} /> {type.label}
                               </option>
                             ))}
                           </select>
@@ -1255,7 +1256,7 @@ const Tests = () => {
                       <div className={styles.previewHeader}>
                         <span className={styles.previewNum}>{index + 1}</span>
                         <span className={styles.previewType}>
-                          {questionTypes.find(t => t.value === q.questionType)?.icon}{' '}
+                          <TeacherUiIcon name={questionTypes.find(t => t.value === q.questionType)?.icon} size={15} />{' '}
                           {questionTypes.find(t => t.value === q.questionType)?.label}
                         </span>
                         <span className={styles.previewPoints}>{q.points} ball</span>

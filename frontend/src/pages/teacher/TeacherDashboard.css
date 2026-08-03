@@ -564,8 +564,8 @@
   .tch-layout .tch-header-content { padding: 0 12px; gap: 8px; }
   .tch-layout .tch-header-left,
   .tch-layout .tch-header-right { gap: 8px; }
-  .tch-layout .tch-header .logo-text,
   .tch-layout .tch-user-info { display: none; }
+  .tch-layout .tch-header .logo-text { display: flex; }
   .tch-layout .tch-header .logo-image { width: 36px; height: 36px !important; }
   .tch-layout .tch-refresh-btn,
   .tch-layout .tch-logout-btn,

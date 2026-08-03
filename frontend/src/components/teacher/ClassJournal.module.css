@@ -568,6 +568,11 @@
     border-right: 2px solid #cbd5e1;
     background: #f8fafc !important;
 }
+.journalTable .thStudent,
+.journalTable .tdStudent {
+    text-align: left;
+}
+
 
 .journalTable tbody tr:hover .tdNumber,
 .journalTable tbody tr:hover .tdStudent {

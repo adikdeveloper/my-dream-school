@@ -892,7 +892,7 @@ const ClassJournal = () => {
                 <thead>
                   <tr>
                     <th className={styles.thNumber}>№</th>
-                    <th className={styles.thStudent}>Familiya Ism</th>
+                    <th className={styles.thStudent}>Ism familiya</th>
                     {lessonDates.map((date, index) => {
                       const dateStr = date.toISOString().split('T')[0];
                       const holidayInfo = isHoliday(dateStr);
@@ -920,7 +920,7 @@ const ClassJournal = () => {
                       <tr key={student._id}>
                         <td className={styles.tdNumber}>{index + 1}</td>
                         <td className={styles.tdStudent}>
-                          {student.lastName} {student.firstName}
+                          {student.firstName} {student.lastName}
                         </td>
                         {lessonDates.map((date, dateIndex) => {
                           const dateStr = date.toISOString().split('T')[0];

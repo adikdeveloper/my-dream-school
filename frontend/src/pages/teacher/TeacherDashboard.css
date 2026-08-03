@@ -504,9 +504,10 @@
 .tch-layout .tch-container,
 .tch-layout .tch-main { min-height: calc(100vh - 72px); }
 .tch-layout .tch-sidebar {
-  top: 72px;
+  top: 0;
   width: 272px;
-  height: calc(100vh - 72px);
+  height: 100vh;
+  padding-top: 72px;
   background: var(--tch-shell);
   border-right: 1px solid var(--tch-shell-border);
   transition: transform var(--tch-transition);
@@ -549,9 +550,10 @@
   .tch-layout .tch-main { min-height: calc(100vh - 72px); }
   .tch-layout .tch-main { margin-left: 0; }
   .tch-layout .tch-sidebar {
-    top: 72px;
+    top: 0;
     width: min(320px, calc(100vw - 48px));
-    height: calc(100vh - 72px);
+    height: 100vh;
+    padding-top: 72px;
     transform: translateX(-100%);
   }
   .tch-layout .tch-sidebar.tch-sidebar-open { transform: translateX(0); }

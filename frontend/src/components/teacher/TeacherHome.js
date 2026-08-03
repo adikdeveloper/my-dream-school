@@ -193,10 +193,10 @@ const TeacherHome = () => {
   ];
 
   const quickActions = [
-    { icon: 'journal', label: 'Sinf jurnalini ochish', color: '#667eea', handler: () => navigate('/teacher/journal') },
-    { icon: 'attendance', label: 'Davomat olish', color: '#43e97b', handler: () => navigate('/teacher/journal') },
-    { icon: 'assignment', label: 'Topshiriq berish', color: '#f093fb', handler: () => navigate('/teacher/assignments') },
-    { icon: 'test', label: 'Test yaratish', color: '#fbbf24', handler: () => navigate('/teacher/tests') }
+    { icon: 'journal', label: 'Sinf jurnalini ochish', handler: () => navigate('/teacher/journal') },
+    { icon: 'attendance', label: 'Davomat olish', handler: () => navigate('/teacher/journal') },
+    { icon: 'assignment', label: 'Topshiriq berish', handler: () => navigate('/teacher/assignments') },
+    { icon: 'test', label: 'Test yaratish', handler: () => navigate('/teacher/tests') }
   ];
 
   return (
@@ -298,7 +298,7 @@ const TeacherHome = () => {
                 onClick={action.handler}
                 aria-label={action.label}
               >
-                <div className={styles.actionIcon} style={{ background: action.color }}>
+                <div className={styles.actionIcon}>
                   <HomeIcon name={action.icon} size={22} />
                 </div>
                 <span className={styles.actionLabel}>{action.label}</span>

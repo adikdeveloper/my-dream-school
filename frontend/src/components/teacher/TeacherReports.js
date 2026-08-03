@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiService from '../../services/apiService';
+import TeacherUiIcon from './TeacherUiIcon';
 
 const TeacherReports = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -157,7 +158,7 @@ const TeacherReports = () => {
     return (
       <div className="teacher-reports">
         <div className="page-header">
-          <h1 className="page-title">📊 Hisobotlar</h1>
+          <h1 className="page-title"><TeacherUiIcon name="report" size={24} /> Hisobotlar</h1>
           <p className="page-subtitle">Sinf va o'quvchilar bo'yicha batafsil statistika</p>
         </div>
         <div className="loading-container">
@@ -174,7 +175,7 @@ const TeacherReports = () => {
     return (
       <div className="teacher-reports">
         <div className="page-header">
-          <h1 className="page-title">📊 Hisobotlar</h1>
+          <h1 className="page-title"><TeacherUiIcon name="report" size={24} /> Hisobotlar</h1>
           <p className="page-subtitle">Sinf va o'quvchilar bo'yicha batafsil statistika</p>
         </div>
         {error && (
@@ -201,7 +202,7 @@ const TeacherReports = () => {
   return (
     <div className="teacher-reports">
       <div className="page-header">
-        <h1 className="page-title">📊 Hisobotlar</h1>
+        <h1 className="page-title"><TeacherUiIcon name="report" size={24} /> Hisobotlar</h1>
         <p className="page-subtitle">Sinf va o'quvchilar bo'yicha batafsil statistika</p>
       </div>
 

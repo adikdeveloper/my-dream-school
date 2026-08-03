@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
 import styles from './TeacherSalary.module.css';
+import TeacherUiIcon from './TeacherUiIcon';
 
 const TeacherSalary = () => {
   useAuth();
@@ -102,7 +103,7 @@ const TeacherSalary = () => {
 
   const header = (
     <div className={styles.salaryHeader}>
-      <h1 className={styles.pageTitle}>💰 Maosh ma'lumotlari</h1>
+      <h1 className={styles.pageTitle}><TeacherUiIcon name="salary" size={24} /> Maosh ma'lumotlari</h1>
       <div className={styles.monthSelector}>
         <button className={styles.monthNavBtn} onClick={() => handleMonthChange(-1)} aria-label="Oldingi oy">
           ←
@@ -131,7 +132,7 @@ const TeacherSalary = () => {
       <div className={styles.teacherSalary}>
         {header}
         <div className={styles.errorBox}>
-          <span>⚠️ {error || "Maosh ma'lumotlari topilmadi"}</span>
+          <span><TeacherUiIcon name="warning" size={17} /> {error || "Maosh ma'lumotlari topilmadi"}</span>
           <button className={styles.retryBtn} onClick={loadSalaryData}>Qayta urinish</button>
         </div>
       </div>
@@ -180,7 +181,7 @@ const TeacherSalary = () => {
 
       {/* Salary Info Banner */}
       <div className={styles.salaryInfoBanner}>
-        <div className={styles.infoIcon}>ℹ️</div>
+        <div className={styles.infoIcon}><TeacherUiIcon name="info" size={20} /></div>
         <div className={styles.infoText}>
           Maosh faqat <strong>baho qo'yilgan</strong> darslar uchun hisoblanadi.
           Baho qo'yilmagan darslarga to'lov hisoblanmaydi.
@@ -189,7 +190,7 @@ const TeacherSalary = () => {
 
       {/* Soliq tushuntirishi */}
       <div className={styles.salaryInfoBanner}>
-        <div className={styles.infoIcon}>📋</div>
+        <div className={styles.infoIcon}><TeacherUiIcon name="test" size={20} /></div>
         <div className={styles.infoText}>
           <strong>Nega 12% olinadi?</strong> O'zbekiston qonunchiligiga ko'ra ish haqidan{' '}
           <strong>jismoniy shaxslardan olinadigan daromad solig'i (JShDS)</strong> — yagona 12% stavkada ushlab qolinadi.
@@ -200,7 +201,7 @@ const TeacherSalary = () => {
       {/* Statistics Grid */}
       <div className={styles.salaryStatsGrid}>
         <div className={`${styles.statCard} ${styles.graded}`}>
-          <div className={styles.statIcon}>📝</div>
+          <div className={styles.statIcon}><TeacherUiIcon name="assignment" size={22} /></div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{salaryData.totalLessonsTaught || 0}</div>
             <div className={styles.statLabel}>Baho qo'yilgan darslar</div>
@@ -208,7 +209,7 @@ const TeacherSalary = () => {
         </div>
 
         <div className={`${styles.statCard} ${styles.missed}`}>
-          <div className={styles.statIcon}>❌</div>
+          <div className={styles.statIcon}><TeacherUiIcon name="close" size={22} /></div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{salaryData.totalLessonsMissed || 0}</div>
             <div className={styles.statLabel}>O'tkazib yuborildi</div>
@@ -216,7 +217,7 @@ const TeacherSalary = () => {
         </div>
 
         <div className={`${styles.statCard} ${styles.covered}`}>
-          <div className={styles.statIcon}>⭐</div>
+          <div className={styles.statIcon}><TeacherUiIcon name="star" size={22} /></div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{salaryData.totalLessonsCovered || 0}</div>
             <div className={styles.statLabel}>O'rnini bosib o'tildi</div>
@@ -224,7 +225,7 @@ const TeacherSalary = () => {
         </div>
 
         <div className={`${styles.statCard} ${styles.payment}`}>
-          <div className={styles.statIcon}>💰</div>
+          <div className={styles.statIcon}><TeacherUiIcon name="salary" size={22} /></div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{formatCurrency(salaryData.baseSalaryPerLesson || 0)}</div>
             <div className={styles.statLabel}>Dars uchun to'lov</div>

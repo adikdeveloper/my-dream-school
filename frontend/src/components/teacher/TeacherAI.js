@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
 import './TeacherAI.css';
+import TeacherUiIcon from './TeacherUiIcon';
 
 /**
  * O'qituvchi AI yordamchisi.
@@ -430,7 +431,7 @@ const TeacherAI = () => {
     <div className="tai-page">
       {/* ─── Sarlavha ─── */}
       <div className="tai-hero">
-        <div className="tai-hero-icon">🤖</div>
+        <div className="tai-hero-icon"><TeacherUiIcon name="ai" size={29} /></div>
         <div className="tai-hero-text">
           <h1>AI Yordamchi</h1>
           <p>Baholar tahlili, dars jadvali va test generatori — faqat sizning sinflaringiz ma'lumotlari asosida</p>

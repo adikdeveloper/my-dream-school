@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/authService';
+import TeacherUiIcon from './TeacherUiIcon';
 
 const TeacherProfile = () => {
   const { user, updateUser, loadUser } = useAuth();
@@ -238,14 +239,14 @@ const TeacherProfile = () => {
 
       {error && (
         <div className="alert alert-error">
-          <span className="alert-icon">⚠️</span>
+          <span className="alert-icon"><TeacherUiIcon name="warning" size={17} /></span>
           <span>{error}</span>
         </div>
       )}
 
       {success && (
         <div className="alert alert-success">
-          <span className="alert-icon">✅</span>
+          <span className="alert-icon"><TeacherUiIcon name="check" size={17} /></span>
           <span>{success}</span>
         </div>
       )}
@@ -289,7 +290,7 @@ const TeacherProfile = () => {
                     style={{ display: 'none' }}
                   />
                   <label htmlFor="profile-image-upload" className="avatar-upload-btn" title="Rasm yuklash">
-                    <span className="upload-icon">📷</span>
+                    <span className="upload-icon"><TeacherUiIcon name="camera" size={20} /></span>
                   </label>
                   {(profileImage || (imagePreview && !removeProfileImage)) && (
                     <button
@@ -403,7 +404,7 @@ const TeacherProfile = () => {
       <div className="profile-card">
         <div className="card-header">
           <div className="header-left">
-            <div className="icon-wrapper">🔐</div>
+            <div className="icon-wrapper"><TeacherUiIcon name="lock" size={23} /></div>
             <div>
               <h2 className="card-title">Xavfsizlik</h2>
               <p className="card-subtitle">Parolni o'zgartirish</p>
@@ -411,7 +412,7 @@ const TeacherProfile = () => {
           </div>
           {!showPasswordChange && (
             <button className="btn-edit" onClick={() => setShowPasswordChange(true)}>
-              <span>🔑</span>
+              <span><TeacherUiIcon name="key" size={17} /></span>
               <span>Parolni o'zgartirish</span>
             </button>
           )}

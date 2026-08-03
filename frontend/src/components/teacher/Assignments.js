@@ -3,6 +3,7 @@ import { api } from '../../services/authService';
 import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 import styles from './Assignments.module.css';
+import TeacherUiIcon from './TeacherUiIcon';
 
 // Biriktirma fayllar uchun asosiy URL
 const FILE_BASE = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
@@ -218,7 +219,7 @@ const Assignments = () => {
   return (
     <div className={styles.assignmentsContainer}>
       <div className={styles.assignmentsHeader}>
-        <h1 className={styles.pageTitle}>📝 Uyga Vazifalar</h1>
+        <h1 className={styles.pageTitle}><TeacherUiIcon name="assignment" size={24} /> Uyga vazifalar</h1>
         <Can perm="assignment.create"><button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowCreateModal(true)}>
           ➕ Yangi Vazifa
         </button></Can>
@@ -227,14 +228,14 @@ const Assignments = () => {
       {/* Success Message */}
       {success && (
         <div className={styles.successMessage}>
-          ✓ {success}
+          <TeacherUiIcon name="check" size={16} /> {success}
         </div>
       )}
 
       {/* Error Message */}
       {error && (
         <div className={styles.errorMessage}>
-          ✗ {error}
+          <TeacherUiIcon name="close" size={16} /> {error}
         </div>
       )}
 
@@ -261,7 +262,7 @@ const Assignments = () => {
                     title="O'chirish"
                     aria-label="Vazifani o'chirish"
                   >
-                    🗑️
+                    <TeacherUiIcon name="trash" size={17} />
                   </button>
                 </div>
 
@@ -310,7 +311,7 @@ const Assignments = () => {
                           <div className={styles.submissionInfo}>
                             <span className={styles.studentName}>
                               {submission.student?.lastName} {submission.student?.firstName}
-                              {isNew && <span className={styles.newSubmissionBadge}>🔔 YANGI</span>}
+                              {isNew && <span className={styles.newSubmissionBadge}><TeacherUiIcon name="bell" size={13} /> YANGI</span>}
                             </span>
                             {getStatusBadge(submission)}
                             {submission.isLate && (
@@ -330,7 +331,7 @@ const Assignments = () => {
                                   rel="noreferrer"
                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', fontWeight: 600, color: '#0f766e', textDecoration: 'none', background: '#f0fdfa', padding: '0.35rem 0.7rem', borderRadius: '8px', marginBottom: '0.4rem' }}
                                 >
-                                  📎 {submission.attachmentName || 'Biriktirilgan fayl'}
+                                  <TeacherUiIcon name="attach" size={14} /> {submission.attachmentName || 'Biriktirilgan fayl'}
                                 </a>
                               )}
                               {submission.grade !== undefined && (

@@ -45,6 +45,9 @@
 }
 
 .pageTitle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
     font-size: 1.75rem;
     font-weight: 700;
     color: #134e4a;
@@ -239,6 +242,9 @@
 }
 
 .newSubmissionBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.625rem;
     font-weight: 700;
     color: #ef4444;
@@ -526,6 +532,9 @@
 }
 
 .successMessage {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     background: linear-gradient(135deg, #d1fae5, #a7f3d0);
     color: #065f46;
     padding: 1rem 1.5rem;
@@ -537,6 +546,9 @@
 }
 
 .errorMessage {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     background: linear-gradient(135deg, #fee2e2, #fecaca);
     color: #991b1b;
     padding: 1rem 1.5rem;

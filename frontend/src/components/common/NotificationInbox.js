@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../../services/apiService';
+import TeacherUiIcon from '../teacher/TeacherUiIcon';
 
 const PRIORITY_COLORS = {
   low: '#94a3b8',
@@ -95,12 +96,12 @@ const NotificationInbox = () => {
     <div className="inbox-page">
       <div className="inbox-header">
         <div>
-          <h1 className="inbox-title">📥 Bildirishnomalar</h1>
+          <h1 className="inbox-title"><TeacherUiIcon name="bell" size={24} /> Bildirishnomalar</h1>
           <p className="inbox-subtitle">{unreadCount > 0 ? `${unreadCount} ta o'qilmagan` : "Yangiliklar yo'q"}</p>
         </div>
         {unreadCount > 0 && (
           <button className="inbox-mark-all" onClick={handleMarkAllRead}>
-            ✓ Hammasini o'qilgan deb belgilash
+            <TeacherUiIcon name="check" size={16} /> Hammasini o'qilgan deb belgilash
           </button>
         )}
       </div>
@@ -118,7 +119,7 @@ const NotificationInbox = () => {
       {loading && <div className="inbox-loading">Yuklanmoqda...</div>}
       {!loading && items.length === 0 && (
         <div className="inbox-empty">
-          <div className="inbox-empty-icon">🔕</div>
+          <div className="inbox-empty-icon"><TeacherUiIcon name="bell" size={25} /></div>
           <div className="inbox-empty-title">{filter === 'unread' ? 'O\'qilmagan bildirishnomalar yo\'q' : 'Hali bildirishnomalar kelmagan'}</div>
         </div>
       )}
@@ -131,7 +132,7 @@ const NotificationInbox = () => {
             onClick={() => handleClick(n)}
             style={{ borderLeftColor: PRIORITY_COLORS[n.priority] || '#3b82f6' }}
           >
-            <div className="inbox-item-icon">{n.icon || '🔔'}</div>
+            <div className="inbox-item-icon"><TeacherUiIcon name="bell" size={19} /></div>
             <div className="inbox-item-body">
               <div className="inbox-item-head">
                 <h4 className="inbox-item-title">{n.title}</h4>
@@ -144,12 +145,12 @@ const NotificationInbox = () => {
               </div>
               <p className="inbox-item-text">{n.message}</p>
               <div className="inbox-item-meta">
-                <span>👤 {n.sender?.firstName} {n.sender?.lastName}</span>
-                <span>🕐 {formatRelative(n.createdAt)}</span>
+                <span><TeacherUiIcon name="profile" size={14} /> {n.sender?.firstName} {n.sender?.lastName}</span>
+                <span><TeacherUiIcon name="clock" size={14} /> {formatRelative(n.createdAt)}</span>
                 {n.link && <span className="inbox-link-hint">↗ Havolaga o'tish</span>}
               </div>
             </div>
-            <button className="inbox-delete" onClick={(e) => handleDelete(n._id, e)} title="O'chirish">🗑</button>
+            <button className="inbox-delete" onClick={(e) => handleDelete(n._id, e)} title="O'chirish"><TeacherUiIcon name="trash" size={17} /></button>
           </div>
         ))}
       </div>

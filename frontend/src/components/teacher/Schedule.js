@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiService from '../../services/apiService';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Schedule.module.css';
+import TeacherUiIcon from './TeacherUiIcon';
 
 const Schedule = () => {
   const { user } = useAuth();
@@ -118,7 +119,7 @@ const Schedule = () => {
                           if (!cov || !cov.substituteTeacher) return null;
                           return (
                             <div style={{ marginTop: 4, background: '#fee2e2', color: '#991b1b', borderRadius: 4, padding: '2px 5px', fontSize: '0.62rem', fontWeight: 700 }}>
-                              🔄 O'rniga: {cov.substituteTeacher.name} ({formatDateShort(cov.date)})
+                              <TeacherUiIcon name="swap" size={13} /> O'rniga: {cov.substituteTeacher.name} ({formatDateShort(cov.date)})
                             </div>
                           );
                         })()}
@@ -156,7 +157,7 @@ const Schedule = () => {
     return (
       <div className={styles.scheduleContainer}>
         <div className={styles.header}>
-          <h1 className={styles.title}>📅 Dars Jadvali</h1>
+          <h1 className={styles.title}><TeacherUiIcon name="calendar" size={22} /> Dars jadvali</h1>
         </div>
         <div className={styles.emptyBox}>
           <p>Dars jadvali topilmadi</p>
@@ -169,7 +170,7 @@ const Schedule = () => {
   return (
     <div className={styles.scheduleContainer}>
       <div className={styles.header}>
-        <h1 className={styles.title}>📅 Haftalik Dars Jadvali</h1>
+        <h1 className={styles.title}><TeacherUiIcon name="calendar" size={22} /> Haftalik dars jadvali</h1>
         <p className={styles.subtitle}>Jami {timeSlots.length} ta dars soati</p>
       </div>
 
@@ -208,7 +209,7 @@ const Schedule = () => {
         );
         return (
           <div style={{ background: '#fff', borderRadius: 12, padding: '1rem 1.25rem', marginTop: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h2 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#0f172a' }}>🔄 Bu haftadagi almashtirishlar</h2>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 7 }}><TeacherUiIcon name="swap" /> Bu haftadagi almashtirishlar</h2>
             {asSub.map((s) => row(s, `Siz ${s.originalTeacher ? s.originalTeacher.name : ''} o'rniga o'tdingiz`))}
             {asOrig.map((s) => row(s, `${s.substituteTeacher ? s.substituteTeacher.name : ''} sizning o'rningizga o'tdi`))}
           </div>

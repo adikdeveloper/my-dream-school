@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../services/authService';
 import { usePermissions } from '../../context/PermissionsContext';
 import styles from './StudentLists.module.css';
+import TeacherUiIcon from './TeacherUiIcon';
 
 const StudentLists = () => {
   const { can } = usePermissions();
@@ -306,10 +307,10 @@ const StudentLists = () => {
           <h1 className={styles.pageTitle}>Mening O'quvchilarim</h1>
         </div>
         <div className={styles.errorContainer}>
-          <div className={styles.errorIcon}>⚠️</div>
+          <div className={styles.errorIcon}><TeacherUiIcon name="warning" size={28} /></div>
           <p className={styles.errorMessage}>{error}</p>
           <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleRetry}>
-            🔄 Qayta urinish
+            <TeacherUiIcon name="swap" size={16} /> Qayta urinish
           </button>
         </div>
       </div>
@@ -340,7 +341,7 @@ const StudentLists = () => {
 
       {students.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📚</div>
+          <div className={styles.emptyIcon}><TeacherUiIcon name="book" size={30} /></div>
           <h3>Hozircha o'quvchilar yo'q</h3>
           <p>Sizga biriktirilgan sinflar va o'quvchilar bu yerda ko'rinadi</p>
         </div>
@@ -349,7 +350,7 @@ const StudentLists = () => {
           {/* Filters Section */}
           <div className={styles.filtersSection}>
             <div className={styles.searchBox}>
-              <span className={styles.searchIcon}>🔍</span>
+              <span className={styles.searchIcon}><TeacherUiIcon name="search" size={17} /></span>
               <input
                 type="text"
                 placeholder="Ism, familiya, ID yoki telefon..."
@@ -375,7 +376,7 @@ const StudentLists = () => {
                   className={`${styles.classBox} ${filterClass === '' ? styles.classBoxActive : ''}`}
                   onClick={() => setFilterClass('')}
                 >
-                  <div className={styles.classBoxIcon}>📚</div>
+                  <div className={styles.classBoxIcon}><TeacherUiIcon name="book" size={20} /></div>
                   <div className={styles.classBoxLabel}>Barchasi</div>
                   <div className={styles.classBoxCount}>{students.length}</div>
                 </div>
@@ -401,7 +402,7 @@ const StudentLists = () => {
 
           {filteredStudents.length === 0 ? (
             <div className={styles.noResults}>
-              <div className={styles.noResultsIcon}>🔍</div>
+              <div className={styles.noResultsIcon}><TeacherUiIcon name="search" size={26} /></div>
               <h3>Natija topilmadi</h3>
               <p>Qidiruv shartlariga mos o'quvchi yo'q</p>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleClearFilters}>
@@ -455,7 +456,7 @@ const StudentLists = () => {
                             className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`}
                             onClick={() => handleViewProfile(student)}
                           >
-                            👁️ Profil
+                            <TeacherUiIcon name="eye" size={15} /> Profil
                           </button>
                         </td>
                       </tr>
@@ -503,7 +504,7 @@ const StudentLists = () => {
                         className={`${styles.btn} ${styles.btnPrimary} ${styles.btnBlock}`}
                         onClick={() => handleViewProfile(student)}
                       >
-                        👁️ Profilni ko'rish
+                        <TeacherUiIcon name="eye" size={15} /> Profilni ko'rish
                       </button>
                     </div>
                   </div>
@@ -586,10 +587,10 @@ const StudentLists = () => {
               </h3>
               <div className={styles.profileDetails}>
                 {editSuccess && (
-                  <div className={styles.successAlert}>✅ {editSuccess}</div>
+                  <div className={styles.successAlert}><TeacherUiIcon name="check" size={16} /> {editSuccess}</div>
                 )}
                 {editError && (
-                  <div className={styles.errorAlert}>⚠️ {editError}</div>
+                  <div className={styles.errorAlert}><TeacherUiIcon name="warning" size={16} /> {editError}</div>
                 )}
 
                 {isEditing ? (
@@ -730,7 +731,7 @@ const StudentLists = () => {
                       disabled={deleting}
                       style={{ background: '#ef4444', color: '#fff' }}
                     >
-                      {deleting ? 'O\'chirilmoqda...' : '🗑️ O\'chirish'}
+                      {deleting ? 'O\'chirilmoqda...' : <><TeacherUiIcon name="trash" size={16} /> O'chirish</>}
                     </button>
                   )}
                   <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleCloseModal}>
@@ -744,7 +745,7 @@ const StudentLists = () => {
                     onClick={handleSaveEdit}
                     disabled={saving}
                   >
-                    {saving ? 'Saqlanmoqda...' : '💾 Saqlash'}
+                    {saving ? 'Saqlanmoqda...' : <><TeacherUiIcon name="save" size={16} /> Saqlash</>}
                   </button>
                   <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleCancelEdit}>
                     Bekor qilish
@@ -766,8 +767,8 @@ const StudentLists = () => {
             <form onSubmit={handleAddSubmit}>
               <div className={styles.modalBody}>
                 <div className={styles.profileDetails}>
-                  {addSuccess && <div className={styles.successAlert}>✅ {addSuccess}</div>}
-                  {addError && <div className={styles.errorAlert}>⚠️ {addError}</div>}
+                  {addSuccess && <div className={styles.successAlert}><TeacherUiIcon name="check" size={16} /> {addSuccess}</div>}
+                  {addError && <div className={styles.errorAlert}><TeacherUiIcon name="warning" size={16} /> {addError}</div>}
 
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Sinf *</label>
@@ -825,7 +826,7 @@ const StudentLists = () => {
               </div>
               <div className={styles.modalFooter}>
                 <button type="submit" className={`${styles.btn} ${styles.btnSuccess}`} disabled={adding || myClasses.length === 0}>
-                  {adding ? 'Qo\'shilmoqda...' : '💾 Qo\'shish'}
+                  {adding ? 'Qo\'shilmoqda...' : <><TeacherUiIcon name="save" size={16} /> Qo'shish</>}
                 </button>
                 <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowAddModal(false)} disabled={adding}>
                   Bekor qilish

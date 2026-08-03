@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 import './Substitutions.css';
+import TeacherUiIcon from '../teacher/TeacherUiIcon';
 
 // Dars almashtirish (o'rnini bosish) boshqaruvi.
 // Rolga qarab ko'rinish: o'qituvchi o'zi belgilaydi/tasdiqlaydi,
@@ -167,7 +168,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
   if (!allowed) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-        <div style={{ fontSize: '2.5rem' }}>🔒</div>
+        <div style={{ color: '#64748b' }}><TeacherUiIcon name="lock" size={34} /></div>
         <h2 style={{ color: '#1e293b' }}>Ruxsat yo'q</h2>
         <p>Dars almashtirish bo'limidan foydalanish uchun sizda ruxsat yo'q. Administrator yoki direktorga murojaat qiling.</p>
       </div>
@@ -178,7 +179,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
     <div className="sub-page">
       <div className="sub-hero">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.4rem', color: '#0f172a' }}>🔄 Dars almashtirish</h1>
+          <h1 style={{ margin: 0, fontSize: '1.4rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}><TeacherUiIcon name="swap" size={24} /> Dars almashtirish</h1>
           <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>
             O'qituvchi kelmaganda o'rniga kim o'tganini belgilash va tasdiqlash
           </p>
@@ -201,7 +202,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
       {banner && (
         <div style={{ padding: '0.7rem 1rem', borderRadius: 8, marginBottom: '1rem', fontWeight: 600, fontSize: '0.85rem',
           background: banner.type === 'error' ? '#fee2e2' : '#dcfce7', color: banner.type === 'error' ? '#991b1b' : '#166534' }}>
-          {banner.type === 'error' ? '⚠️ ' : '✅ '}{banner.text}
+          <TeacherUiIcon name={banner.type === 'error' ? 'warning' : 'check'} size={16} /> {banner.text}
         </div>
       )}
 
@@ -212,7 +213,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
         <>
           {/* Oylik xulosa: kim necha soat */}
           <div style={card} className="sub-card">
-            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a' }}>📊 {MONTHS[month - 1]} oyi — kim necha soat o'rniga o'tdi</h2>
+            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 7 }}><TeacherUiIcon name="report" /> {MONTHS[month - 1]} oyi — kim necha soat o'rniga o'tdi</h2>
             {report.summary.length === 0 ? (
               <p style={{ color: '#94a3b8', margin: 0 }}>Bu oyda almashtirishlar yo'q</p>
             ) : (
@@ -264,9 +265,9 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
                         <td style={{ ...td, fontWeight: 600, color: accent }}>{teacherName(s.substituteTeacher)}</td>
                         <td style={td}><StatusBadge status={s.status} /></td>
                         <td style={td}>
-                          {s.status !== 'confirmed' && <button style={btn('#16a34a')} onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}>✓ Tasdiq</button>}
+                          {s.status !== 'confirmed' && <button style={btn('#16a34a')} onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}><TeacherUiIcon name="check" size={14} /> Tasdiq</button>}
                           {s.status !== 'rejected' && <button style={btn('#f59e0b')} onClick={() => act(apiService.rejectSubstitution, s._id, 'Rad etildi')}>✕ Rad</button>}
-                          <button style={btn('#ef4444')} onClick={() => { if (window.confirm("O'chirilsinmi?")) act(apiService.deleteSubstitution, s._id, "O'chirildi"); }}>🗑️</button>
+                          <button style={btn('#ef4444')} onClick={() => { if (window.confirm("O'chirilsinmi?")) act(apiService.deleteSubstitution, s._id, "O'chirildi"); }}><TeacherUiIcon name="trash" size={15} /></button>
                         </td>
                       </tr>
                     ))}
@@ -290,7 +291,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
                     <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{s.classId?.name} • {periodLabel({ date: s.date, startTime: s.startTime, endTime: s.endTime, subjectName: s.subject?.name })}</div>
                   </div>
                   <div>
-                    <button style={btn('#16a34a')} onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}>✓ Tasdiqlash</button>
+                    <button style={btn('#16a34a')} onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}><TeacherUiIcon name="check" size={14} /> Tasdiqlash</button>
                     <button style={btn('#ef4444')} onClick={() => act(apiService.rejectSubstitution, s._id, 'Rad etildi')}>✕ Rad etish</button>
                   </div>
                 </div>
@@ -300,7 +301,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
 
           {/* Men boshqa o'qituvchi o'rniga o'tgan darslar */}
           <div style={card}>
-            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a' }}>⭐ Men o'rniga o'tgan darslar</h2>
+            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 7 }}><TeacherUiIcon name="star" /> Men o'rniga o'tgan darslar</h2>
             {mine.asSubstitute.length === 0 ? (
               <p style={{ color: '#94a3b8', margin: 0 }}>Bu oyda yozuvlar yo'q</p>
             ) : mine.asSubstitute.map((s) => (
@@ -311,7 +312,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <StatusBadge status={s.status} />
-                  {s.status === 'pending' && <button style={btn('#ef4444')} onClick={() => act(apiService.deleteSubstitution, s._id, "O'chirildi")}>🗑️</button>}
+                  {s.status === 'pending' && <button style={btn('#ef4444')} onClick={() => act(apiService.deleteSubstitution, s._id, "O'chirildi")}><TeacherUiIcon name="trash" size={15} /></button>}
                 </div>
               </div>
             ))}

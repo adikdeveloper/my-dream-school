@@ -20,7 +20,7 @@ import NotificationBell from '../../components/common/NotificationBell';
 import apiService from '../../services/apiService';
 import './TeacherDashboard.css';
 
-const TEACHER_BLUE = '#0d9488';
+const TEACHER_BLUE = '#3b82f6';
 
 const TeacherDashboard = () => {
   const { user, logout } = useAuth();

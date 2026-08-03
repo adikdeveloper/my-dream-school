@@ -413,7 +413,7 @@ const ClassJournal = () => {
     }
 
     // Validate input
-    if (value !== '' && (isNaN(value) || parseFloat(value) < 0 || parseFloat(value) > 100)) {
+    if (value !== '' && (isNaN(value) || parseFloat(value) < 0 || parseFloat(value) > 5)) {
       return; // Ignore invalid input
     }
 
@@ -841,7 +841,7 @@ const ClassJournal = () => {
                           <input
                             type="number"
                             min="0"
-                            max="100"
+                            max="5"
                             inputMode="numeric"
                             className={`${styles.dailyGradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                             value={grade || ''}
@@ -917,7 +917,7 @@ const ClassJournal = () => {
                                   <input
                                     type="number"
                                     min="0"
-                                    max="100"
+                                    max="5"
                                     className={`${styles.gradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                                     value={grade || ''}
                                     onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
@@ -969,7 +969,7 @@ const ClassJournal = () => {
               <h4 className={styles.legendSectionTitle}>Baholash:</h4>
               <div className={styles.legendItems}>
                 <div className={styles.legendItem}>
-                  <span className={styles.legendBadge}>0-100</span>
+                  <span className={styles.legendBadge}>0-5</span>
                   <span>Ball</span>
                 </div>
                 <div className={styles.legendItem}>

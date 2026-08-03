@@ -1304,11 +1304,11 @@ const addGradeWithAI = async (model, message) => {
   gradeDate.setHours(12, 0, 0, 0); // Standardize time
 
   // Validate Score Logic from Grade Model
-  if (!isExam && score > 0.5) {
+  if (!isExam && score > 5) {
     return { 
       handled: true, 
       action: 'add_grade_invalid_score', 
-      message: `Kundalik dars uchun maksimal 0.5 ball qo'yish mumkin. Siz ${score} ball kiritdingiz.` 
+      message: `Kundalik dars uchun maksimal 5 ball qo'yish mumkin. Siz ${score} ball kiritdingiz.` 
     };
   }
 

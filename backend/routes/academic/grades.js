@@ -103,7 +103,7 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
   body('subject').isMongoId(),
   body('class').isMongoId(),
   body('type').isIn(['quiz', 'assignment', 'midterm', 'final', 'project', 'participation', 'daily', 'exam']),
-  body('score').isFloat({ min: 0, max: 100 }),
+  body('score').isFloat({ min: 0, max: 5 }),
   body('date').isISO8601(),
   body('description').optional().trim().escape()
 ], async (req, res) => {
@@ -815,7 +815,7 @@ router.post('/journal-bulk', auth, authorize('admin'), [
   body('grades').isArray().withMessage('Ballar array bo\'lishi kerak'),
   body('grades.*.student').isMongoId().withMessage('Noto\'g\'ri o\'quvchi ID'),
   body('grades.*.date').isISO8601().withMessage('Noto\'g\'ri sana'),
-  body('grades.*.score').isFloat({ min: 0 }).withMessage('Ball 0 dan katta bo\'lishi kerak'),
+  body('grades.*.score').isFloat({ min: 0, max: 5 }).withMessage('Ball 0 dan 5 gacha bo\'lishi kerak'),
   body('grades.*.periodNumber').isInt({ min: 1, max: 10 }).withMessage('Dars raqami 1-10 oralig\'ida bo\'lishi kerak'),
   body('grades.*.isExam').optional().isBoolean(),
   body('grades.*.examMaxScore').optional().isFloat({ min: 0 })
@@ -841,10 +841,10 @@ router.post('/journal-bulk', auth, authorize('admin'), [
           });
         }
       } else {
-        // Daily grade validation - max 0.5 points
-        if (gradeData.score > 0.5) {
+        // Daily grade validation - max 5 points
+        if (gradeData.score > 5) {
           return res.status(400).json({
-            message: 'Kundalik darsga maksimal 0.5 ball qo\'yish mumkin',
+            message: 'Kundalik darsga maksimal 5 ball qo\'yish mumkin',
             score: gradeData.score,
             studentId: gradeData.student
           });

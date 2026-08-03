@@ -219,7 +219,7 @@ router.get('/teacher/classes', auth, authorize('teacher'), async (req, res) => {
         }
       },
       {
-        // Har bir bahoni foizga normallashtiramiz (kunlik 0.5, imtihon examMaxScore, maks 100%)
+        // Har bir bahoni foizga normallashtiramiz (kunlik 5, imtihon examMaxScore, maks 100%)
         $addFields: {
           pct: {
             $min: [
@@ -231,8 +231,8 @@ router.get('/teacher/classes', auth, authorize('teacher'), async (req, res) => {
                       {
                         $cond: [
                           { $or: [{ $eq: ['$isExam', true] }, { $eq: ['$type', 'exam'] }] },
-                          { $max: [{ $ifNull: ['$examMaxScore', { $ifNull: ['$maxScore', 100] }] }, 0.5] },
-                          0.5
+                          { $max: [{ $ifNull: ['$examMaxScore', { $ifNull: ['$maxScore', 100] }] }, 5] },
+                          5
                         ]
                       }
                     ]
@@ -392,10 +392,10 @@ router.get('/teacher/student/:studentId', auth, async (req, res) => {
       Attendance.find({ student: studentId }).select('status date').lean()
     ]);
 
-    // Bahoni foizga aylantirish (kunlik 0.5, imtihon examMaxScore, maks 100%)
+    // Bahoni foizga aylantirish (kunlik 5, imtihon examMaxScore, maks 100%)
     const gradeToPercent = (g) => {
       const isExam = g.isExam || g.type === 'exam' || !!g.examMaxScore;
-      const cap = isExam ? Math.max(g.examMaxScore || g.maxScore || 100, 0.5) : 0.5;
+      const cap = isExam ? Math.max(g.examMaxScore || g.maxScore || 100, 5) : 5;
       return cap > 0 ? Math.min(100, Math.round(((g.score || 0) / cap) * 100)) : 0;
     };
 
@@ -517,7 +517,7 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
         {
           $group: {
             _id: '$student',
-            // O'rtacha foiz: kunlik baho 0.5 ga, imtihon examMaxScore ga normallashtiriladi (maks 100%)
+            // O'rtacha foiz: kunlik baho 5 ga, imtihon examMaxScore ga normallashtiriladi (maks 100%)
             average: {
               $avg: {
                 $min: [
@@ -529,8 +529,8 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
                           {
                             $cond: [
                               { $or: [{ $eq: ['$isExam', true] }, { $eq: ['$type', 'exam'] }] },
-                              { $max: [{ $ifNull: ['$examMaxScore', { $ifNull: ['$maxScore', 100] }] }, 0.5] },
-                              0.5
+                              { $max: [{ $ifNull: ['$examMaxScore', { $ifNull: ['$maxScore', 100] }] }, 5] },
+                              5
                             ]
                           }
                         ]

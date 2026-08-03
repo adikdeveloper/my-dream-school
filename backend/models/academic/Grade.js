@@ -152,9 +152,9 @@ gradeSchema.pre('save', function(next) {
       return next(new Error(`Imtihon bali ${this.examMaxScore} balldan oshmasligi kerak`));
     }
   } else {
-    // Kundalik bal - maksimal 0.5 ball
-    if (this.score > 0.5) {
-      return next(new Error('Kundalik darsga maksimal 0.5 ball qo\'yish mumkin'));
+    // Kundalik baho - maksimal 5 ball
+    if (this.score > 5) {
+      return next(new Error('Kundalik darsga maksimal 5 ball qo\'yish mumkin'));
     }
   }
 

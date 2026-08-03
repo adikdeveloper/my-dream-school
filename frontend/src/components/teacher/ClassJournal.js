@@ -4,6 +4,32 @@ import apiService from '../../services/apiService';
 import { useAuth } from '../../context/AuthContext';
 import styles from './ClassJournal.module.css';
 
+const JournalIcon = ({ name, size = 18 }) => {
+  const paths = {
+    book: <><path d="M4 5a3 3 0 0 1 3-3h13v17H7a3 3 0 0 0-3 3Z" /><path d="M4 5v17M8 6h8M8 10h6" /></>,
+    day: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h8M8 15h5" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
+    pin: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    left: <path d="m15 18-6-6 6-6" />,
+    right: <path d="m9 18 6-6-6-6" />,
+    chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
+    attendance: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="m17 11 2 2 4-5" /></>,
+    save: <><path d="M5 3h12l3 3v15H4V3Z" /><path d="M8 3v6h8V3M8 21v-7h8v7" /></>,
+    check: <path d="m5 12 4 4L19 6" />,
+    close: <path d="m6 6 12 12M18 6 6 18" />,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
+    warning: <><path d="M12 3 2 21h20Z" /><path d="M12 9v5M12 17h.01" /></>,
+    holiday: <><path d="M4 21h16M6 17h12M8 13h8M12 3v10M9 6h6" /></>,
+    empty: <><path d="M4 7h16v13H4zM8 3h8l2 4H6Z" /><path d="M9 13h6" /></>
+  };
+  return (
+    <svg className={styles.uiIcon} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.info}
+    </svg>
+  );
+};
+
 const ClassJournal = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
@@ -282,7 +308,7 @@ const ClassJournal = () => {
       // If schedule endpoint is not found, show user-friendly message
       if (error.response?.status === 404 || error.response?.data?.message?.includes('topilmadi')) {
         setLessonDates([]);
-        showToast('⚠️ Bu sinf uchun dars jadvali topilmadi. Jurnal ishlatish uchun avval admin tomonidan sinf jadvali yaratilishi kerak.', 'warning');
+        showToast('Bu sinf uchun dars jadvali topilmadi. Jurnal ishlatish uchun avval admin tomonidan sinf jadvali yaratilishi kerak.', 'warning');
       } else {
         showToast('Jurnal ma\'lumotlarini yuklashda xatolik: ' + (error.response?.data?.message || error.message), 'error');
       }
@@ -408,7 +434,7 @@ const ClassJournal = () => {
     // Bayram kunida baho qo'yish mumkin emas
     const holiday = isHoliday(dateStr);
     if (holiday) {
-      showToast(`🎉 ${holiday.name} - bayram kunida baho qo'yib bo'lmaydi!`, 'warning');
+      showToast(`${holiday.name} — bayram kunida baho qo'yib bo'lmaydi!`, 'warning');
       return;
     }
 
@@ -430,7 +456,7 @@ const ClassJournal = () => {
     // Bayram kunida davomat belgilash mumkin emas
     const holiday = isHoliday(dateStr);
     if (holiday) {
-      showToast(`🎉 ${holiday.name} - bayram kunida davomat belgilab bo'lmaydi!`, 'warning');
+      showToast(`${holiday.name} — bayram kunida davomat belgilab bo'lmaydi!`, 'warning');
       return;
     }
 
@@ -462,9 +488,9 @@ const ClassJournal = () => {
   // Get attendance icon like admin dashboard
   const getAttendanceIcon = (status) => {
     switch (status) {
-      case 'absent': return '✗';
-      case 'excused': return '◐';
-      default: return '✓';
+      case 'absent': return <JournalIcon name="close" size={14} />;
+      case 'excused': return <JournalIcon name="clock" size={14} />;
+      default: return <JournalIcon name="check" size={14} />;
     }
   };
 
@@ -631,10 +657,10 @@ const ClassJournal = () => {
     return (
       <div className={styles.classJournal}>
         <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>📖 Sinf Jurnali</h1>
+          <h1 className={styles.pageTitle}><JournalIcon name="book" size={24} /> Sinf jurnali</h1>
         </div>
         <div className={styles.noDataMessage}>
-          <p>❌ Sizga biriktirilgan sinflar topilmadi.</p>
+          <p>Sizga biriktirilgan sinflar topilmadi.</p>
           <p>Iltimos, administrator bilan bog'laning.</p>
         </div>
       </div>
@@ -647,20 +673,20 @@ const ClassJournal = () => {
       {toast.show && (
         <div className={`${styles.toastNotification} ${getToastClass(toast.type)}`}>
           <div className={styles.toastIcon}>
-            {toast.type === 'success' && '✓'}
-            {toast.type === 'warning' && '⚠'}
-            {toast.type === 'error' && '✗'}
-            {toast.type === 'info' && 'ℹ'}
+            {toast.type === 'success' && <JournalIcon name="check" />}
+            {toast.type === 'warning' && <JournalIcon name="warning" />}
+            {toast.type === 'error' && <JournalIcon name="close" />}
+            {toast.type === 'info' && <JournalIcon name="info" />}
           </div>
           <div className={styles.toastMessage}>{toast.message}</div>
           <button className={styles.toastClose} onClick={() => setToast({ ...toast, show: false })}>
-            ×
+            <JournalIcon name="close" size={16} />
           </button>
         </div>
       )}
 
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>📖 Sinf Jurnali</h1>
+        <h1 className={styles.pageTitle}><JournalIcon name="book" size={24} /> Sinf jurnali</h1>
         <p className={styles.pageSubtitle}>Jami {classes.length} ta sinf mavjud</p>
 
         {/* View Type Toggle */}
@@ -669,19 +695,19 @@ const ClassJournal = () => {
             className={`${styles.viewToggleBtn} ${viewType === 'day' ? styles.viewToggleBtnActive : ''}`}
             onClick={() => setViewType('day')}
           >
-            📋 Kunlik
+            <JournalIcon name="day" size={16} /> Kunlik
           </button>
           <button
             className={`${styles.viewToggleBtn} ${viewType === 'week' ? styles.viewToggleBtnActive : ''}`}
             onClick={() => setViewType('week')}
           >
-            📅 Haftalik
+            <JournalIcon name="calendar" size={16} /> Haftalik
           </button>
           <button
             className={`${styles.viewToggleBtn} ${viewType === 'month' ? styles.viewToggleBtnActive : ''}`}
             onClick={() => setViewType('month')}
           >
-            📆 Oylik
+            <JournalIcon name="calendar" size={16} /> Oylik
           </button>
         </div>
 
@@ -717,13 +743,13 @@ const ClassJournal = () => {
           {viewType === 'day' ? (
             <div className={styles.weekNavigation}>
               <button className={styles.weekNavBtn} onClick={() => { const d = new Date(selectedDay); d.setDate(d.getDate() - 1); setSelectedDay(d); }} title="Oldingi kun">
-                ◀ Oldingi
+                <JournalIcon name="left" size={16} /> Oldingi
               </button>
               <button className={`${styles.weekNavBtn} ${styles.todayBtn}`} onClick={() => setSelectedDay(new Date())} title="Bugun">
-                📍 Bugun
+                <JournalIcon name="pin" size={15} /> Bugun
               </button>
               <button className={styles.weekNavBtn} onClick={() => { const d = new Date(selectedDay); d.setDate(d.getDate() + 1); setSelectedDay(d); }} title="Keyingi kun">
-                Keyingi ▶
+                Keyingi <JournalIcon name="right" size={16} />
               </button>
               <div className={styles.weekDisplay}>
                 {selectedDay.getDate()} {months[selectedDay.getMonth()]} {selectedDay.getFullYear()}
@@ -754,13 +780,13 @@ const ClassJournal = () => {
           ) : (
             <div className={styles.weekNavigation}>
               <button className={styles.weekNavBtn} onClick={handlePreviousWeek} title="Oldingi hafta">
-                ◀ Oldingi
+                <JournalIcon name="left" size={16} /> Oldingi
               </button>
               <button className={`${styles.weekNavBtn} ${styles.todayBtn}`} onClick={handleTodayWeek} title="Bugun">
-                📍 Bugun
+                <JournalIcon name="pin" size={15} /> Bugun
               </button>
               <button className={styles.weekNavBtn} onClick={handleNextWeek} title="Keyingi hafta">
-                Keyingi ▶
+                Keyingi <JournalIcon name="right" size={16} />
               </button>
               <div className={styles.weekDisplay}>
                 {formatWeekRange()}
@@ -777,10 +803,7 @@ const ClassJournal = () => {
         </div>
       ) : lessonDates.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.trashAnimation}>
-            <div className={styles.paperFalling}>📄</div>
-            <div className={styles.trashBin}>🗑️</div>
-          </div>
+          <div className={styles.emptyIcon}><JournalIcon name="empty" size={28} /></div>
           <h3 className={styles.emptyTitle}>Darslar topilmadi</h3>
           <p className={styles.emptyText}>
             {viewType === 'day'
@@ -801,15 +824,15 @@ const ClassJournal = () => {
               <strong>{selectedClassData?.name}</strong>
               <span>{subjects.find(s => s.subject?._id === selectedSubject)?.subject?.name}</span>
               <span>{viewType === 'day' ? `${selectedDay.getDate()} ${months[selectedDay.getMonth()]}` : viewType === 'week' ? formatWeekRange() : `${months[selectedMonth]} ${selectedYear}`}</span>
-              <span className={styles.infoStat} style={{ background: '#ccfbf1', color: '#115e59' }}>📊 O'rtacha: {calculateSubjectAvgPercent()}%</span>
-              <span className={styles.infoStat} style={{ background: '#d1fae5', color: '#065f46' }}>📋 Davomat: {calculateAttendanceRate()}%</span>
+              <span className={styles.infoStat}><JournalIcon name="chart" size={15} /> O'rtacha: {calculateSubjectAvgPercent()}%</span>
+              <span className={styles.infoStat}><JournalIcon name="attendance" size={15} /> Davomat: {calculateAttendanceRate()}%</span>
             </div>
             <button
               className={`${styles.btn} ${styles.btnPrimary}`}
               onClick={saveJournal}
               disabled={saving}
             >
-              {saving ? '⏳ Saqlanmoqda...' : '💾 Saqlash'}
+              <JournalIcon name={saving ? 'clock' : 'save'} size={17} /> {saving ? 'Saqlanmoqda...' : 'Saqlash'}
             </button>
           </div>
 
@@ -818,7 +841,7 @@ const ClassJournal = () => {
             <div className={styles.dailyView}>
               {students.length === 0 ? (
                 <div className={styles.emptyState}>
-                  <p>⚠️ Bu sinfda hali o'quvchilar ro'yxatga olinmagan</p>
+                  <p>Bu sinfda hali o'quvchilar ro'yxatga olinmagan</p>
                 </div>
               ) : students.map((student, index) => {
                 const dateStr = selectedDay.toISOString().split('T')[0];
@@ -834,7 +857,7 @@ const ClassJournal = () => {
                       <span className={styles.dailyAvg}>{calculateAverage(student._id)}</span>
                     </div>
                     {holidayInfo ? (
-                      <div className={styles.dailyHoliday}>🎉 {holidayInfo.name}</div>
+                      <div className={styles.dailyHoliday}><JournalIcon name="holiday" size={18} /> {holidayInfo.name}</div>
                     ) : (
                       <div className={styles.dailyCardBody}>
                         <div className={styles.dailyGradeWrap}>
@@ -876,7 +899,7 @@ const ClassJournal = () => {
                       return (
                         <th key={index} className={`${styles.thDate} ${holidayInfo ? styles.holidayHeader : ''}`} title={holidayInfo ? holidayInfo.name : ''}>
                           {date.getDate()}.{String(date.getMonth() + 1).padStart(2, '0')}
-                          {holidayInfo && <span className={styles.holidayIconSmall}>🎉</span>}
+                          {holidayInfo && <span className={styles.holidayIconSmall}><JournalIcon name="holiday" size={13} /></span>}
                         </th>
                       );
                     })}
@@ -887,7 +910,7 @@ const ClassJournal = () => {
                   {students.length === 0 ? (
                     <tr>
                       <td colSpan={lessonDates.length + 3} style={{ textAlign: 'center', padding: '1.5rem' }}>
-                        ⚠️ Bu sinfda hali o'quvchilar ro'yxatga olinmagan
+                        Bu sinfda hali o'quvchilar ro'yxatga olinmagan
                         <br />
                         <small>Administrator bilan bog'lanib, o'quvchilarni qo'shing</small>
                       </td>
@@ -910,7 +933,7 @@ const ClassJournal = () => {
                             <td key={dateIndex} className={`${styles.tdGrade} ${holidayInfo ? styles.holidayCell : ''}`}>
                               {holidayInfo ? (
                                 <div className={styles.holidayMarker} title={holidayInfo.name}>
-                                  🎉
+                                  <JournalIcon name="holiday" size={17} />
                                 </div>
                               ) : (
                                 <div className={styles.gradeWrapper}>
@@ -921,7 +944,7 @@ const ClassJournal = () => {
                                     className={`${styles.gradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                                     value={grade || ''}
                                     onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
-                                    placeholder={isDisabled ? (attStatus === 'excused' ? '◐' : 'н/к') : ''}
+                                    placeholder={isDisabled ? (attStatus === 'excused' ? 'S' : 'n/k') : ''}
                                     disabled={isDisabled}
                                   />
                                   <button
@@ -952,15 +975,15 @@ const ClassJournal = () => {
               <h4 className={styles.legendSectionTitle}>Davomat belgilari:</h4>
               <div className={styles.legendItems}>
                 <div className={styles.legendItem}>
-                  <span className={`${styles.legendIcon} ${styles.legendIconPresent}`}>✓</span>
+                  <span className={`${styles.legendIcon} ${styles.legendIconPresent}`}><JournalIcon name="check" size={12} /></span>
                   <span>Kelgan</span>
                 </div>
                 <div className={styles.legendItem}>
-                  <span className={`${styles.legendIcon} ${styles.legendIconAbsent}`}>✗</span>
+                  <span className={`${styles.legendIcon} ${styles.legendIconAbsent}`}><JournalIcon name="close" size={12} /></span>
                   <span>Kelmagan</span>
                 </div>
                 <div className={styles.legendItem}>
-                  <span className={`${styles.legendIcon} ${styles.legendIconExcused}`}>◐</span>
+                  <span className={`${styles.legendIcon} ${styles.legendIconExcused}`}><JournalIcon name="clock" size={12} /></span>
                   <span>Sababli</span>
                 </div>
               </div>
@@ -979,7 +1002,7 @@ const ClassJournal = () => {
               </div>
             </div>
             <div className={styles.legendNote}>
-              <span className={styles.noteIcon}>ℹ️</span>
+              <span className={styles.noteIcon}><JournalIcon name="info" size={17} /></span>
               <span className={styles.noteText}>Faqat dars bo'lgan kunlar ko'rsatiladi. O'quvchi kelmaganda avtomatik "н/к" ko'rinadi.</span>
             </div>
           </div>

@@ -431,11 +431,6 @@
 
 .tch-layout .tch-header {
   height: 72px;
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  width: 100%;
   background: var(--tch-shell);
   border-bottom: 1px solid var(--tch-shell-border);
   box-shadow: none;
@@ -506,7 +501,6 @@
 }
 .tch-layout .nb-btn:hover { color: #fff; background: #243654; border-color: #3b82f6; }
 
-.tch-layout .tch-container { padding-top: 72px; }
 .tch-layout .tch-container,
 .tch-layout .tch-main { min-height: calc(100vh - 72px); }
 .tch-layout .tch-sidebar {

@@ -507,6 +507,35 @@ const ClassJournal = () => {
     setDirtyGrades(prev => ({ ...prev, [`${studentId}|${dateStr}`]: true }));
   };
 
+  const handleGradeKeyDown = (event, rowIndex, columnIndex) => {
+    const directions = {
+      ArrowUp: [-1, 0],
+      ArrowDown: [1, 0],
+      ArrowLeft: [0, -1],
+      ArrowRight: [0, 1]
+    };
+    const direction = directions[event.key];
+    if (!direction) return;
+
+    event.preventDefault();
+    let targetRow = rowIndex + direction[0];
+    let targetColumn = columnIndex + direction[1];
+    const maxColumn = viewType === 'day' ? 0 : lessonDates.length - 1;
+
+    while (targetRow >= 0 && targetRow < students.length && targetColumn >= 0 && targetColumn <= maxColumn) {
+      const target = document.querySelector(
+        `[data-grade-row="${targetRow}"][data-grade-column="${targetColumn}"]`
+      );
+      if (target && !target.disabled) {
+        target.focus();
+        target.select();
+        return;
+      }
+      targetRow += direction[0];
+      targetColumn += direction[1];
+    }
+  };
+
   const handleAttendanceToggle = (studentId, dateStr) => {
     // Bayram kunida davomat belgilash mumkin emas
     const holiday = isHoliday(dateStr);
@@ -934,6 +963,9 @@ const ClassJournal = () => {
                             className={`${styles.dailyGradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                             value={grade || ''}
                             onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
+                            onKeyDown={(e) => handleGradeKeyDown(e, index, 0)}
+                            data-grade-row={index}
+                            data-grade-column={0}
                             placeholder={beforeRegistration ? 'Hali kelmagan' : isDisabled ? (attStatus === 'excused' ? 'Sababli' : 'н/к') : 'Baho'}
                             disabled={isDisabled || beforeRegistration}
                           />
@@ -1010,6 +1042,9 @@ const ClassJournal = () => {
                                     className={`${styles.gradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                                     value={grade || ''}
                                     onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
+                                    onKeyDown={(e) => handleGradeKeyDown(e, index, dateIndex)}
+                                    data-grade-row={index}
+                                    data-grade-column={dateIndex}
                                     placeholder={beforeRegistration ? '—' : isDisabled ? (attStatus === 'excused' ? 'S' : 'n/k') : ''}
                                     disabled={isDisabled || beforeRegistration}
                                     title={beforeRegistration ? "O'quvchi bu sanada hali maktabga kelmagan" : ''}

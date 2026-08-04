@@ -82,18 +82,10 @@ async function validateGradeDate(classId, gradeDate) {
       };
     }
 
-    if (status === 'expired') {
-      return {
-        valid: false,
-        schedule: schedule,
-        message: 'Bu jadval muddati tugagan'
-      };
-    }
-
     return {
       valid: true,
       schedule: schedule,
-      message: 'OK'
+      message: status === 'expired' ? 'Tarixiy jadval bo\'yicha baholash' : 'OK'
     };
   } catch (error) {
     return {

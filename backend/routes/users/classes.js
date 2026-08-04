@@ -2,6 +2,7 @@
 const { body, validationResult } = require('express-validator');
 const Class = require('../../models/academic/Class');
 const User = require('../../models/users/User');
+const Schedule = require('../../models/scheduling/Schedule');
 const { auth, authorize } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { syncClassToSchedule } = require('../../utils/scheduleSynchronizer');
@@ -101,6 +102,14 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
   try {
     const teacher = await User.findById(req.user.id).select('classes').lean();
     const directlyAssignedClassIds = (teacher?.classes || []).filter(Boolean);
+    const teacherSchedules = await Schedule.find({
+      'schedule.periods.teacher': req.user.id,
+      isActive: true
+    })
+      .select('classId schedule.periods.subject schedule.periods.teacher')
+      .populate('schedule.periods.subject', 'name code color')
+      .lean();
+    const scheduleClassIds = [...new Set(teacherSchedules.map(item => String(item.classId)).filter(Boolean))];
     const classFilters = [
       { classTeacher: req.user.id },
       { 'subjects.teacher': req.user.id }
@@ -108,6 +117,9 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
 
     if (directlyAssignedClassIds.length > 0) {
       classFilters.push({ _id: { $in: directlyAssignedClassIds } });
+    }
+    if (scheduleClassIds.length > 0) {
+      classFilters.push({ _id: { $in: scheduleClassIds } });
     }
 
     // Find classes where teacher is curator/class teacher, subject teacher, or directly assigned.
@@ -223,7 +235,25 @@ router.get('/teacher/my-classes', auth, authorize('teacher'), async (req, res) =
       .sort({ grade: 1, section: 1 })
       .lean();
 
-    res.json(classes);
+    const result = classes.map(classItem => {
+      const subjectMap = new Map();
+      teacherSchedules
+        .filter(item => String(item.classId) === String(classItem._id))
+        .forEach(item => (item.schedule || []).forEach(day => (day.periods || []).forEach(period => {
+          if (String(period.teacher?._id || period.teacher) !== String(req.user.id) || !period.subject) return;
+          const subjectId = String(period.subject._id || period.subject);
+          subjectMap.set(subjectId, {
+            _id: period.subject._id || period.subject,
+            name: period.subject.name || '',
+            code: period.subject.code || '',
+            color: period.subject.color || ''
+          });
+        })));
+
+      return { ...classItem, scheduleSubjects: [...subjectMap.values()] };
+    });
+
+    res.json(result);
   } catch (error) {
     logger.error('Error fetching teacher classes', {
       error: error.message,

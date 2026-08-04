@@ -204,6 +204,16 @@ const ClassJournal = () => {
         return String(teacherId || '') === String(user?._id || '');
       });
 
+      // Ayrim eski sinflarda fan biriktirishi faqat dars jadvalida saqlangan.
+      // Endpoint qaytargan jadval fanlarini ham jurnal ro'yxatiga qo'shamiz.
+      const selectedClassInfo = classes.find(item => String(item._id) === String(selectedClass));
+      (selectedClassInfo?.scheduleSubjects || []).forEach(subject => {
+        const exists = teacherSubjects.some(item => String(item.subject?._id || item.subject) === String(subject._id));
+        if (!exists) {
+          teacherSubjects.push({ subject, teacher: { _id: user?._id }, fromSchedule: true });
+        }
+      });
+
       // Almashtirish orqali shu sinfga vaqtincha kira oladigan fanlarni qo'shamiz
       // (masalan: ingliz tili o'qituvchisi matematika o'qituvchisi o'rniga o'tgan)
       const subSubjects = substitutionAccess

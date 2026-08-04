@@ -270,13 +270,13 @@ const ClassJournal = () => {
         endDate = monthEnd.toISOString();
 
         // Generate lesson dates based on schedule
-        dates = generateLessonDates(scheduleData?.schedule || [], selectedMonth, selectedYear);
+        dates = generateLessonDates(scheduleData, selectedMonth, selectedYear);
         setLessonDates(dates);
       }
 
       // Fetch grades and attendance in parallel for better performance
       const [gradesResponse, attendanceResponse] = await Promise.all([
-        api.get(`/grades?classId=${selectedClass}&subjectId=${selectedSubject}&startDate=${startDate}&endDate=${endDate}`),
+        api.get(`/grades?classId=${selectedClass}&subjectId=${selectedSubject}&startDate=${startDate}&endDate=${endDate}&limit=1000`),
         api.get(`/attendance?classId=${selectedClass}&startDate=${startDate}&endDate=${endDate}`)
       ]);
 
@@ -380,7 +380,8 @@ const ClassJournal = () => {
     return dates;
   };
 
-  const generateLessonDates = (schedule, month, year) => {
+  const generateLessonDates = (scheduleData, month, year) => {
+    const schedule = scheduleData?.schedule || [];
     // Map day names to day numbers (0 = Sunday, 1 = Monday, etc.)
     const dayMap = {
       'Dushanba': 1, 'Seshanba': 2, 'Chorshanba': 3, 'Payshanba': 4, 'Juma': 5, 'Shanba': 6,
@@ -426,11 +427,18 @@ const ClassJournal = () => {
     }
 
     const dates = [];
+    const scheduleStart = scheduleData?.startDate ? new Date(scheduleData.startDate) : null;
+    const scheduleEnd = scheduleData?.endDate ? new Date(scheduleData.endDate) : null;
+    if (scheduleStart) scheduleStart.setHours(0, 0, 0, 0);
+    if (scheduleEnd) scheduleEnd.setHours(23, 59, 59, 999);
+
     // Generate all dates in the month for those days
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      if (daysOfWeek.includes(date.getDay())) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const insideSchedule = (!scheduleStart || date >= scheduleStart) && (!scheduleEnd || date <= scheduleEnd);
+      if (insideSchedule && daysOfWeek.includes(date.getDay()) && !isHoliday(dateStr)) {
         dates.push(date);
       }
     }
@@ -571,7 +579,7 @@ const ClassJournal = () => {
                 description: 'Kundalik baho'
               }).catch(err => ({
                 error: true,
-                message: `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
+                message: err.response?.data?.message || `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
               }))
             );
           }
@@ -592,7 +600,7 @@ const ClassJournal = () => {
                 period: 1
               }).catch(err => ({
                 error: true,
-                message: `Davomat saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
+                message: err.response?.data?.message || `Davomat saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
               }))
             );
           }

@@ -38,8 +38,10 @@ router.get('/',
       }
       return true;
     }),
+    query('startDate').optional().isISO8601().withMessage('Noto\'g\'ri boshlanish sanasi'),
+    query('endDate').optional().isISO8601().withMessage('Noto\'g\'ri tugash sanasi'),
     query('page').optional().isInt({ min: 1 }).withMessage('Page 1 dan katta bo\'lishi kerak'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit 1 dan 100 gacha bo\'lishi kerak')
+    query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('Limit 1 dan 1000 gacha bo\'lishi kerak')
   ],
   async (req, res) => {
     try {
@@ -49,7 +51,7 @@ router.get('/',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { studentId, subjectId, classId, page = 1, limit = 50 } = req.query;
+      const { studentId, subjectId, classId, startDate, endDate, page = 1, limit = 50 } = req.query;
       let query = {};
 
       // Security: Students can only see their own grades
@@ -61,6 +63,11 @@ router.get('/',
 
       if (subjectId) query.subject = subjectId;
       if (classId) query.class = classId;
+      if (startDate || endDate) {
+        query.date = {};
+        if (startDate) query.date.$gte = new Date(startDate);
+        if (endDate) query.date.$lte = new Date(endDate);
+      }
 
       // Calculate pagination
       const skip = (parseInt(page) - 1) * parseInt(limit);

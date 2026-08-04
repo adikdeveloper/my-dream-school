@@ -147,12 +147,23 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
     // Validate grade date against schedule
     const validation = await scheduleValidator.validateGradeDate(req.body.class, req.body.date);
 
+    // O'tgan sana o'sha davrdagi jadval oralig'iga kirsa, jadval bugungi kunda
+    // "expired" bo'lsa ham tarixiy baho qo'yishga ruxsat beriladi.
+    const scheduleStatus = validation.schedule?.getStatus?.();
+    const gradeDay = new Date(req.body.date);
+    const today = new Date();
+    gradeDay.setHours(23, 59, 59, 999);
+    today.setHours(23, 59, 59, 999);
+    const isHistoricalSchedule = !!validation.schedule
+      && scheduleStatus === 'expired'
+      && gradeDay <= today;
+
     // Allow admins to bypass validation with warning, but teachers must follow schedule
-    if (!validation.valid) {
+    if (!validation.valid && !isHistoricalSchedule) {
       if (req.user.role === 'teacher') {
         return res.status(400).json({
           message: `Baho qo'yish mumkin emas: ${validation.message}`,
-          scheduleStatus: validation.schedule ? validation.schedule.getStatus() : null
+          scheduleStatus
         });
       }
       // Admin gets a warning but can proceed

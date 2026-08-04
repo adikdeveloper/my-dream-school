@@ -211,7 +211,7 @@ router.get('/teacher/journal-context', auth, authorize('teacher'), async (req, r
   try {
     const { classId, startDate, endDate } = req.query;
     if (!classId || !startDate || !endDate) return res.status(400).json({ message: 'Sinf va sana oralig\'i majburiy' });
-    const scope = await getTeacherJournalScope(req.user.id, { classId });
+    const scope = await getTeacherJournalScope(req.user.id, { classId, startDate, endDate });
     const classScope = scope.find(item => String(item._id) === String(classId));
     if (!classScope) return res.status(403).json({ message: 'Bu sana oralig\'ida jurnalga kirish huquqi yo\'q' });
     const [classData, schedules, substitutions, teacherLessons] = await Promise.all([

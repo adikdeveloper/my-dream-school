@@ -39,6 +39,9 @@ const toLocalDateKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+const toUtcDayStart = date => `${toLocalDateKey(date)}T00:00:00.000Z`;
+const toUtcDayEnd = date => `${toLocalDateKey(date)}T23:59:59.999Z`;
+
 const ClassJournal = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
@@ -240,8 +243,8 @@ const ClassJournal = () => {
         const dayEnd = new Date(selectedDay);
         dayEnd.setHours(23, 59, 59, 999);
 
-        startDate = dayStart.toISOString();
-        endDate = dayEnd.toISOString();
+        startDate = toUtcDayStart(dayStart);
+        endDate = toUtcDayEnd(dayEnd);
 
       } else if (viewType === 'week') {
         // Weekly view: 7 days from Monday to Sunday
@@ -251,8 +254,8 @@ const ClassJournal = () => {
         weekEnd.setDate(weekEnd.getDate() + 6);
         weekEnd.setHours(23, 59, 59, 999);
 
-        startDate = weekStart.toISOString();
-        endDate = weekEnd.toISOString();
+        startDate = toUtcDayStart(weekStart);
+        endDate = toUtcDayEnd(weekEnd);
 
         // Generate lesson dates for the week
       } else {
@@ -260,8 +263,8 @@ const ClassJournal = () => {
         const monthStart = new Date(selectedYear, selectedMonth, 1);
         const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
 
-        startDate = monthStart.toISOString();
-        endDate = monthEnd.toISOString();
+        startDate = toUtcDayStart(monthStart);
+        endDate = toUtcDayEnd(monthEnd);
 
         // Generate lesson dates based on schedule
       }
@@ -271,6 +274,15 @@ const ClassJournal = () => {
       const rangeSubstitutions = contextResponse.data?.substitutions || [];
       const teacherLessons = contextResponse.data?.teacherLessons || [];
       setStudents(contextResponse.data?.class?.students || []);
+      const rangeSubjects = (contextResponse.data?.subjects || []).map(subject => ({
+        subject, teacher: { _id: user?._id }, fromSchedule: true
+      }));
+      setSubjects(rangeSubjects);
+      if (!rangeSubjects.some(item => String(item.subject?._id) === String(selectedSubject))) {
+        setSelectedSubject(rangeSubjects[0]?.subject?._id || '');
+        setLessonDates([]);
+        return;
+      }
       if (viewType === 'day') {
         const dayStart = new Date(selectedDay); dayStart.setHours(0, 0, 0, 0);
         dates = generateLessonDatesForWeek(schedules, dayStart, rangeSubstitutions, teacherLessons).filter(date => toLocalDateKey(date) === toLocalDateKey(dayStart));

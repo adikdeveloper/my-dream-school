@@ -11,13 +11,13 @@ const asId = value => String(value?._id || value || '');
 const normalizeDay = value => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  date.setHours(0, 0, 0, 0);
+  date.setUTCHours(0, 0, 0, 0);
   return date;
 };
 
 const endOfDay = value => {
   const date = normalizeDay(value);
-  if (date) date.setHours(23, 59, 59, 999);
+  if (date) date.setUTCHours(23, 59, 59, 999);
   return date;
 };
 
@@ -99,7 +99,10 @@ function collectScheduleSubjects(schedule, teacherId) {
 }
 
 async function getTeacherJournalScope(teacherId, options = {}) {
-  const [teacher, schedules, substitutions, teacherLessons, gradeAssignments, legacyClasses] = await Promise.all([
+  const isRangeScoped = !!(normalizeDay(options.startDate) && endOfDay(options.endDate || options.startDate));
+  const overlapQuery = isRangeScoped ? scheduleOverlapFilter(options.startDate, options.endDate) : null;
+  if (overlapQuery && options.classId) overlapQuery.classId = options.classId;
+  const [teacher, schedules, substitutions, teacherLessons, gradeAssignments, legacyClasses, overlappingClassIds] = await Promise.all([
     User.findById(teacherId).select('classes subjects').lean(),
     getTeacherSchedules(teacherId, options),
     getTeacherSubstitutions(teacherId, options),
@@ -111,8 +114,10 @@ async function getTeacherJournalScope(teacherId, options = {}) {
     })
       .select('name grade section group subjects classTeacher isActive')
       .populate('subjects.subject', 'name code color isActive')
-      .lean()
+      .lean(),
+    overlapQuery ? Schedule.distinct('classId', overlapQuery) : []
   ]);
+  const rangeScheduleClasses = new Set(overlappingClassIds.map(asId));
 
   const directClassIds = (teacher?.classes || []).map(asId).filter(Boolean);
   if (directClassIds.length) {
@@ -170,6 +175,7 @@ async function getTeacherJournalScope(teacherId, options = {}) {
   for (const lesson of teacherLessons) {
     const entry = ensureClass(lesson.classId);
     if (!entry || !lesson.subject) continue;
+    if (isRangeScoped && rangeScheduleClasses.has(asId(lesson.classId))) continue;
     entry.sources.add('teacherLesson');
     entry.subjects.set(asId(lesson.subject), { _id: lesson.subject._id || lesson.subject, name: lesson.subject.name || '', code: lesson.subject.code || '', color: lesson.subject.color || '' });
   }
@@ -183,6 +189,7 @@ async function getTeacherJournalScope(teacherId, options = {}) {
   }
 
   for (const classItem of legacyClasses) {
+    if (isRangeScoped && rangeScheduleClasses.has(asId(classItem))) continue;
     const entry = ensureClass(classItem);
     if (!entry) continue;
     entry.sources.add('legacy');
@@ -225,7 +232,7 @@ async function resolveTeacherLessonAccess({ teacherId, classId, subjectId, date 
     ['Chorshanba', 'Wednesday'], ['Payshanba', 'Thursday'], ['Juma', 'Friday'],
     ['Shanba', 'Saturday']
   ];
-  const allowedDayNames = dayNames[dayStart.getDay()];
+  const allowedDayNames = dayNames[dayStart.getUTCDay()];
   const schedule = schedules.find(item => (item.schedule || []).some(day =>
     allowedDayNames.includes(day.day) && (day.periods || []).some(period =>
       asId(period.teacher) === asId(teacherId) && asId(period.subject) === asId(subjectId)

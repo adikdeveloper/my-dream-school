@@ -545,7 +545,26 @@ router.get('/class/:classId/current', rateLimiters.api, auth, async (req, res) =
       return res.status(400).json({ message: 'Sinf ID noto\'g\'ri' });
     }
 
-    const schedule = await Schedule.findCurrentSchedule(classId);
+    let schedule;
+    if (req.query.date) {
+      const targetDate = new Date(req.query.date);
+      if (Number.isNaN(targetDate.getTime())) {
+        return res.status(400).json({ message: 'Sana noto\'g\'ri' });
+      }
+      targetDate.setHours(12, 0, 0, 0);
+      schedule = await Schedule.findOne({
+        classId,
+        isActive: true,
+        startDate: { $lte: targetDate },
+        endDate: { $gte: targetDate }
+      })
+        .populate('schedule.periods.subject', 'name code color')
+        .populate('schedule.periods.teacher', 'firstName lastName email')
+        .populate('createdBy', 'firstName lastName')
+        .sort({ startDate: -1 });
+    } else {
+      schedule = await Schedule.findCurrentSchedule(classId);
+    }
 
     if (!schedule) {
       return res.status(404).json({ message: 'Jadval topilmadi' });

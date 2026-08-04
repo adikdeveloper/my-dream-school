@@ -240,8 +240,15 @@ const ClassJournal = () => {
     try {
       setLoading(true);
 
-      // Get current schedule for the class
-      const scheduleResponse = await api.get(`/schedule/class/${selectedClass}/current`);
+      // Tanlangan ko'rinishga tegishli (jumladan tarixiy) jadvalni olamiz.
+      const scheduleTargetDate = viewType === 'day'
+        ? new Date(selectedDay)
+        : viewType === 'week'
+          ? new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth(), currentWeekStart.getDate() + 3)
+          : new Date(selectedYear, selectedMonth, 15);
+      const scheduleResponse = await api.get(
+        `/schedule/class/${selectedClass}/current?date=${toLocalDateKey(scheduleTargetDate)}`
+      );
       const scheduleData = scheduleResponse.data;
 
       let startDate, endDate, dates;
@@ -270,7 +277,7 @@ const ClassJournal = () => {
         endDate = weekEnd.toISOString();
 
         // Generate lesson dates for the week
-        dates = generateLessonDatesForWeek(scheduleData?.schedule || [], weekStart);
+        dates = generateLessonDatesForWeek(scheduleData, weekStart);
         setLessonDates(dates);
       } else {
         // Monthly view
@@ -357,7 +364,8 @@ const ClassJournal = () => {
     }
   };
 
-  const generateLessonDatesForWeek = (schedule, weekStart) => {
+  const generateLessonDatesForWeek = (scheduleData, weekStart) => {
+    const schedule = scheduleData?.schedule || [];
     // Map day names to day numbers (0 = Sunday, 1 = Monday, etc.)
     const dayMap = {
       'Dushanba': 1, 'Seshanba': 2, 'Chorshanba': 3, 'Payshanba': 4, 'Juma': 5, 'Shanba': 6,
@@ -401,10 +409,16 @@ const ClassJournal = () => {
 
     // Generate dates for the week (7 days from weekStart)
     const dates = [];
+    const scheduleStart = scheduleData?.startDate ? new Date(scheduleData.startDate) : null;
+    const scheduleEnd = scheduleData?.endDate ? new Date(scheduleData.endDate) : null;
+    if (scheduleStart) scheduleStart.setHours(0, 0, 0, 0);
+    if (scheduleEnd) scheduleEnd.setHours(23, 59, 59, 999);
     for (let i = 0; i < 7; i++) {
       const date = new Date(weekStart);
       date.setDate(date.getDate() + i);
-      if (daysOfWeek.includes(date.getDay())) {
+      const dateStr = toLocalDateKey(date);
+      const insideSchedule = (!scheduleStart || date >= scheduleStart) && (!scheduleEnd || date <= scheduleEnd);
+      if (insideSchedule && daysOfWeek.includes(date.getDay()) && !isHoliday(dateStr)) {
         dates.push(date);
       }
     }

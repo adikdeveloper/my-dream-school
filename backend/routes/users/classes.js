@@ -304,7 +304,7 @@ router.get('/:id', auth, async (req, res) => {
 
     const classData = await Class.findById(req.params.id)
       .populate('classTeacher', 'firstName lastName email')
-      .populate('students', 'firstName lastName studentId')
+      .populate('students', 'firstName lastName studentId registrationDate')
       .populate('subjects.subject', 'name code color')
       .populate('subjects.teacher', 'firstName lastName');
 

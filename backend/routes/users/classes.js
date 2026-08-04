@@ -218,6 +218,14 @@ router.get('/teacher/my-classes', auth, authorize('teacher'), async (req, res) =
   try {
     const teacher = await User.findById(req.user.id).select('classes').lean();
     const directlyAssignedClassIds = (teacher?.classes || []).filter(Boolean);
+    const teacherSchedules = await Schedule.find({
+      'schedule.periods.teacher': req.user.id,
+      isActive: true
+    })
+      .select('classId schedule.periods.subject schedule.periods.teacher')
+      .populate('schedule.periods.subject', 'name code color')
+      .lean();
+    const scheduleClassIds = [...new Set(teacherSchedules.map(item => String(item.classId)).filter(Boolean))];
     const classFilters = [
       { classTeacher: req.user.id },
       { 'subjects.teacher': req.user.id }
@@ -225,6 +233,9 @@ router.get('/teacher/my-classes', auth, authorize('teacher'), async (req, res) =
 
     if (directlyAssignedClassIds.length > 0) {
       classFilters.push({ _id: { $in: directlyAssignedClassIds } });
+    }
+    if (scheduleClassIds.length > 0) {
+      classFilters.push({ _id: { $in: scheduleClassIds } });
     }
 
     const classes = await Class.find({

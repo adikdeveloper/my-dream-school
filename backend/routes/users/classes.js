@@ -28,7 +28,7 @@ router.get('/', auth, async (req, res) => {
     const classes = await Class.find(query)
       .select('name grade section group academicYear classTeacher students subjects room maxStudents isActive createdAt')
       .populate('classTeacher', 'firstName lastName email')
-      .populate('students', 'firstName lastName studentId phone')
+      .populate('students', 'firstName lastName studentId phone registrationDate')
       .populate('subjects.subject', 'name code')
       .populate('subjects.teacher', 'firstName lastName')
       .sort({ grade: 1, section: 1 })
@@ -116,7 +116,7 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
       isActive: true
     })
       .select('name grade section students')
-      .populate('students', 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId')
+      .populate('students', 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId registrationDate')
       .lean();
 
     const classIds = classes.map(classData => classData._id);

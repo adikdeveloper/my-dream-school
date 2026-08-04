@@ -145,6 +145,14 @@ const ClassJournal = () => {
     });
   };
 
+  const isBeforeStudentRegistration = (student, dateStr) => {
+    if (!student?.registrationDate) return false;
+    const lessonDate = new Date(`${dateStr}T00:00:00`);
+    const registrationDate = new Date(student.registrationDate);
+    registrationDate.setHours(0, 0, 0, 0);
+    return lessonDate < registrationDate;
+  };
+
   const fetchClasses = async () => {
     try {
       setLoading(true);
@@ -431,6 +439,12 @@ const ClassJournal = () => {
   };
 
   const handleGradeChange = (studentId, dateStr, value) => {
+    const student = students.find(item => item._id === studentId);
+    if (isBeforeStudentRegistration(student, dateStr)) {
+      showToast("O'quvchining maktabga kelgan sanasidan oldingi darsga baho qo'yib bo'lmaydi", 'warning');
+      return;
+    }
+
     // Bayram kunida baho qo'yish mumkin emas
     const holiday = isHoliday(dateStr);
     if (holiday) {
@@ -543,8 +557,9 @@ const ClassJournal = () => {
 
       // Prepare grades for saving
       Object.entries(grades).forEach(([studentId, studentGrades]) => {
+        const student = students.find(item => item._id === studentId);
         Object.entries(studentGrades).forEach(([dateStr, score]) => {
-          if (score !== null && score !== undefined) {
+          if (score !== null && score !== undefined && !isBeforeStudentRegistration(student, dateStr)) {
             gradePromises.push(
               api.post('/grades', {
                 student: studentId,
@@ -849,6 +864,7 @@ const ClassJournal = () => {
                 const isDisabled = attStatus === 'absent' || attStatus === 'excused';
                 const grade = grades[student._id]?.[dateStr];
                 const holidayInfo = isHoliday(dateStr);
+                const beforeRegistration = isBeforeStudentRegistration(student, dateStr);
                 return (
                   <div key={student._id} className={`${styles.dailyCard} ${attStatus === 'absent' ? styles.dailyCardAbsent : attStatus === 'excused' ? styles.dailyCardExcused : ''}`}>
                     <div className={styles.dailyCardHeader}>
@@ -869,8 +885,8 @@ const ClassJournal = () => {
                             className={`${styles.dailyGradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                             value={grade || ''}
                             onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
-                            placeholder={isDisabled ? (attStatus === 'excused' ? 'Sababli' : 'н/к') : 'Baho'}
-                            disabled={isDisabled}
+                            placeholder={beforeRegistration ? 'Hali kelmagan' : isDisabled ? (attStatus === 'excused' ? 'Sababli' : 'н/к') : 'Baho'}
+                            disabled={isDisabled || beforeRegistration}
                           />
                         </div>
                         <button
@@ -928,6 +944,7 @@ const ClassJournal = () => {
                           const isDisabled = attStatus === 'absent' || attStatus === 'excused';
                           const grade = grades[student._id]?.[dateStr];
                           const holidayInfo = isHoliday(dateStr);
+                          const beforeRegistration = isBeforeStudentRegistration(student, dateStr);
 
                           return (
                             <td key={dateIndex} className={`${styles.tdGrade} ${holidayInfo ? styles.holidayCell : ''}`}>
@@ -944,8 +961,9 @@ const ClassJournal = () => {
                                     className={`${styles.gradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
                                     value={grade || ''}
                                     onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
-                                    placeholder={isDisabled ? (attStatus === 'excused' ? 'S' : 'n/k') : ''}
-                                    disabled={isDisabled}
+                                    placeholder={beforeRegistration ? '—' : isDisabled ? (attStatus === 'excused' ? 'S' : 'n/k') : ''}
+                                    disabled={isDisabled || beforeRegistration}
+                                    title={beforeRegistration ? "O'quvchi bu sanada hali maktabga kelmagan" : ''}
                                   />
                                   <button
                                     className={`${styles.btnAttendance} ${attStatus === 'absent' ? styles.btnAttendanceAbsent : attStatus === 'excused' ? styles.btnAttendanceExcused : styles.btnAttendancePresent}`}

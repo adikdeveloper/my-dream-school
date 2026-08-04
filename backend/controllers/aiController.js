@@ -1303,6 +1303,20 @@ const addGradeWithAI = async (model, message) => {
   const gradeDate = parsed.date ? new Date(parsed.date) : new Date();
   gradeDate.setHours(12, 0, 0, 0); // Standardize time
 
+  if (student.registrationDate) {
+    const registrationDate = new Date(student.registrationDate);
+    const lessonDay = new Date(gradeDate);
+    registrationDate.setHours(0, 0, 0, 0);
+    lessonDay.setHours(0, 0, 0, 0);
+    if (lessonDay < registrationDate) {
+      return {
+        handled: true,
+        action: 'add_grade_before_registration',
+        message: `${student.firstName} ${student.lastName}ga maktabga kelgan sanasidan oldingi dars uchun baho qo'yib bo'lmaydi.`
+      };
+    }
+  }
+
   // Validate Score Logic from Grade Model
   if (!isExam && score > 5) {
     return { 

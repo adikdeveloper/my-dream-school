@@ -123,6 +123,20 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
       return res.status(403).json({ message: 'Nofaol o\'quvchiga baho qo\'yib bo\'lmaydi' });
     }
 
+    // O'quvchi maktabga kelgan kundan boshlab baholanishi mumkin.
+    if (student.registrationDate) {
+      const gradeDate = new Date(req.body.date);
+      const registrationDate = new Date(student.registrationDate);
+      gradeDate.setHours(0, 0, 0, 0);
+      registrationDate.setHours(0, 0, 0, 0);
+
+      if (gradeDate < registrationDate) {
+        return res.status(400).json({
+          message: `O'quvchiga maktabga kelgan sanasidan (${registrationDate.toISOString().split('T')[0]}) oldingi dars uchun baho qo'yib bo'lmaydi`
+        });
+      }
+    }
+
     // Validate grade date against schedule
     const validation = await scheduleValidator.validateGradeDate(req.body.class, req.body.date);
 

@@ -234,7 +234,10 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
         submitData.append('lastName', formData.lastName);
         submitData.append('passportNumber', formData.passportNumber);
         submitData.append('phone', formData.phone);
-        submitData.append('studentId', formData.studentId);
+        // MDS (o'quvchi ID) ixtiyoriy — bo'sh qiymatni serverga yubormaymiz.
+        if (formData.studentId?.trim()) {
+          submitData.append('studentId', formData.studentId.trim());
+        }
         submitData.append('address', formData.address);
         submitData.append('dateOfBirth', formData.dateOfBirth);
         submitData.append('parentName', formData.parentName);
@@ -655,7 +658,7 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
               </div>
 
               <div className="form-group">
-                <label className="form-label">O'quvchi ID</label>
+                <label className="form-label">O'quvchi ID (ixtiyoriy)</label>
                 {isEditing ? (
                   <input
                     type="text"

@@ -643,7 +643,7 @@ const ClassJournal = () => {
               description: 'Kundalik baho'
             }).catch(err => ({
               error: true,
-              message: err.response?.data?.message || `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
+              message: err.response?.data?.error || err.response?.data?.message || `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
             }))
           );
         }
@@ -664,7 +664,7 @@ const ClassJournal = () => {
               period: 1
             }).catch(err => ({
               error: true,
-              message: err.response?.data?.message || `Davomat saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
+              message: err.response?.data?.error || err.response?.data?.message || `Davomat saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
             }))
           );
         }

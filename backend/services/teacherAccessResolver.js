@@ -3,6 +3,8 @@ const Schedule = require('../models/scheduling/Schedule');
 const Class = require('../models/academic/Class');
 const User = require('../models/users/User');
 const LessonSubstitution = require('../models/scheduling/LessonSubstitution');
+const TeacherLesson = require('../models/scheduling/TeacherLesson');
+const Grade = require('../models/academic/Grade');
 
 const asId = value => String(value?._id || value || '');
 
@@ -54,6 +56,32 @@ async function getTeacherSubstitutions(teacherId, options = {}) {
     .lean();
 }
 
+async function getTeacherLessons(teacherId, options = {}) {
+  const query = { teacher: teacherId };
+  if (options.classId) query.classId = options.classId;
+  return TeacherLesson.find(query)
+    .populate('classId', 'name grade section group isActive')
+    .populate('subject', 'name code color isActive')
+    .lean();
+}
+
+async function getTeacherGradeAssignments(teacherId, options = {}) {
+  const match = { teacher: new mongoose.Types.ObjectId(String(teacherId)) };
+  if (options.classId) match.class = new mongoose.Types.ObjectId(String(options.classId));
+  const start = normalizeDay(options.startDate);
+  const end = endOfDay(options.endDate || options.startDate);
+  if (start && end) match.date = { $gte: start, $lte: end };
+  return Grade.aggregate([
+    { $match: match },
+    { $group: { _id: { classId: '$class', subjectId: '$subject' } } },
+    { $lookup: { from: 'classes', localField: '_id.classId', foreignField: '_id', as: 'classData' } },
+    { $lookup: { from: 'subjects', localField: '_id.subjectId', foreignField: '_id', as: 'subjectData' } },
+    { $unwind: '$classData' },
+    { $unwind: '$subjectData' },
+    { $match: { 'classData.isActive': { $ne: false } } }
+  ]);
+}
+
 function collectScheduleSubjects(schedule, teacherId) {
   const subjects = new Map();
   for (const day of schedule.schedule || []) {
@@ -71,10 +99,12 @@ function collectScheduleSubjects(schedule, teacherId) {
 }
 
 async function getTeacherJournalScope(teacherId, options = {}) {
-  const [teacher, schedules, substitutions, legacyClasses] = await Promise.all([
+  const [teacher, schedules, substitutions, teacherLessons, gradeAssignments, legacyClasses] = await Promise.all([
     User.findById(teacherId).select('classes subjects').lean(),
     getTeacherSchedules(teacherId, options),
     getTeacherSubstitutions(teacherId, options),
+    getTeacherLessons(teacherId, options),
+    getTeacherGradeAssignments(teacherId, options),
     Class.find({
       isActive: true,
       $or: [{ classTeacher: teacherId }, { 'subjects.teacher': teacherId }]
@@ -135,6 +165,21 @@ async function getTeacherJournalScope(teacherId, options = {}) {
         color: substitution.subject.color || ''
       });
     }
+  }
+
+  for (const lesson of teacherLessons) {
+    const entry = ensureClass(lesson.classId);
+    if (!entry || !lesson.subject) continue;
+    entry.sources.add('teacherLesson');
+    entry.subjects.set(asId(lesson.subject), { _id: lesson.subject._id || lesson.subject, name: lesson.subject.name || '', code: lesson.subject.code || '', color: lesson.subject.color || '' });
+  }
+
+  for (const assignment of gradeAssignments) {
+    const entry = ensureClass(assignment.classData);
+    if (!entry) continue;
+    const subject = assignment.subjectData;
+    entry.sources.add('gradeHistory');
+    entry.subjects.set(asId(subject), { _id: subject._id, name: subject.name || '', code: subject.code || '', color: subject.color || '' });
   }
 
   for (const classItem of legacyClasses) {
@@ -204,6 +249,12 @@ async function resolveTeacherLessonAccess({ teacherId, classId, subjectId, date 
   });
   if (substitution) return { allowed: true, source: 'substitution', schedule: null, substitution };
 
+  const historicalGrade = await Grade.exists({ teacher: teacherId, class: classId, subject: subjectId, date: { $gte: dayStart, $lte: dayEnd } });
+  if (historicalGrade) return { allowed: true, source: 'gradeHistory', schedule: null };
+
+  const teacherLesson = await TeacherLesson.exists({ teacher: teacherId, classId, subject: subjectId, day: { $in: allowedDayNames } });
+  if (teacherLesson) return { allowed: true, source: 'teacherLesson', schedule: null };
+
   const anyScheduleForDay = schedules.length > 0;
   if (!anyScheduleForDay) {
     const legacy = await Class.exists({
@@ -221,7 +272,7 @@ module.exports = {
   endOfDay,
   getTeacherSchedules,
   getTeacherSubstitutions,
+  getTeacherLessons,
   getTeacherJournalScope,
   resolveTeacherLessonAccess
 };
-

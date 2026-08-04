@@ -7,7 +7,7 @@ const logger = require('../../utils/logger');
 const { syncClassToSchedule } = require('../../utils/scheduleSynchronizer');
 const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
 const { requirePermission } = require('../../middleware/permissions');
-const { getTeacherJournalScope, getTeacherSchedules, getTeacherSubstitutions } = require('../../services/teacherAccessResolver');
+const { getTeacherJournalScope, getTeacherSchedules, getTeacherSubstitutions, getTeacherLessons } = require('../../services/teacherAccessResolver');
 
 const router = express.Router();
 
@@ -211,16 +211,17 @@ router.get('/teacher/journal-context', auth, authorize('teacher'), async (req, r
   try {
     const { classId, startDate, endDate } = req.query;
     if (!classId || !startDate || !endDate) return res.status(400).json({ message: 'Sinf va sana oralig\'i majburiy' });
-    const scope = await getTeacherJournalScope(req.user.id, { classId, startDate, endDate });
+    const scope = await getTeacherJournalScope(req.user.id, { classId });
     const classScope = scope.find(item => String(item._id) === String(classId));
     if (!classScope) return res.status(403).json({ message: 'Bu sana oralig\'ida jurnalga kirish huquqi yo\'q' });
-    const [classData, schedules, substitutions] = await Promise.all([
+    const [classData, schedules, substitutions, teacherLessons] = await Promise.all([
       Class.findById(classId).select('name grade section group students').populate('students', 'firstName lastName studentId registrationDate').lean(),
       getTeacherSchedules(req.user.id, { classId, startDate, endDate }),
-      getTeacherSubstitutions(req.user.id, { classId, startDate, endDate })
+      getTeacherSubstitutions(req.user.id, { classId, startDate, endDate }),
+      getTeacherLessons(req.user.id, { classId })
     ]);
     if (!classData) return res.status(404).json({ message: 'Sinf topilmadi' });
-    res.json({ class: classData, subjects: classScope.subjects, schedules, substitutions });
+    res.json({ class: classData, subjects: classScope.subjects, schedules, substitutions, teacherLessons });
   } catch (error) {
     logger.error('Error fetching journal context', { error: error.message, teacherId: req.user?.id });
     res.status(500).json({ message: 'Jurnal kontekstini yuklashda xatolik yuz berdi' });

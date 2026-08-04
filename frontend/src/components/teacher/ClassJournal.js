@@ -269,14 +269,15 @@ const ClassJournal = () => {
       const contextResponse = await api.get('/classes/teacher/journal-context', { params: { classId: selectedClass, startDate, endDate } });
       const schedules = contextResponse.data?.schedules || [];
       const rangeSubstitutions = contextResponse.data?.substitutions || [];
+      const teacherLessons = contextResponse.data?.teacherLessons || [];
       setStudents(contextResponse.data?.class?.students || []);
       if (viewType === 'day') {
         const dayStart = new Date(selectedDay); dayStart.setHours(0, 0, 0, 0);
-        dates = generateLessonDatesForWeek(schedules, dayStart, rangeSubstitutions).filter(date => toLocalDateKey(date) === toLocalDateKey(dayStart));
+        dates = generateLessonDatesForWeek(schedules, dayStart, rangeSubstitutions, teacherLessons).filter(date => toLocalDateKey(date) === toLocalDateKey(dayStart));
       } else if (viewType === 'week') {
-        dates = generateLessonDatesForWeek(schedules, currentWeekStart, rangeSubstitutions);
+        dates = generateLessonDatesForWeek(schedules, currentWeekStart, rangeSubstitutions, teacherLessons);
       } else {
-        dates = generateLessonDates(schedules, selectedMonth, selectedYear, rangeSubstitutions);
+        dates = generateLessonDates(schedules, selectedMonth, selectedYear, rangeSubstitutions, teacherLessons);
       }
       setLessonDates(dates);
 
@@ -360,14 +361,15 @@ const ClassJournal = () => {
     }
   };
 
-  const hasLessonOnDate = (schedules, date, substitutions = []) => {
+  const hasLessonOnDate = (schedules, date, substitutions = [], teacherLessons = []) => {
     const dayMap = {
       'Dushanba': 1, 'Seshanba': 2, 'Chorshanba': 3, 'Payshanba': 4, 'Juma': 5, 'Shanba': 6,
       'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6
     };
     const day = new Date(date); day.setHours(12, 0, 0, 0);
     const substitutionMatch = substitutions.some(item => toLocalDateKey(new Date(item.date)) === toLocalDateKey(day) && String(item.subject?._id || item.subject) === String(selectedSubject));
-    return substitutionMatch || (schedules || []).some(item => {
+    const teacherLessonMatch = teacherLessons.some(item => dayMap[item.day] === day.getDay() && String(item.subject?._id || item.subject) === String(selectedSubject));
+    return substitutionMatch || teacherLessonMatch || (schedules || []).some(item => {
       const start = new Date(item.startDate); start.setHours(0, 0, 0, 0);
       const end = new Date(item.endDate); end.setHours(23, 59, 59, 999);
       if (day < start || day > end) return false;
@@ -375,7 +377,7 @@ const ClassJournal = () => {
     });
   };
 
-  const generateLessonDatesForWeek = (schedules, weekStart, substitutions = []) => {
+  const generateLessonDatesForWeek = (schedules, weekStart, substitutions = [], teacherLessons = []) => {
 
     // Generate dates for the week (7 days from weekStart)
     const dates = [];
@@ -383,7 +385,7 @@ const ClassJournal = () => {
       const date = new Date(weekStart);
       date.setDate(date.getDate() + i);
       const dateStr = toLocalDateKey(date);
-      if (hasLessonOnDate(schedules, date, substitutions) && !isHoliday(dateStr)) {
+      if (hasLessonOnDate(schedules, date, substitutions, teacherLessons) && !isHoliday(dateStr)) {
         dates.push(date);
       }
     }
@@ -391,7 +393,7 @@ const ClassJournal = () => {
     return dates;
   };
 
-  const generateLessonDates = (schedules, month, year, substitutions = []) => {
+  const generateLessonDates = (schedules, month, year, substitutions = [], teacherLessons = []) => {
     const dates = [];
 
     // Generate all dates in the month for those days
@@ -399,7 +401,7 @@ const ClassJournal = () => {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      if (hasLessonOnDate(schedules, date, substitutions) && !isHoliday(dateStr)) {
+      if (hasLessonOnDate(schedules, date, substitutions, teacherLessons) && !isHoliday(dateStr)) {
         dates.push(date);
       }
     }

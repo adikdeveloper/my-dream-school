@@ -30,6 +30,15 @@ const JournalIcon = ({ name, size = 18 }) => {
   );
 };
 
+// Jurnal sanalarini UTC ga aylantirmasdan lokal YYYY-MM-DD ko'rinishida beradi.
+// Aks holda UTC+5 da tanlangan sana backendga bir kun oldin bo'lib ketadi.
+const toLocalDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const ClassJournal = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
@@ -75,6 +84,8 @@ const ClassJournal = () => {
   const [lessonDates, setLessonDates] = useState([]);
   const [grades, setGrades] = useState({});
   const [attendance, setAttendance] = useState({});
+  const [dirtyGrades, setDirtyGrades] = useState({});
+  const [dirtyAttendance, setDirtyAttendance] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -314,6 +325,7 @@ const ClassJournal = () => {
         });
       }
       setGrades(gradesData);
+      setDirtyGrades({});
 
       // Process attendance data - handle API format {attendance: [...], pagination: {...}}
       const attendanceData = {};
@@ -330,6 +342,7 @@ const ClassJournal = () => {
         });
       }
       setAttendance(attendanceData);
+      setDirtyAttendance({});
 
     } catch (error) {
       // If schedule endpoint is not found, show user-friendly message
@@ -491,6 +504,7 @@ const ClassJournal = () => {
         [dateStr]: value === '' ? null : parseFloat(value)
       }
     }));
+    setDirtyGrades(prev => ({ ...prev, [`${studentId}|${dateStr}`]: true }));
   };
 
   const handleAttendanceToggle = (studentId, dateStr) => {
@@ -519,6 +533,7 @@ const ClassJournal = () => {
         [dateStr]: newStatus
       }
     }));
+    setDirtyAttendance(prev => ({ ...prev, [`${studentId}|${dateStr}`]: true }));
 
     // If marking as absent or excused, clear grade
     if (newStatus === 'absent' || newStatus === 'excused') {
@@ -582,49 +597,54 @@ const ClassJournal = () => {
       const gradePromises = [];
       const attendancePromises = [];
 
-      // Prepare grades for saving
-      Object.entries(grades).forEach(([studentId, studentGrades]) => {
+      // Faqat o'qituvchi o'zgartirgan baholarni saqlaymiz.
+      Object.keys(dirtyGrades).forEach(key => {
+        const [studentId, dateStr] = key.split('|');
+        const score = grades[studentId]?.[dateStr];
         const student = students.find(item => item._id === studentId);
-        Object.entries(studentGrades).forEach(([dateStr, score]) => {
-          if (score !== null && score !== undefined && !isBeforeStudentRegistration(student, dateStr)) {
-            gradePromises.push(
-              api.post('/grades', {
-                student: studentId,
-                class: selectedClass,
-                subject: selectedSubject,
-                date: dateStr,
-                score: score,
-                type: 'daily',
-                description: 'Kundalik baho'
-              }).catch(err => ({
-                error: true,
-                message: err.response?.data?.message || `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
-              }))
-            );
-          }
-        });
+        if (score !== null && score !== undefined && !isBeforeStudentRegistration(student, dateStr)) {
+          gradePromises.push(
+            api.post('/grades', {
+              student: studentId,
+              class: selectedClass,
+              subject: selectedSubject,
+              date: dateStr,
+              score: score,
+              type: 'daily',
+              description: 'Kundalik baho'
+            }).catch(err => ({
+              error: true,
+              message: err.response?.data?.message || `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
+            }))
+          );
+        }
       });
 
       // Prepare attendance for saving
-      Object.entries(attendance).forEach(([studentId, studentAttendance]) => {
-        Object.entries(studentAttendance).forEach(([dateStr, status]) => {
-          if (status) {
-            attendancePromises.push(
-              api.post('/attendance', {
-                student: studentId,
-                class: selectedClass,
-                subject: selectedSubject,
-                date: dateStr,
-                status: status,
-                period: 1
-              }).catch(err => ({
-                error: true,
-                message: err.response?.data?.message || `Davomat saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
-              }))
-            );
-          }
-        });
+      Object.keys(dirtyAttendance).forEach(key => {
+        const [studentId, dateStr] = key.split('|');
+        const status = attendance[studentId]?.[dateStr];
+        if (status) {
+          attendancePromises.push(
+            api.post('/attendance', {
+              student: studentId,
+              class: selectedClass,
+              subject: selectedSubject,
+              date: dateStr,
+              status: status,
+              period: 1
+            }).catch(err => ({
+              error: true,
+              message: err.response?.data?.message || `Davomat saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
+            }))
+          );
+        }
       });
+
+      if (gradePromises.length === 0 && attendancePromises.length === 0) {
+        showToast("Saqlash uchun o'zgartirilgan ma'lumot yo'q", 'info');
+        return;
+      }
 
       // Save all in parallel
       const results = await Promise.all([...gradePromises, ...attendancePromises]);
@@ -632,8 +652,10 @@ const ClassJournal = () => {
       // Check for errors
       const errors = results.filter(r => r && r.error);
       if (errors.length > 0) {
-        showToast(`Saqlashda ${errors.length} ta xatolik yuz berdi. Ba'zi ma'lumotlar saqlanmagan bo'lishi mumkin.`, 'error');
+        showToast(`Saqlashda ${errors.length} ta xatolik: ${errors[0].message}`, 'error');
       } else {
+        setDirtyGrades({});
+        setDirtyAttendance({});
         showToast('Jurnal muvaffaqiyatli saqlandi!', 'success');
         // Refresh data after successful save
         await fetchJournalData();
@@ -886,7 +908,7 @@ const ClassJournal = () => {
                   <p>Bu sinfda hali o'quvchilar ro'yxatga olinmagan</p>
                 </div>
               ) : students.map((student, index) => {
-                const dateStr = selectedDay.toISOString().split('T')[0];
+                const dateStr = toLocalDateKey(selectedDay);
                 const attStatus = attendance[student._id]?.[dateStr] || 'present';
                 const isDisabled = attStatus === 'absent' || attStatus === 'excused';
                 const grade = grades[student._id]?.[dateStr];
@@ -937,7 +959,7 @@ const ClassJournal = () => {
                     <th className={styles.thNumber}>№</th>
                     <th className={styles.thStudent}>Ism familiya</th>
                     {lessonDates.map((date, index) => {
-                      const dateStr = date.toISOString().split('T')[0];
+                      const dateStr = toLocalDateKey(date);
                       const holidayInfo = isHoliday(dateStr);
                       return (
                         <th key={index} className={`${styles.thDate} ${holidayInfo ? styles.holidayHeader : ''}`} title={holidayInfo ? holidayInfo.name : ''}>
@@ -966,7 +988,7 @@ const ClassJournal = () => {
                           {student.firstName} {student.lastName}
                         </td>
                         {lessonDates.map((date, dateIndex) => {
-                          const dateStr = date.toISOString().split('T')[0];
+                          const dateStr = toLocalDateKey(date);
                           const attStatus = attendance[student._id]?.[dateStr] || 'present';
                           const isDisabled = attStatus === 'absent' || attStatus === 'excused';
                           const grade = grades[student._id]?.[dateStr];

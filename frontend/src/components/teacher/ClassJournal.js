@@ -167,9 +167,10 @@ const ClassJournal = () => {
   const fetchClasses = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/classes');
+      // Barcha sinflarni emas, faqat shu o'qituvchiga tegishli sinflarni olamiz.
+      const response = await api.get('/classes/teacher/my-classes');
 
-      // Handle new API format: {classes: [...], pagination: {...}}
+      // Endpoint array qaytaradi; eski format bilan ham moslikni saqlaymiz.
       const classesData = response.data.classes || response.data || [];
       const teacherClasses = Array.isArray(classesData) ? classesData : [];
 
@@ -200,7 +201,7 @@ const ClassJournal = () => {
       // Masalan: IT o'qituvchi faqat IT fanini ko'radi
       const teacherSubjects = classSubjects.filter(subj => {
         const teacherId = subj.teacher?._id || subj.teacher;
-        return teacherId === user?._id;
+        return String(teacherId || '') === String(user?._id || '');
       });
 
       // Almashtirish orqali shu sinfga vaqtincha kira oladigan fanlarni qo'shamiz

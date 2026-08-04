@@ -274,15 +274,34 @@ const ClassJournal = () => {
         setLessonDates(dates);
       }
 
+      // Baholarni backend ruxsat bergan limitda sahifalab to'liq yuklaymiz.
+      // Bu katta sinf/oylarda ham ma'lumot kesilib qolmasligini ta'minlaydi.
+      const fetchAllGrades = async () => {
+        const allGrades = [];
+        let page = 1;
+        let totalPages = 1;
+
+        do {
+          const response = await api.get(
+            `/grades?classId=${selectedClass}&subjectId=${selectedSubject}&startDate=${startDate}&endDate=${endDate}&limit=100&page=${page}`
+          );
+          const pageGrades = response.data?.grades || response.data || [];
+          if (Array.isArray(pageGrades)) allGrades.push(...pageGrades);
+          totalPages = Number(response.data?.pagination?.totalPages) || 1;
+          page += 1;
+        } while (page <= totalPages);
+
+        return allGrades;
+      };
+
       // Fetch grades and attendance in parallel for better performance
-      const [gradesResponse, attendanceResponse] = await Promise.all([
-        api.get(`/grades?classId=${selectedClass}&subjectId=${selectedSubject}&startDate=${startDate}&endDate=${endDate}&limit=1000`),
+      const [gradesArray, attendanceResponse] = await Promise.all([
+        fetchAllGrades(),
         api.get(`/attendance?classId=${selectedClass}&startDate=${startDate}&endDate=${endDate}`)
       ]);
 
-      // Process grades data - handle API format {grades: [...], pagination: {...}}
+      // Process grades data
       const gradesData = {};
-      const gradesArray = gradesResponse.data.grades || gradesResponse.data || [];
 
       if (Array.isArray(gradesArray)) {
         gradesArray.forEach(record => {

@@ -81,7 +81,7 @@ router.get('/',
         .populate('subject', 'name code')
         .populate('teacher', 'firstName lastName')
         .populate('class', 'name grade section')
-        .sort({ date: -1 })
+        .sort({ date: -1, updatedAt: 1, createdAt: 1 })
         .skip(skip)
         .limit(parseInt(limit))
         .lean(); // Use lean() for better performance

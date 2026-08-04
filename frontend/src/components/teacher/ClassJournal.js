@@ -321,15 +321,23 @@ const ClassJournal = () => {
 
       // Process grades data
       const gradesData = {};
+      const gradeUpdateTimes = {};
 
       if (Array.isArray(gradesArray)) {
         gradesArray.forEach(record => {
           const recordDate = new Date(record.date).toISOString().split('T')[0];
           const studentId = record.student._id || record.student;
+          const gradeKey = `${studentId}|${recordDate}`;
+          const updateTime = new Date(record.updatedAt || record.createdAt || record.date).getTime();
           if (!gradesData[studentId]) {
             gradesData[studentId] = {};
           }
-          gradesData[studentId][recordDate] = record.score;
+          // Bir kun uchun eski dublikatlar bo'lsa, faqat eng oxirgi
+          // yangilangan bahoni katakka chiqaramiz.
+          if (gradeUpdateTimes[gradeKey] === undefined || updateTime >= gradeUpdateTimes[gradeKey]) {
+            gradesData[studentId][recordDate] = record.score;
+            gradeUpdateTimes[gradeKey] = updateTime;
+          }
         });
       }
       setGrades(gradesData);

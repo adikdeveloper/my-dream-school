@@ -74,14 +74,11 @@ attendanceSchema.pre('save', function(next) {
     if (!this.academicMonth) {
       const jsMonth = this.date.getMonth(); // 0-11
 
-      // Iyul (6) va Avgust (7) o'quv yilida emas
-      if (jsMonth === 6 || jsMonth === 7) {
-        return next(new Error('Iyul va Avgust oylari o\'quv yilida mavjud emas'));
-      }
-
       // Sentyabr-Dekabr: 8,9,10,11 -> 1,2,3,4
       // Yanvar-Iyun: 0,1,2,3,4,5 -> 5,6,7,8,9,10
-      this.academicMonth = jsMonth >= 8 ? jsMonth - 7 : jsMonth + 5;
+      if (jsMonth !== 6 && jsMonth !== 7) {
+        this.academicMonth = jsMonth >= 8 ? jsMonth - 7 : jsMonth + 5;
+      }
     }
   }
   next();

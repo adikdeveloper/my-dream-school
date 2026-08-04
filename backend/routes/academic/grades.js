@@ -5,7 +5,9 @@ const Grade = require('../../models/academic/Grade');
 const { auth, authorize } = require('../../middleware/auth');
 const { requirePermission } = require('../../middleware/permissions');
 const scheduleValidator = require('../../utils/scheduleValidator');
+const { resolveTeacherLessonAccess, getTeacherJournalScope } = require('../../services/teacherAccessResolver');
 const salaryController = require('../../controllers/salaryController');
+const Attendance = require('../../models/academic/Attendance');
 
 const router = express.Router();
 
@@ -53,6 +55,13 @@ router.get('/',
 
       const { studentId, subjectId, classId, startDate, endDate, page = 1, limit = 50 } = req.query;
       let query = {};
+
+      if (req.user.role === 'teacher') {
+        if (!classId || !subjectId || !startDate || !endDate) return res.status(400).json({ message: "O'qituvchi uchun sinf, fan va sana oralig'i majburiy" });
+        const scope = await getTeacherJournalScope(req.user._id, { classId, startDate, endDate });
+        const allowed = scope.some(item => String(item._id) === String(classId) && item.subjects.some(subject => String(subject._id) === String(subjectId)));
+        if (!allowed) return res.status(403).json({ message: "Bu jurnalni ko'rish huquqingiz yo'q" });
+      }
 
       // Security: Students can only see their own grades
       if (req.user.role === 'student') {
@@ -129,6 +138,9 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
     if (!student.isActive) {
       return res.status(403).json({ message: 'Nofaol o\'quvchiga baho qo\'yib bo\'lmaydi' });
     }
+    const Class = require('../../models/academic/Class');
+    const belongsToClass = String(student.classId || '') === String(req.body.class) || await Class.exists({ _id: req.body.class, students: student._id });
+    if (!belongsToClass) return res.status(400).json({ message: "O'quvchi ushbu sinfga biriktirilmagan" });
 
     // O'quvchi maktabga kelgan kundan boshlab baholanishi mumkin.
     if (student.registrationDate) {
@@ -144,7 +156,12 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
       }
     }
 
-    // Validate grade date against schedule
+    let teacherAccess = null;
+    if (req.user.role === 'teacher') {
+      teacherAccess = await resolveTeacherLessonAccess({ teacherId: req.user._id, classId: req.body.class, subjectId: req.body.subject, date: req.body.date });
+      if (!teacherAccess.allowed) return res.status(403).json({ message: "Bu sana uchun ushbu sinf/fanga baho qo'yish huquqingiz yo'q" });
+    }
+
     const validation = await scheduleValidator.validateGradeDate(req.body.class, req.body.date);
 
     // O'tgan sana o'sha davrdagi jadval oralig'iga kirsa, jadval bugungi kunda
@@ -159,7 +176,7 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
       && gradeDay <= today;
 
     // Allow admins to bypass validation with warning, but teachers must follow schedule
-    if (!validation.valid && !isHistoricalSchedule) {
+    if (!validation.valid && !isHistoricalSchedule && !teacherAccess?.allowed) {
       if (req.user.role === 'teacher') {
         return res.status(400).json({
           message: `Baho qo'yish mumkin emas: ${validation.message}`,
@@ -173,35 +190,15 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
     // Egalik tekshiruvi: o'qituvchi faqat o'zi dars beradigan yoki almashtirish
     // (o'rnini bosish) orqali ruxsat olgan sinf+fanga baho qo'ya oladi.
     // admin/supervisor/director cheklanmaydi.
-    if (req.user.role === 'teacher') {
-      const Class = require('../../models/academic/Class');
-      const cls = await Class.findById(req.body.class).select('subjects').lean();
-      let allowed = !!(cls && (cls.subjects || []).some(s =>
-        s.subject && s.subject.toString() === String(req.body.subject) &&
-        s.teacher && s.teacher.toString() === req.user._id.toString()
-      ));
-      if (!allowed) {
-        const LessonSubstitution = require('../../models/scheduling/LessonSubstitution');
-        const d = new Date(req.body.date); d.setHours(0, 0, 0, 0);
-        const nd = new Date(d); nd.setDate(nd.getDate() + 1);
-        const sub = await LessonSubstitution.findOne({
-          substituteTeacher: req.user._id,
-          classId: req.body.class,
-          subject: req.body.subject,
-          date: { $gte: d, $lt: nd },
-          status: { $ne: 'rejected' }
-        });
-        allowed = !!sub;
-      }
-      if (!allowed) {
-        return res.status(403).json({ message: "Bu sinf/fanga baho qo'yish uchun ruxsatingiz yo'q" });
-      }
-    }
+    const gradeDateStart = new Date(req.body.date); gradeDateStart.setHours(0, 0, 0, 0);
+    const gradeDateEnd = new Date(gradeDateStart); gradeDateEnd.setDate(gradeDateEnd.getDate() + 1);
+    const blockingAttendance = await Attendance.exists({ student: req.body.student, class: req.body.class, subject: req.body.subject, date: { $gte: gradeDateStart, $lt: gradeDateEnd }, status: { $in: ['absent', 'excused', 'kelmadi', 'sababli'] } });
+    if (blockingAttendance) return res.status(400).json({ message: "Kelmagan yoki sababli o'quvchiga baho qo'yib bo'lmaydi" });
 
     const gradeData = {
       ...req.body,
       teacher: req.user._id,
-      schedule: validation.schedule ? validation.schedule._id : null
+      schedule: teacherAccess?.schedule?._id || validation.schedule?._id || null
     };
 
     // Upsert: Update if exists, create if not
@@ -253,6 +250,23 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
     }
 
     res.status(existingGrade ? 200 : 201).json(populatedGrade);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+router.delete('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermission('grade.create'), async (req, res) => {
+  try {
+    const { studentId, classId, subjectId, date } = req.query;
+    if (![studentId, classId, subjectId].every(isValidObjectId) || !date) return res.status(400).json({ message: "O'quvchi, sinf, fan va sana majburiy" });
+    if (req.user.role === 'teacher') {
+      const access = await resolveTeacherLessonAccess({ teacherId: req.user._id, classId, subjectId, date });
+      if (!access.allowed) return res.status(403).json({ message: "Bu bahoni o'chirish huquqingiz yo'q" });
+    }
+    const start = new Date(date); start.setHours(0, 0, 0, 0);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const result = await Grade.deleteMany({ student: studentId, class: classId, subject: subjectId, date: { $gte: start, $lt: end } });
+    res.json({ deletedCount: result.deletedCount || 0 });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

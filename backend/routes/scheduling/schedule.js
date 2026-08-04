@@ -1008,7 +1008,8 @@ router.post('/', rateLimiters.api, auth, authorize('admin', 'director', 'supervi
     await newSchedule.save();
 
     // SYNCHRONIZATION: Update Class.subjects and User.subjects
-    await syncScheduleToClassAndUser(classId, schedule);
+    const syncResult = await syncScheduleToClassAndUser(classId, schedule);
+    if (!syncResult.success) throw new Error(`Jadval biriktirishlarini sinxronlash xatosi: ${syncResult.error}`);
 
     // Populate and return
     const populatedSchedule = await Schedule.findById(newSchedule._id)
@@ -1185,7 +1186,8 @@ router.put('/:id', rateLimiters.api, auth, authorize('admin', 'director', 'super
 
     // SYNCHRONIZATION: Update Class.subjects and User.subjects if schedule changed
     if (schedule) {
-      await syncScheduleToClassAndUser(existingSchedule.classId, schedule);
+      const syncResult = await syncScheduleToClassAndUser(existingSchedule.classId, schedule);
+      if (!syncResult.success) throw new Error(`Jadval biriktirishlarini sinxronlash xatosi: ${syncResult.error}`);
     }
 
     // Populate and return

@@ -2,12 +2,12 @@
 const { body, validationResult } = require('express-validator');
 const Class = require('../../models/academic/Class');
 const User = require('../../models/users/User');
-const Schedule = require('../../models/scheduling/Schedule');
 const { auth, authorize } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { syncClassToSchedule } = require('../../utils/scheduleSynchronizer');
 const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
 const { requirePermission } = require('../../middleware/permissions');
+const { getTeacherJournalScope, getTeacherSchedules, getTeacherSubstitutions } = require('../../services/teacherAccessResolver');
 
 const router = express.Router();
 
@@ -100,38 +100,13 @@ router.get('/available-students', auth, authorize('admin', 'accountant'), async 
 // @access  Private/Teacher
 router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => {
   try {
-    const teacher = await User.findById(req.user.id).select('classes').lean();
-    const directlyAssignedClassIds = (teacher?.classes || []).filter(Boolean);
-    const teacherSchedules = await Schedule.find({
-      'schedule.periods.teacher': req.user.id,
-      isActive: true
-    })
-      .select('classId schedule.periods.subject schedule.periods.teacher')
-      .populate('schedule.periods.subject', 'name code color')
-      .lean();
-    const scheduleClassIds = [...new Set(teacherSchedules.map(item => String(item.classId)).filter(Boolean))];
-    const classFilters = [
-      { classTeacher: req.user.id },
-      { 'subjects.teacher': req.user.id }
-    ];
-
-    if (directlyAssignedClassIds.length > 0) {
-      classFilters.push({ _id: { $in: directlyAssignedClassIds } });
-    }
-    if (scheduleClassIds.length > 0) {
-      classFilters.push({ _id: { $in: scheduleClassIds } });
-    }
-
-    // Find classes where teacher is curator/class teacher, subject teacher, or directly assigned.
-    const classes = await Class.find({
-      $or: classFilters,
-      isActive: true
-    })
+    const scope = await getTeacherJournalScope(req.user.id);
+    const classIds = scope.map(item => item._id);
+    const classes = await Class.find({ _id: { $in: classIds }, isActive: true })
       .select('name grade section students')
       .populate('students', 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId registrationDate')
       .lean();
 
-    const classIds = classes.map(classData => classData._id);
     const classMap = new Map(classes.map(classData => [classData._id.toString(), classData]));
     const studentsByClassId = classIds.length > 0
       ? await User.find({
@@ -216,53 +191,10 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
 // @access  Private/Teacher
 router.get('/teacher/my-classes', auth, authorize('teacher'), async (req, res) => {
   try {
-    const teacher = await User.findById(req.user.id).select('classes').lean();
-    const directlyAssignedClassIds = (teacher?.classes || []).filter(Boolean);
-    const teacherSchedules = await Schedule.find({
-      'schedule.periods.teacher': req.user.id,
-      isActive: true
-    })
-      .select('classId schedule.periods.subject schedule.periods.teacher')
-      .populate('schedule.periods.subject', 'name code color')
-      .lean();
-    const scheduleClassIds = [...new Set(teacherSchedules.map(item => String(item.classId)).filter(Boolean))];
-    const classFilters = [
-      { classTeacher: req.user.id },
-      { 'subjects.teacher': req.user.id }
-    ];
-
-    if (directlyAssignedClassIds.length > 0) {
-      classFilters.push({ _id: { $in: directlyAssignedClassIds } });
-    }
-    if (scheduleClassIds.length > 0) {
-      classFilters.push({ _id: { $in: scheduleClassIds } });
-    }
-
-    const classes = await Class.find({
-      $or: classFilters,
-      isActive: true
-    })
-      .select('name grade section')
-      .sort({ grade: 1, section: 1 })
-      .lean();
-
-    const result = classes.map(classItem => {
-      const subjectMap = new Map();
-      teacherSchedules
-        .filter(item => String(item.classId) === String(classItem._id))
-        .forEach(item => (item.schedule || []).forEach(day => (day.periods || []).forEach(period => {
-          if (String(period.teacher?._id || period.teacher) !== String(req.user.id) || !period.subject) return;
-          const subjectId = String(period.subject._id || period.subject);
-          subjectMap.set(subjectId, {
-            _id: period.subject._id || period.subject,
-            name: period.subject.name || '',
-            code: period.subject.code || '',
-            color: period.subject.color || ''
-          });
-        })));
-
-      return { ...classItem, scheduleSubjects: [...subjectMap.values()] };
-    });
+    const scope = await getTeacherJournalScope(req.user.id);
+    const result = scope
+      .map(item => ({ ...item, scheduleSubjects: item.subjects }))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'uz'));
 
     res.json(result);
   } catch (error) {
@@ -272,6 +204,26 @@ router.get('/teacher/my-classes', auth, authorize('teacher'), async (req, res) =
       teacherId: req.user?.id
     });
     res.status(500).json({ message: 'Sinflarni yuklashda xatolik yuz berdi' });
+  }
+});
+
+router.get('/teacher/journal-context', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const { classId, startDate, endDate } = req.query;
+    if (!classId || !startDate || !endDate) return res.status(400).json({ message: 'Sinf va sana oralig\'i majburiy' });
+    const scope = await getTeacherJournalScope(req.user.id, { classId, startDate, endDate });
+    const classScope = scope.find(item => String(item._id) === String(classId));
+    if (!classScope) return res.status(403).json({ message: 'Bu sana oralig\'ida jurnalga kirish huquqi yo\'q' });
+    const [classData, schedules, substitutions] = await Promise.all([
+      Class.findById(classId).select('name grade section group students').populate('students', 'firstName lastName studentId registrationDate').lean(),
+      getTeacherSchedules(req.user.id, { classId, startDate, endDate }),
+      getTeacherSubstitutions(req.user.id, { classId, startDate, endDate })
+    ]);
+    if (!classData) return res.status(404).json({ message: 'Sinf topilmadi' });
+    res.json({ class: classData, subjects: classScope.subjects, schedules, substitutions });
+  } catch (error) {
+    logger.error('Error fetching journal context', { error: error.message, teacherId: req.user?.id });
+    res.status(500).json({ message: 'Jurnal kontekstini yuklashda xatolik yuz berdi' });
   }
 });
 

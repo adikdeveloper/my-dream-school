@@ -3,9 +3,29 @@ const { body, validationResult } = require('express-validator');
 const Attendance = require('../../models/academic/Attendance');
 const { auth, authorize } = require('../../middleware/auth');
 const { requirePermission } = require('../../middleware/permissions');
+const User = require('../../models/users/User');
+const Class = require('../../models/academic/Class');
+const { resolveTeacherLessonAccess, getTeacherJournalScope } = require('../../services/teacherAccessResolver');
 // Maosh faqat baho qo'yilganda hisoblanadi (grades.js da)
 
 const router = express.Router();
+
+async function validateAttendanceAccess(req, record) {
+  const student = await User.findOne({ _id: record.student, role: 'student', isActive: true }).select('registrationDate classId').lean();
+  if (!student) throw new Error("O'quvchi topilmadi yoki faol emas");
+  const belongsToClass = String(student.classId || '') === String(record.class) || await Class.exists({ _id: record.class, students: student._id });
+  if (!belongsToClass) throw new Error("O'quvchi ushbu sinfga biriktirilmagan");
+  const lessonDate = new Date(record.date); lessonDate.setHours(0, 0, 0, 0);
+  if (Number.isNaN(lessonDate.getTime())) throw new Error("Noto'g'ri sana");
+  if (student.registrationDate) {
+    const registrationDate = new Date(student.registrationDate); registrationDate.setHours(0, 0, 0, 0);
+    if (lessonDate < registrationDate) throw new Error("O'quvchi kelgan sanadan oldin davomat qo'yib bo'lmaydi");
+  }
+  if (req.user.role === 'teacher') {
+    const access = await resolveTeacherLessonAccess({ teacherId: req.user._id, classId: record.class, subjectId: record.subject, date: record.date });
+    if (!access.allowed) throw new Error("Bu sana uchun ushbu sinf/fanga davomat qo'yish huquqi yo'q");
+  }
+}
 
 // @route   GET /api/attendance
 // @desc    Get attendance records
@@ -22,6 +42,15 @@ router.get('/', auth, async (req, res) => {
     }
 
     if (classId) query.class = classId;
+
+    if (req.user.role === 'teacher') {
+      const subjectId = req.query.subjectId;
+      if (!classId || !subjectId || !startDate || !endDate) return res.status(400).json({ message: "O'qituvchi uchun sinf, fan va sana oralig'i majburiy" });
+      const scope = await getTeacherJournalScope(req.user._id, { classId, startDate, endDate });
+      const allowed = scope.some(item => String(item._id) === String(classId) && item.subjects.some(subject => String(subject._id) === String(subjectId)));
+      if (!allowed) return res.status(403).json({ message: "Bu jurnalni ko'rish huquqingiz yo'q" });
+      query.subject = subjectId;
+    }
 
     if (date) {
       query.date = new Date(date);
@@ -121,6 +150,7 @@ router.post('/bulk', auth, authorize('teacher', 'admin', 'supervisor'), requireP
 
     for (const record of records) {
       try {
+        await validateAttendanceAccess(req, record);
         const dateOnly = new Date(record.date);
         dateOnly.setHours(0, 0, 0, 0);
         const nextDay = new Date(dateOnly);
@@ -130,13 +160,9 @@ router.post('/bulk', auth, authorize('teacher', 'admin', 'supervisor'), requireP
         const month = dateOnly.getMonth() + 1; // 1-12
 
         // Validate month (Iyul va Avgust o'quv yilida yo'q)
-        if (month === 7 || month === 8) {
-          throw new Error('Iyul va Avgust oylari o\'quv yilida mavjud emas');
-        }
-
         // Sentyabr-Dekabr: 9,10,11,12 -> 1,2,3,4
         // Yanvar-Iyun: 1,2,3,4,5,6 -> 5,6,7,8,9,10
-        const academicMonth = month >= 9 ? month - 8 : month + 4;
+        const academicMonth = (month === 7 || month === 8) ? null : (month >= 9 ? month - 8 : month + 4);
 
         // Check if attendance already exists for this student on this date/period
         const existingAttendance = await Attendance.findOne({
@@ -215,6 +241,12 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      await validateAttendanceAccess(req, req.body);
+    } catch (accessError) {
+      return res.status(403).json({ message: accessError.message });
     }
 
     const attendanceData = {

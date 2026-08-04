@@ -190,29 +190,8 @@ const ClassJournal = () => {
     try {
       setLoading(true);
 
-      // Get class details
-      const classResponse = await api.get(`/classes/${selectedClass}`);
-      const classData = classResponse.data;
-
-      setStudents(classData.students || []);
-      const classSubjects = classData.subjects || [];
-
-      // O'qituvchining faqat o'ziga biriktirilgan fanlarini filtrlash
-      // Masalan: IT o'qituvchi faqat IT fanini ko'radi
-      const teacherSubjects = classSubjects.filter(subj => {
-        const teacherId = subj.teacher?._id || subj.teacher;
-        return String(teacherId || '') === String(user?._id || '');
-      });
-
-      // Ayrim eski sinflarda fan biriktirishi faqat dars jadvalida saqlangan.
-      // Endpoint qaytargan jadval fanlarini ham jurnal ro'yxatiga qo'shamiz.
       const selectedClassInfo = classes.find(item => String(item._id) === String(selectedClass));
-      (selectedClassInfo?.scheduleSubjects || []).forEach(subject => {
-        const exists = teacherSubjects.some(item => String(item.subject?._id || item.subject) === String(subject._id));
-        if (!exists) {
-          teacherSubjects.push({ subject, teacher: { _id: user?._id }, fromSchedule: true });
-        }
-      });
+      const teacherSubjects = (selectedClassInfo?.scheduleSubjects || []).map(subject => ({ subject, teacher: { _id: user?._id }, fromSchedule: true }));
 
       // Almashtirish orqali shu sinfga vaqtincha kira oladigan fanlarni qo'shamiz
       // (masalan: ingliz tili o'qituvchisi matematika o'qituvchisi o'rniga o'tgan)
@@ -252,16 +231,6 @@ const ClassJournal = () => {
       setLoading(true);
 
       // Tanlangan ko'rinishga tegishli (jumladan tarixiy) jadvalni olamiz.
-      const scheduleTargetDate = viewType === 'day'
-        ? new Date(selectedDay)
-        : viewType === 'week'
-          ? new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth(), currentWeekStart.getDate() + 3)
-          : new Date(selectedYear, selectedMonth, 15);
-      const scheduleResponse = await api.get(
-        `/schedule/class/${selectedClass}/current?date=${toLocalDateKey(scheduleTargetDate)}`
-      );
-      const scheduleData = scheduleResponse.data;
-
       let startDate, endDate, dates;
 
       if (viewType === 'day') {
@@ -274,9 +243,6 @@ const ClassJournal = () => {
         startDate = dayStart.toISOString();
         endDate = dayEnd.toISOString();
 
-        dates = generateLessonDatesForWeek(scheduleData, dayStart)
-          .filter(date => toLocalDateKey(date) === toLocalDateKey(dayStart));
-        setLessonDates(dates);
       } else if (viewType === 'week') {
         // Weekly view: 7 days from Monday to Sunday
         const weekStart = new Date(currentWeekStart);
@@ -289,8 +255,6 @@ const ClassJournal = () => {
         endDate = weekEnd.toISOString();
 
         // Generate lesson dates for the week
-        dates = generateLessonDatesForWeek(scheduleData, weekStart);
-        setLessonDates(dates);
       } else {
         // Monthly view
         const monthStart = new Date(selectedYear, selectedMonth, 1);
@@ -300,9 +264,21 @@ const ClassJournal = () => {
         endDate = monthEnd.toISOString();
 
         // Generate lesson dates based on schedule
-        dates = generateLessonDates(scheduleData, selectedMonth, selectedYear);
-        setLessonDates(dates);
       }
+
+      const contextResponse = await api.get('/classes/teacher/journal-context', { params: { classId: selectedClass, startDate, endDate } });
+      const schedules = contextResponse.data?.schedules || [];
+      const rangeSubstitutions = contextResponse.data?.substitutions || [];
+      setStudents(contextResponse.data?.class?.students || []);
+      if (viewType === 'day') {
+        const dayStart = new Date(selectedDay); dayStart.setHours(0, 0, 0, 0);
+        dates = generateLessonDatesForWeek(schedules, dayStart, rangeSubstitutions).filter(date => toLocalDateKey(date) === toLocalDateKey(dayStart));
+      } else if (viewType === 'week') {
+        dates = generateLessonDatesForWeek(schedules, currentWeekStart, rangeSubstitutions);
+      } else {
+        dates = generateLessonDates(schedules, selectedMonth, selectedYear, rangeSubstitutions);
+      }
+      setLessonDates(dates);
 
       // Baholarni backend ruxsat bergan limitda sahifalab to'liq yuklaymiz.
       // Bu katta sinf/oylarda ham ma'lumot kesilib qolmasligini ta'minlaydi.
@@ -327,7 +303,7 @@ const ClassJournal = () => {
       // Fetch grades and attendance in parallel for better performance
       const [gradesArray, attendanceResponse] = await Promise.all([
         fetchAllGrades(),
-        api.get(`/attendance?classId=${selectedClass}&startDate=${startDate}&endDate=${endDate}`)
+        api.get(`/attendance?classId=${selectedClass}&subjectId=${selectedSubject}&startDate=${startDate}&endDate=${endDate}`)
       ]);
 
       // Process grades data
@@ -384,61 +360,30 @@ const ClassJournal = () => {
     }
   };
 
-  const generateLessonDatesForWeek = (scheduleData, weekStart) => {
-    const schedule = scheduleData?.schedule || [];
-    // Map day names to day numbers (0 = Sunday, 1 = Monday, etc.)
+  const hasLessonOnDate = (schedules, date, substitutions = []) => {
     const dayMap = {
       'Dushanba': 1, 'Seshanba': 2, 'Chorshanba': 3, 'Payshanba': 4, 'Juma': 5, 'Shanba': 6,
       'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6
     };
+    const day = new Date(date); day.setHours(12, 0, 0, 0);
+    const substitutionMatch = substitutions.some(item => toLocalDateKey(new Date(item.date)) === toLocalDateKey(day) && String(item.subject?._id || item.subject) === String(selectedSubject));
+    return substitutionMatch || (schedules || []).some(item => {
+      const start = new Date(item.startDate); start.setHours(0, 0, 0, 0);
+      const end = new Date(item.endDate); end.setHours(23, 59, 59, 999);
+      if (day < start || day > end) return false;
+      return (item.schedule || []).some(daySchedule => dayMap[daySchedule.day] === day.getDay() && (daySchedule.periods || []).some(period => String(period.teacher?._id || period.teacher) === String(user?._id) && String(period.subject?._id || period.subject) === String(selectedSubject)));
+    });
+  };
 
-    let daysOfWeek = [];
-    let hasSchedule = false;
-
-    // Get days from schedule for the selected subject
-    if (schedule && Array.isArray(schedule) && schedule.length > 0) {
-      const subjectDays = new Set();
-
-      schedule.forEach(daySchedule => {
-        if (daySchedule.periods && Array.isArray(daySchedule.periods)) {
-          daySchedule.periods.forEach(period => {
-            if (period.subject && (period.subject._id === selectedSubject || period.subject === selectedSubject)) {
-              subjectDays.add(daySchedule.day);
-              hasSchedule = true;
-            }
-          });
-        }
-      });
-
-      daysOfWeek = Array.from(subjectDays).map(day => dayMap[day]).filter(d => d !== undefined);
-    } else if (schedule && schedule.periods && Array.isArray(schedule.periods)) {
-      const subjectDays = new Set();
-      schedule.periods.forEach(period => {
-        if (period.subject && (period.subject._id === selectedSubject || period.subject === selectedSubject)) {
-          subjectDays.add(period.day);
-          hasSchedule = true;
-        }
-      });
-
-      daysOfWeek = Array.from(subjectDays).map(day => dayMap[day]).filter(d => d !== undefined);
-    }
-
-    if (!hasSchedule || daysOfWeek.length === 0) {
-      return [];
-    }
+  const generateLessonDatesForWeek = (schedules, weekStart, substitutions = []) => {
 
     // Generate dates for the week (7 days from weekStart)
     const dates = [];
-    const scheduleStart = scheduleData?.startDate ? new Date(scheduleData.startDate) : null;
-    const scheduleEnd = scheduleData?.endDate ? new Date(scheduleData.endDate) : null;
-    if (scheduleStart) scheduleStart.setHours(0, 0, 0, 0);
-    if (scheduleEnd) scheduleEnd.setHours(23, 59, 59, 999);
     for (let i = 0; i < 7; i++) {
       const date = new Date(weekStart);
       date.setDate(date.getDate() + i);
       const dateStr = toLocalDateKey(date);
-      const insideSchedule = (!scheduleStart || date >= scheduleStart) && (!scheduleEnd || date <= scheduleEnd);
-      if (insideSchedule && daysOfWeek.includes(date.getDay()) && !isHoliday(dateStr)) {
+      if (hasLessonOnDate(schedules, date, substitutions) && !isHoliday(dateStr)) {
         dates.push(date);
       }
     }
@@ -446,65 +391,15 @@ const ClassJournal = () => {
     return dates;
   };
 
-  const generateLessonDates = (scheduleData, month, year) => {
-    const schedule = scheduleData?.schedule || [];
-    // Map day names to day numbers (0 = Sunday, 1 = Monday, etc.)
-    const dayMap = {
-      'Dushanba': 1, 'Seshanba': 2, 'Chorshanba': 3, 'Payshanba': 4, 'Juma': 5, 'Shanba': 6,
-      'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6
-    };
-
-    let daysOfWeek = [];
-    let hasSchedule = false;
-
-    // Try to get days from schedule - handle both old and new structure
-    if (schedule && Array.isArray(schedule) && schedule.length > 0) {
-      const subjectDays = new Set();
-
-      // New structure: schedule is array of {day, periods: [...]}
-      schedule.forEach(daySchedule => {
-        if (daySchedule.periods && Array.isArray(daySchedule.periods)) {
-          daySchedule.periods.forEach(period => {
-            if (period.subject && (period.subject._id === selectedSubject || period.subject === selectedSubject)) {
-              subjectDays.add(daySchedule.day);
-              hasSchedule = true;
-            }
-          });
-        }
-      });
-
-      daysOfWeek = Array.from(subjectDays).map(day => dayMap[day]).filter(d => d !== undefined);
-    } else if (schedule && schedule.periods && Array.isArray(schedule.periods)) {
-      // Old structure: schedule.periods is array with day property
-      const subjectDays = new Set();
-      schedule.periods.forEach(period => {
-        if (period.subject && (period.subject._id === selectedSubject || period.subject === selectedSubject)) {
-          subjectDays.add(period.day);
-          hasSchedule = true;
-        }
-      });
-
-      daysOfWeek = Array.from(subjectDays).map(day => dayMap[day]).filter(d => d !== undefined);
-    }
-
-    // If no schedule found for this subject, return empty array
-    if (!hasSchedule || daysOfWeek.length === 0) {
-      return [];
-    }
-
+  const generateLessonDates = (schedules, month, year, substitutions = []) => {
     const dates = [];
-    const scheduleStart = scheduleData?.startDate ? new Date(scheduleData.startDate) : null;
-    const scheduleEnd = scheduleData?.endDate ? new Date(scheduleData.endDate) : null;
-    if (scheduleStart) scheduleStart.setHours(0, 0, 0, 0);
-    if (scheduleEnd) scheduleEnd.setHours(23, 59, 59, 999);
 
     // Generate all dates in the month for those days
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const insideSchedule = (!scheduleStart || date >= scheduleStart) && (!scheduleEnd || date <= scheduleEnd);
-      if (insideSchedule && daysOfWeek.includes(date.getDay()) && !isHoliday(dateStr)) {
+      if (hasLessonOnDate(schedules, date, substitutions) && !isHoliday(dateStr)) {
         dates.push(date);
       }
     }
@@ -606,7 +501,8 @@ const ClassJournal = () => {
 
     // If marking as absent or excused, clear grade
     if (newStatus === 'absent' || newStatus === 'excused') {
-      handleGradeChange(studentId, dateStr, 0);
+      setGrades(prev => ({ ...prev, [studentId]: { ...prev[studentId], [dateStr]: null } }));
+      setDirtyGrades(prev => ({ ...prev, [`${studentId}|${dateStr}`]: true }));
     }
   };
 
@@ -671,17 +567,12 @@ const ClassJournal = () => {
         const [studentId, dateStr] = key.split('|');
         const score = grades[studentId]?.[dateStr];
         const student = students.find(item => item._id === studentId);
-        if (score !== null && score !== undefined && !isBeforeStudentRegistration(student, dateStr)) {
+        if (!isBeforeStudentRegistration(student, dateStr)) {
           gradePromises.push(
-            api.post('/grades', {
-              student: studentId,
-              class: selectedClass,
-              subject: selectedSubject,
-              date: dateStr,
-              score: score,
-              type: 'daily',
-              description: 'Kundalik baho'
-            }).catch(err => ({
+            (score === null || score === undefined || score === ''
+              ? api.delete('/grades', { params: { studentId, classId: selectedClass, subjectId: selectedSubject, date: dateStr } })
+              : api.post('/grades', { student: studentId, class: selectedClass, subject: selectedSubject, date: dateStr, score, type: 'daily', description: 'Kundalik baho' })
+            ).catch(err => ({
               error: true,
               message: err.response?.data?.error || err.response?.data?.message || `Baho saqlashda xatolik (${studentId}, ${dateStr}): ${err.message}`
             }))
@@ -715,8 +606,10 @@ const ClassJournal = () => {
         return;
       }
 
-      // Save all in parallel
-      const results = await Promise.all([...gradePromises, ...attendancePromises]);
+      const attendanceResults = await Promise.all(attendancePromises);
+      const attendanceErrors = attendanceResults.filter(r => r && r.error);
+      const gradeResults = attendanceErrors.length ? [] : await Promise.all(gradePromises);
+      const results = [...attendanceResults, ...gradeResults];
 
       // Check for errors
       const errors = results.filter(r => r && r.error);

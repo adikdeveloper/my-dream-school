@@ -8,6 +8,7 @@
 const User = require('../models/users/User');
 const Class = require('../models/academic/Class');
 const Subject = require('../models/academic/Subject');
+const Schedule = require('../models/scheduling/Schedule');
 
 /**
  * Extract unique subject-teacher pairs from schedule
@@ -44,12 +45,15 @@ function extractSubjectTeacherPairs(schedule) {
  */
 async function syncScheduleToClassAndUser(classId, scheduleData) {
   try {
-    // Extract subject-teacher pairs from schedule
-    const pairs = extractSubjectTeacherPairs(scheduleData);
-
-    if (pairs.length === 0) {
-      return { success: true, message: 'No subjects to synchronize' };
+    const schedules = await Schedule.find({ classId }).select('schedule').lean();
+    const pairMap = new Map();
+    for (const item of schedules) {
+      for (const pair of extractSubjectTeacherPairs(item.schedule || [])) {
+        pairMap.set(`${pair.subject}_${pair.teacher}`, pair);
+      }
     }
+    for (const pair of extractSubjectTeacherPairs(scheduleData || [])) pairMap.set(`${pair.subject}_${pair.teacher}`, pair);
+    const pairs = [...pairMap.values()];
 
     // Update Class.subjects
     const classDoc = await Class.findById(classId);
@@ -75,7 +79,7 @@ async function syncScheduleToClassAndUser(classId, scheduleData) {
     for (const [teacherId, subjectIds] of Object.entries(teacherUpdates)) {
       await User.findByIdAndUpdate(
         teacherId,
-        { $addToSet: { subjects: { $each: subjectIds } } },
+        { $addToSet: { subjects: { $each: subjectIds }, classes: classId } },
         { runValidators: true }
       );
 
@@ -113,9 +117,9 @@ async function syncScheduleToClassAndUser(classId, scheduleData) {
 async function syncUserToSchedule(userId, newSubjects, oldSubjects = []) {
   try {
     // Find all schedules where this teacher teaches
-    const Schedule = require('../models/scheduling/Schedule');
     const schedules = await Schedule.find({
-      'schedule.periods.teacher': userId
+      'schedule.periods.teacher': userId,
+      startDate: { $gt: new Date() }
     });
 
     const addedSubjects = newSubjects.filter(s => !oldSubjects.includes(s.toString()));
@@ -161,43 +165,7 @@ async function syncUserToSchedule(userId, newSubjects, oldSubjects = []) {
  */
 async function syncClassToSchedule(classId, newSubjects, oldSubjects = []) {
   try {
-    const Schedule = require('../models/scheduling/Schedule');
-    const schedules = await Schedule.find({ classId });
-
-    const removedPairs = oldSubjects.filter(old => {
-      return !newSubjects.find(newPair =>
-        newPair.subject?.toString() === old.subject?.toString() &&
-        newPair.teacher?.toString() === old.teacher?.toString()
-      );
-    });
-
-    // Remove subject-teacher pairs from schedule if they're no longer in Class.subjects
-    for (const schedule of schedules) {
-      let modified = false;
-
-      schedule.schedule.forEach(day => {
-        if (day.periods) {
-          day.periods.forEach(period => {
-            const removed = removedPairs.find(pair =>
-              pair.subject?.toString() === period.subject?.toString() &&
-              pair.teacher?.toString() === period.teacher?.toString()
-            );
-
-            if (removed) {
-              period.subject = null;
-              period.teacher = null;
-              modified = true;
-            }
-          });
-        }
-      });
-
-      if (modified) {
-        await schedule.save();
-      }
-    }
-
-    return { success: true, message: 'Class-to-Schedule sync completed' };
+    return { success: true, message: 'Historical schedules preserved' };
 
   } catch (error) {
     return { success: false, error: error.message };

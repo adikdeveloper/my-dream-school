@@ -584,6 +584,30 @@
     background: white;
 }
 
+.tdGrade.gradedCell { background: #ecfdf5; }
+.tdGrade.ungradedCell { background: #fffbeb; }
+.tdGrade.blockedGradeCell { background: #f8fafc; }
+
+.gradedInput {
+    background: #dcfce7 !important;
+    border-color: #86efac !important;
+    color: #166534 !important;
+}
+
+.ungradedInput {
+    background: #fef3c7 !important;
+    border-color: #fcd34d !important;
+    color: #92400e !important;
+}
+
+.btnAttendance:disabled,
+.dailyAttBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+    filter: grayscale(1);
+    pointer-events: none;
+}
+
 .tdAverage {
     background: #ccfbf1;
     font-size: 13px;

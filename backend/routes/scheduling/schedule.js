@@ -567,6 +567,15 @@ router.get('/class/:classId/current', rateLimiters.api, auth, async (req, res) =
     }
 
     if (!schedule) {
+      if (req.query.date) {
+        return res.json({
+          schedule: [],
+          startDate: null,
+          endDate: null,
+          status: 'not_found',
+          message: 'Bu sana uchun jadval topilmadi'
+        });
+      }
       return res.status(404).json({ message: 'Jadval topilmadi' });
     }
 

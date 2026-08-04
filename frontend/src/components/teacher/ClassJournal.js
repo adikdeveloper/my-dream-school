@@ -263,7 +263,8 @@ const ClassJournal = () => {
         startDate = dayStart.toISOString();
         endDate = dayEnd.toISOString();
 
-        dates = [new Date(selectedDay)];
+        dates = generateLessonDatesForWeek(scheduleData, dayStart)
+          .filter(date => toLocalDateKey(date) === toLocalDateKey(dayStart));
         setLessonDates(dates);
       } else if (viewType === 'week') {
         // Weekly view: 7 days from Monday to Sunday
@@ -551,6 +552,12 @@ const ClassJournal = () => {
   };
 
   const handleAttendanceToggle = (studentId, dateStr) => {
+    const student = students.find(item => item._id === studentId);
+    if (isBeforeStudentRegistration(student, dateStr)) {
+      showToast("O'quvchi hali maktabga kelmagan sana uchun davomat belgilab bo'lmaydi", 'warning');
+      return;
+    }
+
     // Bayram kunida davomat belgilash mumkin emas
     const holiday = isHoliday(dateStr);
     if (holiday) {
@@ -955,6 +962,7 @@ const ClassJournal = () => {
                 const attStatus = attendance[student._id]?.[dateStr] || 'present';
                 const isDisabled = attStatus === 'absent' || attStatus === 'excused';
                 const grade = grades[student._id]?.[dateStr];
+                const hasGrade = grade !== null && grade !== undefined && grade !== '';
                 const holidayInfo = isHoliday(dateStr);
                 const beforeRegistration = isBeforeStudentRegistration(student, dateStr);
                 return (
@@ -974,19 +982,21 @@ const ClassJournal = () => {
                             min="0"
                             max="5"
                             inputMode="numeric"
-                            className={`${styles.dailyGradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
+                            className={`${styles.dailyGradeInput} ${isDisabled || beforeRegistration ? styles.gradeInputAbsent : hasGrade ? styles.gradedInput : styles.ungradedInput}`}
                             value={grade || ''}
                             onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
                             onKeyDown={(e) => handleGradeKeyDown(e, index, 0)}
                             data-grade-row={index}
                             data-grade-column={0}
-                            placeholder={beforeRegistration ? 'Hali kelmagan' : isDisabled ? (attStatus === 'excused' ? 'Sababli' : 'н/к') : 'Baho'}
+                            placeholder={beforeRegistration ? 'Hali kelmagan' : isDisabled ? '' : 'Baho'}
                             disabled={isDisabled || beforeRegistration}
                           />
                         </div>
                         <button
                           className={`${styles.dailyAttBtn} ${attStatus === 'absent' ? styles.dailyAttAbsent : attStatus === 'excused' ? styles.dailyAttExcused : styles.dailyAttPresent}`}
                           onClick={() => handleAttendanceToggle(student._id, dateStr)}
+                          disabled={beforeRegistration}
+                          title={beforeRegistration ? "O'quvchi bu sanada hali maktabga kelmagan" : getAttendanceLabel(attStatus)}
                         >
                           {getAttendanceIcon(attStatus)} {getAttendanceLabel(attStatus)}
                         </button>
@@ -1038,11 +1048,12 @@ const ClassJournal = () => {
                           const attStatus = attendance[student._id]?.[dateStr] || 'present';
                           const isDisabled = attStatus === 'absent' || attStatus === 'excused';
                           const grade = grades[student._id]?.[dateStr];
+                          const hasGrade = grade !== null && grade !== undefined && grade !== '';
                           const holidayInfo = isHoliday(dateStr);
                           const beforeRegistration = isBeforeStudentRegistration(student, dateStr);
 
                           return (
-                            <td key={dateIndex} className={`${styles.tdGrade} ${holidayInfo ? styles.holidayCell : ''}`}>
+                            <td key={dateIndex} className={`${styles.tdGrade} ${holidayInfo ? styles.holidayCell : beforeRegistration || isDisabled ? styles.blockedGradeCell : hasGrade ? styles.gradedCell : styles.ungradedCell}`}>
                               {holidayInfo ? (
                                 <div className={styles.holidayMarker} title={holidayInfo.name}>
                                   <JournalIcon name="holiday" size={17} />
@@ -1053,20 +1064,21 @@ const ClassJournal = () => {
                                     type="number"
                                     min="0"
                                     max="5"
-                                    className={`${styles.gradeInput} ${isDisabled ? styles.gradeInputAbsent : ''}`}
+                                    className={`${styles.gradeInput} ${isDisabled ? styles.gradeInputAbsent : hasGrade ? styles.gradedInput : styles.ungradedInput}`}
                                     value={grade || ''}
                                     onChange={(e) => handleGradeChange(student._id, dateStr, e.target.value)}
                                     onKeyDown={(e) => handleGradeKeyDown(e, index, dateIndex)}
                                     data-grade-row={index}
                                     data-grade-column={dateIndex}
-                                    placeholder={beforeRegistration ? '—' : isDisabled ? (attStatus === 'excused' ? 'S' : 'n/k') : ''}
+                                    placeholder={beforeRegistration || isDisabled ? '—' : ''}
                                     disabled={isDisabled || beforeRegistration}
                                     title={beforeRegistration ? "O'quvchi bu sanada hali maktabga kelmagan" : ''}
                                   />
                                   <button
                                     className={`${styles.btnAttendance} ${attStatus === 'absent' ? styles.btnAttendanceAbsent : attStatus === 'excused' ? styles.btnAttendanceExcused : styles.btnAttendancePresent}`}
                                     onClick={() => handleAttendanceToggle(student._id, dateStr)}
-                                    title={getAttendanceLabel(attStatus)}
+                                    disabled={beforeRegistration}
+                                    title={beforeRegistration ? "O'quvchi bu sanada hali maktabga kelmagan" : getAttendanceLabel(attStatus)}
                                   >
                                     {getAttendanceIcon(attStatus)}
                                   </button>
@@ -1111,15 +1123,11 @@ const ClassJournal = () => {
                   <span className={styles.legendBadge}>0-5</span>
                   <span>Ball</span>
                 </div>
-                <div className={styles.legendItem}>
-                  <span className={styles.legendBadgeSecondary}>н/к</span>
-                  <span>Не келди (kelmagan)</span>
-                </div>
               </div>
             </div>
             <div className={styles.legendNote}>
               <span className={styles.noteIcon}><JournalIcon name="info" size={17} /></span>
-              <span className={styles.noteText}>Faqat dars bo'lgan kunlar ko'rsatiladi. O'quvchi kelmaganda avtomatik "н/к" ko'rinadi.</span>
+              <span className={styles.noteText}>Yashil katak — baho qo'yilgan. Sariq katak — hali baho qo'yilmagan. Kelmagan yoki sababli bo'lsa baho katagi bloklanadi.</span>
             </div>
           </div>
         </>

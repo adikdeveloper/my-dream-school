@@ -118,6 +118,15 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
       flash('error', "Kim o'tganini (o'rinbosar) tanlang");
       return;
     }
+    // Asl o'qituvchi va o'rinbosar bir xil bo'lmasligi kerak
+    if (isManager && form.periodIndex !== '') {
+      const selPeriod = dayPeriods.find(p => String(p.periodIndex) === String(form.periodIndex));
+      const origId = selPeriod?.teacher?._id ? String(selPeriod.teacher._id) : null;
+      if (origId && origId === form.substituteTeacherId) {
+        flash('error', "O'qituvchini o'zi bilan almashtirib bo'lmaydi!");
+        return;
+      }
+    }
     try {
       setSubmitting(true);
       await apiService.createSubstitution({
@@ -372,16 +381,38 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
                 </div>
               )}
 
-              {isManager && (
-                <>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>O'rniga o'tgan o'qituvchi *</label>
-                  <select required value={form.substituteTeacherId} onChange={(e) => setForm((f) => ({ ...f, substituteTeacherId: e.target.value }))}
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1', marginBottom: '0.9rem' }}>
-                    <option value="">— Kim o'tdi —</option>
-                    {teachers.map((t) => <option key={t._id} value={t._id}>{t.firstName} {t.lastName}</option>)}
-                  </select>
-                </>
-              )}
+              {isManager && (() => {
+                // Tanlangan period dagi asl o'qituvchi ID — uni o'rinbosar sifatida tanlab bo'lmaydi
+                const selectedPeriod = form.periodIndex !== '' ? dayPeriods.find(p => String(p.periodIndex) === String(form.periodIndex)) : null;
+                const originalTeacherIdOfPeriod = selectedPeriod?.teacher?._id ? String(selectedPeriod.teacher._id) : null;
+                return (
+                  <>
+                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>O'rniga o'tgan o'qituvchi *</label>
+                    <select required value={form.substituteTeacherId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && originalTeacherIdOfPeriod && val === originalTeacherIdOfPeriod) return;
+                        setForm((f) => ({ ...f, substituteTeacherId: val }));
+                      }}
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1', marginBottom: '0.9rem' }}>
+                      <option value="">— Kim o'tdi —</option>
+                      {teachers.map((t) => {
+                        const isOriginal = originalTeacherIdOfPeriod && String(t._id) === originalTeacherIdOfPeriod;
+                        return (
+                          <option key={t._id} value={t._id} disabled={isOriginal}>
+                            {t.firstName} {t.lastName}{isOriginal ? ' (asl o\'qituvchi — tanlab bo\'lmaydi)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    {originalTeacherIdOfPeriod && form.substituteTeacherId === originalTeacherIdOfPeriod && (
+                      <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: -8, marginBottom: '0.9rem' }}>
+                        ⚠️ O'qituvchini o'zi bilan almashtirib bo'lmaydi!
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
 
               <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>Sabab (ixtiyoriy)</label>
               <input type="text" value={form.reason} maxLength={300} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}

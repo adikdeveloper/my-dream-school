@@ -6,6 +6,16 @@ const AttendanceManagement = () => {
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedWeek, setSelectedWeek] = useState(() => {
+    const today = new Date();
+    const d = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+  });
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,31 +37,34 @@ const AttendanceManagement = () => {
     loadClasses();
   }, []);
 
-  // Calculate date ranges based on active tab
   const dateRange = useMemo(() => {
-    const today = new Date(selectedDate);
-
     if (activeTab === 'daily') {
       return { startDate: selectedDate, endDate: selectedDate };
     } else if (activeTab === 'weekly') {
-      const dayOfWeek = today.getDay();
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
+      if (!selectedWeek) return { startDate: '', endDate: '' };
+      const [year, weekStr] = selectedWeek.split('-W');
+      const d = new Date(year, 0, 4);
+      const dayNum = d.getDay() || 7;
+      d.setDate(d.getDate() - dayNum + 1);
+      d.setDate(d.getDate() + (parseInt(weekStr) - 1) * 7);
+      const start = new Date(d);
+      const end = new Date(d);
+      end.setDate(start.getDate() + 6);
       return {
-        startDate: monday.toISOString().split('T')[0],
-        endDate: sunday.toISOString().split('T')[0]
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0]
       };
     } else {
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      if (!selectedMonth) return { startDate: '', endDate: '' };
+      const [year, month] = selectedMonth.split('-');
+      const firstDay = new Date(year, parseInt(month) - 1, 1);
+      const lastDay = new Date(year, parseInt(month), 0);
       return {
         startDate: firstDay.toISOString().split('T')[0],
         endDate: lastDay.toISOString().split('T')[0]
       };
     }
-  }, [selectedDate, activeTab]);
+  }, [selectedDate, selectedWeek, selectedMonth, activeTab]);
 
   // Load attendance data
   const loadAttendance = useCallback(async () => {
@@ -61,19 +74,19 @@ const AttendanceManagement = () => {
     setError('');
 
     try {
-      let data;
-      if (activeTab === 'daily') {
-        data = await apiService.getAttendance({
-          classId: selectedClass,
-          date: selectedDate
-        });
-      } else {
-        data = await apiService.getAttendance({
-          classId: selectedClass,
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate
-        });
+      let params = {};
+      if (selectedClass !== 'all') {
+        params.classId = selectedClass;
       }
+
+      if (activeTab === 'daily') {
+        params.date = selectedDate;
+      } else {
+        params.startDate = dateRange.startDate;
+        params.endDate = dateRange.endDate;
+      }
+      
+      const data = await apiService.getAttendance(params);
 
       const attendanceArray = Array.isArray(data) ? data : [];
       setAttendanceData(attendanceArray);
@@ -223,6 +236,7 @@ const AttendanceManagement = () => {
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
           >
+            <option value="all">Barcha sinflar</option>
             {classes.map(cls => (
               <option key={cls._id} value={cls._id}>
                 {cls.name} ({cls.students?.length || 0} o'quvchi)
@@ -234,12 +248,30 @@ const AttendanceManagement = () => {
           <label className="filter-label">
             {activeTab === 'daily' ? 'Sana' : activeTab === 'weekly' ? 'Hafta' : 'Oy'}
           </label>
-          <input
-            type="date"
-            className="filter-input"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
+          {activeTab === 'daily' && (
+            <input
+              type="date"
+              className="filter-input"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          )}
+          {activeTab === 'weekly' && (
+            <input
+              type="week"
+              className="filter-input"
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(e.target.value)}
+            />
+          )}
+          {activeTab === 'monthly' && (
+            <input
+              type="month"
+              className="filter-input"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            />
+          )}
         </div>
         {activeTab !== 'daily' && (
           <div className="date-range-info">
@@ -272,6 +304,7 @@ const AttendanceManagement = () => {
               <tr>
                 <th>#</th>
                 <th>O'quvchi</th>
+                <th>Sinf</th>
                 {activeTab === 'daily' && <th>Dars</th>}
                 {activeTab === 'daily' && <th>Fan</th>}
                 <th>Sana</th>
@@ -287,6 +320,7 @@ const AttendanceManagement = () => {
                     <td className="student-name">
                       {record.student?.firstName} {record.student?.lastName}
                     </td>
+                    <td>{record.class?.name || '—'}</td>
                     <td>{record.period}-dars</td>
                     <td>{record.subject?.name || '—'}</td>
                     <td>{formatDate(record.date)}</td>
@@ -300,6 +334,7 @@ const AttendanceManagement = () => {
                     <td className="student-name">
                       {item.student?.firstName} {item.student?.lastName}
                     </td>
+                    <td>{item.records[0]?.class?.name || '—'}</td>
                     <td>{formatDate(dateRange.startDate)} - {formatDate(dateRange.endDate)}</td>
                     <td>
                       <div className="status-summary">

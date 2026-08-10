@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
@@ -68,7 +68,7 @@ const parseNonNegativeAmount = (value, fieldLabel) => {
 // @route   GET /api/users
 // @desc    Get all users (admin only)
 // @access  Private/Admin
-router.get('/', auth, authorize('admin', 'accountant', 'reception', 'callcenter'), async (req, res) => {
+router.get('/', auth, authorize('admin', 'director', 'supervisor', 'accountant', 'reception', 'callcenter'), async (req, res) => {
   try {
     let { role, page = 1, limit = 10, search } = req.query;
 
@@ -117,7 +117,7 @@ router.get('/', auth, authorize('admin', 'accountant', 'reception', 'callcenter'
 // @route   GET /api/users/student/stats
 // @desc    Get student statistics
 // @access  Private/Admin
-router.get('/student/stats', auth, authorize('admin', 'accountant', 'reception', 'callcenter'), async (req, res) => {
+router.get('/student/stats', auth, authorize('admin', 'director', 'supervisor', 'accountant', 'reception', 'callcenter'), async (req, res) => {
   try {
     const totalStudents = await User.countDocuments({ role: 'student' });
     const activeStudents = await User.countDocuments({ role: 'student', isActive: true });

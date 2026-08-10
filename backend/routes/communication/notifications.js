@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { auth } = require('../../middleware/auth');
 const Assignment = require('../../models/academic/Assignment');
@@ -435,7 +435,7 @@ router.get('/teacher/counts', auth, async (req, res) => {
 // Get notification counts for admins
 router.get('/admin/counts', auth, async (req, res) => {
   try {
-    if ((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'accountant')) {
+    if ((req.user.role !== 'admin' && req.user.role !== 'director' && req.user.role !== 'supervisor' && req.user.role !== 'accountant')) {
       return res.status(403).json({ message: 'Access denied' });
     }
 

@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { auth, authorize } = require('../middleware/auth');
@@ -178,9 +178,9 @@ router.get('/activities', auth, authorize('admin', 'accountant'), async (req, re
 // @route   GET /api/stats/teacher/classes
 // @desc    Get teacher's classes performance statistics (OPTIMIZED - No N+1)
 // @access  Private/Teacher
-router.get('/teacher/classes', auth, authorize('teacher'), async (req, res) => {
+router.get('/teacher/classes', auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
-    const teacherId = req.user._id;
+    const teacherId = req.query.teacherId || req.user._id;
 
     // Get all classes where teacher teaches
     const classes = await Class.find({
@@ -452,10 +452,10 @@ router.get('/teacher/student/:studentId', auth, async (req, res) => {
   }
 });
 
-router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => {
+router.get('/teacher/students', auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
     const { classId, subjectId } = req.query;
-    const teacherId = req.user._id;
+    const teacherId = req.query.teacherId || req.user._id;
 
     // Input validation and sanitization
     if (!classId || !subjectId) {
@@ -685,10 +685,10 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
 // @route   GET /api/stats/teacher/attendance
 // @desc    Get attendance statistics for teacher's classes
 // @access  Private/Teacher
-router.get('/teacher/attendance', auth, authorize('teacher'), async (req, res) => {
+router.get('/teacher/attendance', auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
     const { classId, subjectId, startDate, endDate } = req.query;
-    const teacherId = req.user._id;
+    const teacherId = req.query.teacherId || req.user._id;
 
     // Build filter with validation
     const filter = {};
@@ -1138,9 +1138,9 @@ router.get('/class/:classId', auth, authorize('admin', 'accountant'), async (req
 // @route   GET /api/stats/teacher/today
 // @desc    Get teacher's today's dashboard statistics (REAL DATA)
 // @access  Private/Teacher
-router.get('/teacher/today', auth, authorize('teacher'), async (req, res) => {
+router.get('/teacher/today', auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
-    const teacherId = req.user._id;
+    const teacherId = req.query.teacherId || req.user._id;
 
     // Bugungi sana
     const today = new Date();
@@ -1260,9 +1260,9 @@ function getRelativeTime(date) {
 // @route   GET /api/stats/teacher/ungraded-lessons
 // @desc    Get today's lessons without grades for teacher (with localStorage key for frontend)
 // @access  Private/Teacher
-router.get('/teacher/ungraded-lessons', auth, authorize('teacher'), async (req, res) => {
+router.get('/teacher/ungraded-lessons', auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
-    const teacherId = req.user._id;
+    const teacherId = req.query.teacherId || req.user._id;
 
     // Bugungi sana va vaqt
     const now = new Date();

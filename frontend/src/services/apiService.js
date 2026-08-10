@@ -290,8 +290,9 @@ const apiService = {
   },
 
   // Get teacher's schedule
-  getTeacherSchedule: async () => {
-    const response = await api.get('/schedule/teacher');
+  getTeacherSchedule: async (teacherId = null) => {
+    const url = teacherId ? `/schedule/teacher?teacherId=${teacherId}` : '/schedule/teacher';
+    const response = await api.get(url);
     return response.data;
   },
 
@@ -472,15 +473,17 @@ const apiService = {
   },
 
   // Teacher Reports
-  getTeacherClassStats: async () => {
-    const response = await api.get('/stats/teacher/classes');
+  getTeacherClassStats: async (teacherId = null) => {
+    const url = teacherId ? `/stats/teacher/classes?teacherId=${teacherId}` : '/stats/teacher/classes';
+    const response = await api.get(url);
     return response.data;
   },
 
-  getTeacherStudentStats: async (classId, subjectId) => {
+  getTeacherStudentStats: async (classId, subjectId, teacherId = null) => {
     const params = new URLSearchParams();
     if (classId) params.append('classId', classId);
     if (subjectId) params.append('subjectId', subjectId);
+    if (teacherId) params.append('teacherId', teacherId);
     const response = await api.get(`/stats/teacher/students?${params}`);
     return response.data;
   },
@@ -510,14 +513,16 @@ const apiService = {
   },
 
   // O'qituvchining bugungi statistikasi (real ma'lumotlar)
-  getTeacherTodayStats: async () => {
-    const response = await api.get('/stats/teacher/today');
+  getTeacherTodayStats: async (teacherId = null) => {
+    const url = teacherId ? `/stats/teacher/today?teacherId=${teacherId}` : '/stats/teacher/today';
+    const response = await api.get(url);
     return response.data;
   },
 
   // O'qituvchining bugungi baholarsiz darslarini olish
-  getTeacherUngradedLessons: async () => {
-    const response = await api.get('/stats/teacher/ungraded-lessons');
+  getTeacherUngradedLessons: async (teacherId = null) => {
+    const url = teacherId ? `/stats/teacher/ungraded-lessons?teacherId=${teacherId}` : '/stats/teacher/ungraded-lessons';
+    const response = await api.get(url);
     return response.data;
   },
 

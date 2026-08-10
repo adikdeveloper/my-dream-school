@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/common/Logo';
-import AdminHome from '../../components/admin/AdminHome';
+import SupervisorHome from '../../components/supervisor/SupervisorHome';
 import StudentManagement from '../../components/admin/StudentManagement';
 import TeacherManagement from '../../components/admin/TeacherManagement';
 import ClassManagement from '../../components/admin/ClassManagement';
@@ -241,7 +241,7 @@ const SupervisorDashboard = () => {
                 {/* Main Content - NO financial routes */}
                 <main className="main-content" role="main">
                     <Routes>
-                        <Route path="/" element={<AdminHome />} />
+                        <Route path="/" element={<SupervisorHome />} />
                         <Route path="/users" element={<StudentManagement />} />
                         <Route path="/teachers" element={<TeacherManagement />} />
                         <Route path="/classes" element={<ClassManagement />} />

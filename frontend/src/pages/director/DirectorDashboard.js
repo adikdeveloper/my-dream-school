@@ -451,6 +451,11 @@ const DirectorDashboard = () => {
               icon: '🛡️'
             },
             {
+              path: '/director/staff/supervisor',
+              label: 'Ta\'lim nazoratchisi',
+              icon: '👨‍💼'
+            },
+            {
               path: '/director/staff/accountant',
               label: 'Hisobchi',
               icon: '💰'

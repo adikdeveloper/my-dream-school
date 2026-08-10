@@ -357,7 +357,7 @@ router.get('/student/day/:day', rateLimiters.api, auth, async (req, res) => {
 });
 
 // Get teacher's schedule - OPTIMIZED
-router.get('/teacher', rateLimiters.api, auth, authorize('teacher'), async (req, res) => {
+router.get('/teacher', rateLimiters.api, auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
     // Validate user ID
     if (!req.user?.id) {
@@ -365,7 +365,7 @@ router.get('/teacher', rateLimiters.api, auth, authorize('teacher'), async (req,
     }
 
     // Optimized query with projection to reduce data transfer
-    const teacherUserId = req.user._id || req.user.id;
+    const teacherUserId = req.query.teacherId || req.user._id || req.user.id;
     const classes = await Class.find({
       'subjects.teacher': teacherUserId,
       isActive: true
@@ -378,7 +378,7 @@ router.get('/teacher', rateLimiters.api, auth, authorize('teacher'), async (req,
     const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     // Get the teacher's user ID as string for comparison
-    const currentTeacherId = (req.user._id || req.user.id).toString();
+    const currentTeacherId = teacherUserId.toString();
 
     // Get schedules for all teacher's classes
     for (const classItem of classes) {

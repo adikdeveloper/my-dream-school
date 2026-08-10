@@ -10,6 +10,7 @@ const STAFF_CONFIG = {
   hr:            { role: 'hr',         icon: '📋', singular: 'HR xodimi',           plural: 'HR xodimlari' },
   reception:     { role: 'reception',  icon: '🛎️', singular: 'Reception xodimi',    plural: 'Reception xodimlari' },
   'call-center': { role: 'callcenter', icon: '📞', singular: 'Call markaz xodimi', plural: 'Call markaz xodimlari' },
+  supervisor:    { role: 'supervisor', icon: '👨‍💼', singular: 'Ta\'lim nazoratchisi', plural: 'Ta\'lim nazoratchilari' },
 };
 const DEFAULT_CFG = { role: '', icon: '👥', singular: 'Xodim', plural: 'Xodimlar' };
 

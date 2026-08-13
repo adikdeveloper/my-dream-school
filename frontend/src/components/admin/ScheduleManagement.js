@@ -880,7 +880,9 @@ const ScheduleManagement = () => {
       await loadSchedules(selectedClass._id);
       setViewMode('list');
     } catch (error) {
-      setError(error.response?.data?.message || 'Jadvalni saqlashda xatolik');
+      const message = error.response?.data?.message || 'Jadvalni saqlashda xatolik';
+      setError(message);
+      showToast(message, 'warning');
     } finally {
       setLoading(false);
     }

@@ -510,7 +510,7 @@ router.put('/teacher/period/:classId/:day/:periodIndex', rateLimiters.api, auth,
 // ============= ADMIN SCHEDULE MANAGEMENT ROUTES =============
 
 // Get all schedules for a class
-router.get('/class/:classId', rateLimiters.api, auth, authorize('admin'), async (req, res) => {
+router.get('/class/:classId', rateLimiters.api, auth, authorize('admin', 'director', 'supervisor'), requirePermission('schedule.edit'), async (req, res) => {
   try {
     const { classId } = req.params;
 

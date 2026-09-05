@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Can } from '../../context/PermissionsContext';
@@ -91,33 +91,45 @@ const StudentManagement = () => {
     }
   }, []);
 
-  // Load students with pagination and search
+  // Load students with pagination and search (eskirgan javoblar bekor qilinadi)
+  const studentsRequestId = useRef(0);
   const loadStudents = useCallback(async () => {
+    const myRequest = ++studentsRequestId.current;
     try {
       setLocalLoading(true);
       setLocalError('');
       setLoading(true);
       const response = await apiService.getUsers('student', currentPage, itemsPerPage, debouncedSearchTerm);
+      // Qidiruv/sahifa o'zgargan bo'lsa, bu eskirgan javob — holatni yangilamaymiz
+      if (studentsRequestId.current !== myRequest) return;
       setStudents(response.users || []);
       setTotalPages(response.totalPages || 1);
       setTotalStudents(response.total || 0);
     } catch (error) {
+      if (studentsRequestId.current !== myRequest) return;
       const errorMsg = error.response?.data?.message || 'O\'quvchilarni yuklashda xatolik';
       setError(errorMsg);
       setLocalError(errorMsg);
     } finally {
-      setLoading(false);
-      setLocalLoading(false);
+      if (studentsRequestId.current === myRequest) {
+        setLoading(false);
+        setLocalLoading(false);
+      }
     }
   }, [currentPage, itemsPerPage, debouncedSearchTerm, setLoading, setError]);
 
+  // Birinchi yuklashda: statistika + badge tozalash (qidiruvda qayta chaqirilmaydi)
   useEffect(() => {
-    loadStudents();
     loadStudentStats();
     // Mark users section as viewed to clear notification badge
     apiService.markSectionAsViewed('users').catch(() => {
       // Silently handle this error - not critical
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    loadStudents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, debouncedSearchTerm]);
 

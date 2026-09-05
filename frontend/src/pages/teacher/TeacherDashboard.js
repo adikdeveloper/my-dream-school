@@ -206,8 +206,18 @@ const TeacherDashboard = () => {
         <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-brand">
-              <span className="brand-icon"><TeacherNavIcon name="journal" size={18} /></span>
-              <span className="brand-text">O'qituvchi</span>
+              <div
+                className="brand-avatar"
+                style={profileImageUrl ? {
+                  backgroundImage: `url(${profileImageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                } : undefined}
+                aria-hidden="true"
+              >
+                {!profileImageUrl && <span>{userInitials}</span>}
+              </div>
+              <span className="brand-text">{user?.firstName} {user?.lastName}</span>
             </div>
           </div>
 
@@ -260,6 +270,31 @@ const TeacherDashboard = () => {
           </Routes>
         </main>
       </div>
+
+      <style>{`
+        .admin-dashboard-layout .sidebar .brand-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.7rem;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          color: #fff;
+          background: #2563eb;
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+        .admin-dashboard-layout .sidebar-brand .brand-text {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      `}</style>
     </div>
   );
 };

@@ -11,8 +11,8 @@ import Tests from '../../components/teacher/Tests';
 import Assignments from '../../components/teacher/Assignments';
 import TeacherReports from '../../components/teacher/TeacherReports';
 import TeacherCoins from '../../components/teacher/TeacherCoins';
-import TeacherProfile from '../../components/teacher/TeacherProfile';
 import TeacherSalary from '../../components/teacher/TeacherSalary';
+import Profile from '../../components/admin/Profile';
 import TeacherAI from '../../components/teacher/TeacherAI';
 import Substitutions from '../../components/common/Substitutions';
 import ChatPage from '../../components/chat/ChatPage';
@@ -255,7 +255,7 @@ const TeacherDashboard = () => {
             <Route path="/reports" element={<TeacherReports />} />
             <Route path="/coins" element={<TeacherCoins />} />
             <Route path="/salary" element={<TeacherSalary />} />
-            <Route path="/profile" element={<TeacherProfile />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="/teacher" replace />} />
           </Routes>
         </main>

@@ -85,7 +85,7 @@ const ROLE_THEMES = {
 };
 const getTheme = (role) => ROLE_THEMES[role?.toLowerCase()] || ROLE_THEMES.admin;
 
-const Profile = ({ designSystemVariant = '' }) => {
+const Profile = () => {
   const { user, updateUser } = useAuth();
   const theme = getTheme(user?.role);
   const [isEditing, setIsEditing] = useState(false);
@@ -321,7 +321,7 @@ const Profile = ({ designSystemVariant = '' }) => {
   };
 
   return (
-    <div className={`profile-page profile-theme-${theme.name} ${designSystemVariant === 'director' ? 'director-profile-page' : ''}`} style={themeVars}>
+    <div className={`profile-page profile-theme-${theme.name} director-profile-page`} style={themeVars}>
       {/* Rol bo'yicha rang berilgan header */}
       <div className="profile-hero">
         <div>
@@ -1040,6 +1040,310 @@ const Profile = ({ designSystemVariant = '' }) => {
           .form-actions { flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
           .btn { width: 100%; justify-content: center; padding: 0.55rem; font-size: 0.82rem; }
           .alert { padding: 0.625rem 0.875rem; font-size: 0.8rem; }
+        }
+
+        /* ========================================================
+           DIREKTOR DIZAYN TIZIMI — barcha bo'limlar uchun bir xil
+           (dashboard layout class ga bog'liq emas, o'zi mustaqil)
+        ======================================================== */
+        .director-profile-page {
+          box-sizing: border-box;
+          width: 100%;
+          max-width: var(--director-content-max-width, 1440px);
+          min-height: 100%;
+          margin: 0 auto;
+          padding: 24px 28px;
+          color: var(--director-slate-900, #0f172a);
+          background: var(--director-slate-50, #f8fafc);
+          font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .director-profile-page .profile-hero {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 20px;
+          margin: 0 0 24px;
+          padding: 0;
+          color: var(--director-slate-900, #0f172a);
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+        .director-profile-page .profile-hero h1 {
+          margin: 0;
+          color: var(--director-slate-900, #0f172a);
+          font-size: 28px;
+          font-weight: 750;
+          line-height: 1.2;
+          letter-spacing: -.02em;
+        }
+        .director-profile-page .profile-hero p {
+          max-width: 720px;
+          margin: 6px 0 0;
+          color: var(--director-slate-500, #64748b);
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 1.55;
+          opacity: 1;
+        }
+        .director-profile-page .profile-hero-btn,
+        .director-profile-page .btn-edit,
+        .director-profile-page .btn {
+          box-sizing: border-box;
+          min-height: 40px;
+          padding: 0 16px;
+          border-radius: var(--director-radius-sm, 8px);
+          font-size: 14px;
+          font-weight: 650;
+          line-height: 1;
+          transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+          transform: none;
+          box-shadow: none;
+          width: auto;
+          justify-content: center;
+        }
+        .director-profile-page .profile-hero-btn,
+        .director-profile-page .btn-edit,
+        .director-profile-page .btn-save {
+          color: var(--director-white, #fff);
+          background: var(--director-primary-600, #2563eb);
+          border: 1px solid var(--director-primary-600, #2563eb);
+        }
+        .director-profile-page .profile-hero-btn:hover,
+        .director-profile-page .btn-edit:hover,
+        .director-profile-page .btn-save:hover {
+          background: var(--director-primary-700, #1d4ed8);
+          border-color: var(--director-primary-700, #1d4ed8);
+          transform: none;
+          box-shadow: none;
+        }
+        .director-profile-page .btn-cancel {
+          color: var(--director-slate-700, #334155);
+          background: var(--director-white, #fff);
+          border: 1px solid var(--director-slate-300, #cbd5e1);
+        }
+        .director-profile-page .btn-cancel:hover {
+          color: var(--director-slate-900, #0f172a);
+          background: var(--director-slate-50, #f8fafc);
+          border-color: var(--director-slate-400, #94a3b8);
+        }
+        .director-profile-page .profile-card {
+          margin: 0 0 24px;
+          padding: 20px;
+          background: var(--director-white, #fff);
+          border: 1px solid var(--director-slate-200, #e2e8f0);
+          border-left: 1px solid var(--director-slate-200, #e2e8f0);
+          border-radius: var(--director-radius-lg, 16px);
+          box-shadow: var(--director-shadow-sm, 0 4px 14px rgba(15,23,42,.06));
+        }
+        .director-profile-page .card-header {
+          margin: 0 0 20px;
+          padding: 0 0 16px;
+          border-bottom: 1px solid var(--director-slate-200, #e2e8f0);
+        }
+        .director-profile-page .card-title {
+          margin: 0;
+          color: var(--director-slate-900, #0f172a);
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.35;
+        }
+        .director-profile-page .card-subtitle {
+          margin: 4px 0 0;
+          color: var(--director-slate-500, #64748b);
+          font-size: 13px;
+          font-weight: 400;
+          line-height: 1.45;
+          letter-spacing: 0;
+          text-transform: none;
+        }
+        .director-profile-page .profile-avatar-large {
+          border-radius: var(--director-radius-md, 12px);
+          background: var(--director-primary-600, #2563eb);
+          border: 2px solid var(--director-white, #fff);
+          outline: 1px solid var(--director-slate-200, #e2e8f0);
+          box-shadow: none;
+        }
+        .director-profile-page .profile-avatar-large:hover {
+          transform: none;
+          box-shadow: none;
+        }
+        .director-profile-page .avatar-upload-btn {
+          color: var(--director-white, #fff);
+          background: var(--director-primary-600, #2563eb);
+          border: 2px solid var(--director-white, #fff);
+          box-shadow: none;
+        }
+        .director-profile-page .avatar-upload-btn:hover {
+          transform: none;
+          box-shadow: none;
+          background: var(--director-primary-700, #1d4ed8);
+        }
+        .director-profile-page .avatar-remove-btn {
+          color: var(--director-danger-dark, #991b1b);
+          background: var(--director-danger-soft, #fee2e2);
+          box-shadow: none;
+        }
+        .director-profile-page .icon-wrapper {
+          position: relative;
+          width: 44px;
+          height: 44px;
+          flex-shrink: 0;
+          color: var(--director-primary-700, #1d4ed8);
+          background: var(--director-primary-50, #eff6ff);
+          border: 0;
+          border-radius: var(--director-radius-md, 12px);
+          box-shadow: none;
+          font-size: 0;
+        }
+        .director-profile-page .icon-wrapper::before {
+          content: "";
+          box-sizing: border-box;
+          width: 18px;
+          height: 14px;
+          margin-top: 5px;
+          border: 2px solid currentColor;
+          border-radius: 4px;
+        }
+        .director-profile-page .icon-wrapper::after {
+          content: "";
+          position: absolute;
+          top: 10px;
+          width: 10px;
+          height: 10px;
+          border: 2px solid currentColor;
+          border-bottom: 0;
+          border-radius: 8px 8px 0 0;
+        }
+        .director-profile-page .profile-hero-btn > span:first-child,
+        .director-profile-page .btn-edit > span:first-child,
+        .director-profile-page .alert-icon,
+        .director-profile-page .upload-icon {
+          display: none;
+        }
+        .director-profile-page .form-grid {
+          gap: 16px;
+        }
+        .director-profile-page .form-group {
+          gap: 6px;
+        }
+        .director-profile-page .form-label {
+          color: var(--director-slate-700, #334155);
+          font-size: 13px;
+          font-weight: 650;
+          line-height: 1.3;
+          letter-spacing: 0;
+          text-transform: none;
+        }
+        .director-profile-page .form-input,
+        .director-profile-page .form-value {
+          box-sizing: border-box;
+          min-height: 42px;
+          padding: 10px 12px;
+          color: var(--director-slate-900, #0f172a);
+          background: var(--director-white, #fff);
+          border: 1px solid var(--director-slate-300, #cbd5e1);
+          border-radius: var(--director-radius-sm, 8px);
+          font-size: 14px;
+          font-weight: 400;
+        }
+        .director-profile-page .form-value {
+          background: var(--director-slate-50, #f8fafc);
+          border-color: var(--director-slate-200, #e2e8f0);
+        }
+        .director-profile-page .form-input:focus {
+          background: var(--director-white, #fff);
+          border-color: var(--director-primary-400, #60a5fa);
+          outline: 3px solid rgba(59, 130, 246, .14);
+          box-shadow: none;
+        }
+        .director-profile-page .form-actions {
+          gap: 10px;
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid var(--director-slate-200, #e2e8f0);
+          flex-direction: row;
+          justify-content: flex-end;
+        }
+        .director-profile-page .alert {
+          margin-bottom: 16px;
+          padding: 12px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+        }
+        .director-profile-page .alert-error {
+          color: var(--director-danger-dark, #991b1b);
+          background: var(--director-danger-soft, #fee2e2);
+          border-color: var(--director-danger, #ef4444);
+        }
+        .director-profile-page .alert-success {
+          color: var(--director-success-dark, #166534);
+          background: var(--director-success-bg, #ecfdf5);
+          border-color: var(--director-success-soft, #d1fae5);
+        }
+        .director-profile-page button:focus-visible,
+        .director-profile-page input:focus-visible {
+          outline: 3px solid rgba(59, 130, 246, .2);
+          outline-offset: 2px;
+        }
+        .director-profile-page button:disabled {
+          color: var(--director-slate-500, #64748b);
+          background: var(--director-slate-100, #f1f5f9);
+          border-color: var(--director-slate-200, #e2e8f0);
+          cursor: not-allowed;
+          opacity: 1;
+        }
+
+        /* Direktor responsiv: planshet */
+        @media (max-width: 1023px) {
+          .director-profile-page { padding: 20px; }
+          .director-profile-page .profile-hero { gap: 16px; }
+          .director-profile-page .profile-hero h1 { font-size: 24px; }
+        }
+
+        /* Direktor responsiv: telefon */
+        @media (max-width: 639px) {
+          .director-profile-page { padding: 16px 14px; }
+          .director-profile-page .profile-hero {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 0;
+          }
+          .director-profile-page .profile-hero h1 { font-size: 24px; }
+          .director-profile-page .profile-hero p { font-size: 13px; }
+          .director-profile-page .profile-hero-btn,
+          .director-profile-page .btn,
+          .director-profile-page .btn-edit {
+            width: 100%;
+            min-height: 40px;
+            justify-content: center;
+          }
+          .director-profile-page .profile-card { padding: 16px; margin-bottom: 16px; }
+          .director-profile-page .card-header {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .director-profile-page .form-actions {
+            align-items: stretch;
+            flex-direction: column;
+          }
+          .director-profile-page .form-grid { grid-template-columns: 1fr; }
+          .director-profile-page .form-input,
+          .director-profile-page .form-value { font-size: 16px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .director-profile-page *,
+          .director-profile-page *::before,
+          .director-profile-page *::after {
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: .01ms !important;
+          }
         }
       `}</style>
 

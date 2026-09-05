@@ -7,6 +7,32 @@ import StudentProfile from './StudentProfile';
 import StudentPayments from './StudentPayments';
 import LoadingOverlay from '../common/LoadingOverlay';
 
+// Direktor dizayn tizimiga mos SVG ikonlar (emoji o'rniga — reception ham 1:1 bir xil ko'rinadi)
+const StudentIcon = ({ name = 'grid', size = 16 }) => {
+  const paths = {
+    grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
+    student: <><path d="m3 9 9-5 9 5-9 5-9-5Z" /><path d="M6 11v5c3 2 9 2 12 0v-5M21 9v6" /></>,
+    check: <><path d="M20 6 9 17l-5-5" /></>,
+    pause: <><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></>,
+    spark: <><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /><circle cx="12" cy="12" r="3.5" /></>,
+    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
+    filter: <><path d="M4 5h16l-6 8v5l-4 2v-7L4 5Z" /></>,
+    plus: <path d="M12 5v14M5 12h14" />,
+    eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
+    edit: <><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></>,
+    transfer: <><path d="M4 7h14l-3-3M20 17H6l3 3M18 7l-3 3M6 17l3-3" /></>,
+    phone: <><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.8.7a2 2 0 0 1 1.7 2Z" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
+    dollar: <><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h3" /></>,
+    trash: <><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></>
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.grid}
+    </svg>
+  );
+};
+
 const StudentManagement = () => {
   const { setLoading, setError } = useData();
   const { user } = useAuth();
@@ -245,11 +271,14 @@ const StudentManagement = () => {
           <h1>O'quvchilar</h1>
           <p>O'quvchilar ro'yxati, sinfi, holati va shaxsiy ma'lumotlarini boshqaring.</p>
         </div>
-        <Can perm="teacher.create_student">
-          <button className="students-primary-action" onClick={handleAddStudent}>
-            Yangi o'quvchi
-          </button>
-        </Can>
+        {!isReception && (
+          <Can perm="teacher.create_student">
+            <button className="students-primary-action" onClick={handleAddStudent}>
+              <StudentIcon name="plus" size={15} />
+              <span>Yangi o'quvchi</span>
+            </button>
+          </Can>
+        )}
       </header>
       {/* Loading Overlay */}
       {localLoading && <LoadingOverlay message="O'quvchilar yuklanmoqda" />}
@@ -266,7 +295,7 @@ const StudentManagement = () => {
       {/* Stats Cards */}
       <div className="stats-grid">
         <div className="stat-card stat-total">
-          <div className="stat-icon">📊</div>
+          <div className="stat-icon"><StudentIcon name="grid" size={18} /></div>
           <div className="stat-content">
             <div className="stat-value">{stats.total}</div>
             <div className="stat-label">Jami o'quvchilar</div>
@@ -275,7 +304,7 @@ const StudentManagement = () => {
         </div>
 
         <div className="stat-card stat-active">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon"><StudentIcon name="check" size={18} /></div>
           <div className="stat-content">
             <div className="stat-value">{stats.active}</div>
             <div className="stat-label">Faol o'quvchilar</div>
@@ -284,7 +313,7 @@ const StudentManagement = () => {
         </div>
 
         <div className="stat-card stat-inactive">
-          <div className="stat-icon">⏸️</div>
+          <div className="stat-icon"><StudentIcon name="pause" size={18} /></div>
           <div className="stat-content">
             <div className="stat-value">{stats.inactive}</div>
             <div className="stat-label">Nofaol o'quvchilar</div>
@@ -293,7 +322,7 @@ const StudentManagement = () => {
         </div>
 
         <div className="stat-card stat-new">
-          <div className="stat-icon">🆕</div>
+          <div className="stat-icon"><StudentIcon name="spark" size={18} /></div>
           <div className="stat-content">
             <div className="stat-value">{stats.new}</div>
             <div className="stat-label">Yangi (1 oy)</div>
@@ -308,7 +337,7 @@ const StudentManagement = () => {
           <div className="filter-left">
             <div className="filter-item">
               <label className="filter-label">
-                <span className="label-icon">🔍</span>
+                <span className="label-icon"><StudentIcon name="search" size={13} /></span>
                 Qidiruv
               </label>
               <div className="search-wrapper">
@@ -332,7 +361,7 @@ const StudentManagement = () => {
 
             <div className="filter-item">
               <label className="filter-label">
-                <span className="label-icon">📋</span>
+                <span className="label-icon"><StudentIcon name="filter" size={13} /></span>
                 Holat
               </label>
               <select
@@ -354,7 +383,7 @@ const StudentManagement = () => {
 
           <Can perm="teacher.create_student">
             <button className="btn-add-compact" onClick={handleAddStudent}>
-              <span className="add-icon">➕</span>
+              <span className="add-icon"><StudentIcon name="plus" size={14} /></span>
               <span className="add-text">Yangi o'quvchi</span>
             </button>
           </Can>
@@ -376,7 +405,7 @@ const StudentManagement = () => {
                     <th>Telefon</th>
                     <th>Holat</th>
                     <th>Qabul</th>
-                    <th>Ketgan</th>
+                    {!isReception && <th>Ketgan</th>}
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -429,15 +458,17 @@ const StudentManagement = () => {
                           })}
                         </span>
                       </td>
-                      <td>
-                        <span className="date-text">
-                          {student.leftDate ? new Date(student.leftDate).toLocaleDateString('uz-UZ', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          }) : '-'}
-                        </span>
-                      </td>
+                      {!isReception && (
+                        <td>
+                          <span className="date-text">
+                            {student.leftDate ? new Date(student.leftDate).toLocaleDateString('uz-UZ', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            }) : '-'}
+                          </span>
+                        </td>
+                      )}
                       <td>
                         <div className="action-buttons">
                           <button
@@ -445,7 +476,7 @@ const StudentManagement = () => {
                             title="Ko'rish"
                             onClick={() => handleViewStudent(student)}
                           >
-                            <span>👁️</span>
+                            <span><StudentIcon name="eye" size={15} /></span>
                           </button>
                           {!hideEdit && (
                             <button
@@ -453,7 +484,7 @@ const StudentManagement = () => {
                               title="Tahrirlash"
                               onClick={() => handleEditStudent(student)}
                             >
-                              <span>✏️</span>
+                              <span><StudentIcon name="edit" size={15} /></span>
                             </button>
                           )}
                           {!hideEdit && (
@@ -462,7 +493,7 @@ const StudentManagement = () => {
                               title="Boshqa guruhga ko'chirish"
                               onClick={() => handleTransferStudent(student)}
                             >
-                              <span>🔀</span>
+                              <span><StudentIcon name="transfer" size={15} /></span>
                             </button>
                           )}
                           {!hidePaymentsDelete && (
@@ -471,7 +502,7 @@ const StudentManagement = () => {
                               title="To'lovlar"
                               onClick={() => handleViewPayments(student)}
                             >
-                              <span>💰</span>
+                              <span><StudentIcon name="dollar" size={15} /></span>
                             </button>
                           )}
                           {!hidePaymentsDelete && (
@@ -481,7 +512,7 @@ const StudentManagement = () => {
                                 title="O'chirish"
                                 onClick={() => handleDeleteStudent(student)}
                               >
-                                <span>🗑️</span>
+                                <span><StudentIcon name="trash" size={15} /></span>
                               </button>
                             </Can>
                           )}
@@ -526,12 +557,12 @@ const StudentManagement = () => {
 
                   <div className="card-body">
                     <div className="card-row">
-                      <span className="row-icon">📱</span>
+                      <span className="row-icon"><StudentIcon name="phone" size={14} /></span>
                       <span className="row-label">Telefon:</span>
                       <span className="row-value">{student.phone || '-'}</span>
                     </div>
                     <div className="card-row">
-                      <span className="row-icon">📅</span>
+                      <span className="row-icon"><StudentIcon name="calendar" size={14} /></span>
                       <span className="row-label">Qo'shilgan:</span>
                       <span className="row-value">
                         {new Date(student.createdAt).toLocaleDateString('uz-UZ', {
@@ -541,9 +572,9 @@ const StudentManagement = () => {
                         })}
                       </span>
                     </div>
-                    {student.leftDate && (
+                    {student.leftDate && !isReception && (
                       <div className="card-row">
-                        <span className="row-icon">🚪</span>
+                        <span className="row-icon"><StudentIcon name="transfer" size={14} /></span>
                         <span className="row-label">Ketgan:</span>
                         <span className="row-value">
                           {new Date(student.leftDate).toLocaleDateString('uz-UZ', {
@@ -561,7 +592,7 @@ const StudentManagement = () => {
                       className="card-action-btn view"
                       onClick={() => handleViewStudent(student)}
                     >
-                      <span>👁️</span>
+                      <span><StudentIcon name="eye" size={15} /></span>
                       <span>Ko'rish</span>
                     </button>
                     {!hideEdit && (
@@ -569,7 +600,7 @@ const StudentManagement = () => {
                         className="card-action-btn edit"
                         onClick={() => handleEditStudent(student)}
                       >
-                        <span>✏️</span>
+                        <span><StudentIcon name="edit" size={15} /></span>
                         <span>Tahrirlash</span>
                       </button>
                     )}
@@ -578,7 +609,7 @@ const StudentManagement = () => {
                         className="card-action-btn transfer"
                         onClick={() => handleTransferStudent(student)}
                       >
-                        <span>🔀</span>
+                        <span><StudentIcon name="transfer" size={15} /></span>
                         <span>Ko'chirish</span>
                       </button>
                     )}
@@ -587,7 +618,7 @@ const StudentManagement = () => {
                         className="card-action-btn payment"
                         onClick={() => handleViewPayments(student)}
                       >
-                        <span>💰</span>
+                        <span><StudentIcon name="dollar" size={15} /></span>
                         <span>To'lovlar</span>
                       </button>
                     )}
@@ -597,7 +628,7 @@ const StudentManagement = () => {
                           className="card-action-btn delete"
                           onClick={() => handleDeleteStudent(student)}
                         >
-                          <span>🗑️</span>
+                          <span><StudentIcon name="trash" size={15} /></span>
                           <span>O'chirish</span>
                         </button>
                       </Can>
@@ -901,7 +932,7 @@ const StudentManagement = () => {
                 disabled={transferLoading || !transferClassId}
                 style={{ background: 'linear-gradient(135deg, #0ea5e9, #0369a1)' }}
               >
-                <span>🔀</span>
+                <span><StudentIcon name="transfer" size={15} /></span>
                 <span>{transferLoading ? 'Ko\'chirilmoqda...' : 'Ko\'chirish'}</span>
               </button>
             </div>
@@ -915,6 +946,64 @@ const StudentManagement = () => {
           padding: 1rem;
           max-width: 1400px;
           margin: 0 auto;
+        }
+
+        /* ==================== PAGE HEADER (direktor dizayn tizimi) ==================== */
+        .students-page-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+        .students-page-header h1 {
+          margin: 0;
+          font-size: 1.75rem;
+          font-weight: 750;
+          letter-spacing: -0.025em;
+          line-height: 1.2;
+          color: #0f172a;
+        }
+        .students-page-header p {
+          margin: 0.375rem 0 0;
+          font-size: 0.875rem;
+          line-height: 1.55;
+          color: #64748b;
+        }
+        .students-primary-action {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.625rem 1rem;
+          background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+          color: #fff;
+          border: none;
+          border-radius: 10px;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+          box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .students-primary-action:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+        .students-primary-action svg,
+        .btn-add-compact svg,
+        .action-btn svg,
+        .card-action-btn svg,
+        .stat-icon svg,
+        .label-icon svg,
+        .row-icon svg {
+          display: block;
+          flex-shrink: 0;
+        }
+        .label-icon,
+        .row-icon {
+          display: inline-flex;
+          align-items: center;
         }
 
         /* ==================== STATS GRID ==================== */
@@ -969,10 +1058,10 @@ const StudentManagement = () => {
           flex-shrink: 0;
         }
 
-        .stat-total .stat-icon { background: #dbeafe; }
-        .stat-active .stat-icon { background: #d1fae5; }
-        .stat-inactive .stat-icon { background: #fee2e2; }
-        .stat-new .stat-icon { background: #fef3c7; }
+        .stat-total .stat-icon { background: #dbeafe; color: #1d4ed8; }
+        .stat-active .stat-icon { background: #d1fae5; color: #047857; }
+        .stat-inactive .stat-icon { background: #fee2e2; color: #b91c1c; }
+        .stat-new .stat-icon { background: #fef3c7; color: #b45309; }
 
         .stat-content {
           flex: 1;

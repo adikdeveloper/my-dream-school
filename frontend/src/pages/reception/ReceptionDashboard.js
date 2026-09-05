@@ -13,6 +13,7 @@ import NotificationInbox from '../../components/common/NotificationInbox';
 import NotificationBell from '../../components/common/NotificationBell';
 import apiService from '../../services/apiService';
 import '../director/DirectorDashboard.css';
+import '../director/DirectorStudents.css';
 import homeStyles from '../../components/admin/AdminHome.module.css';
 
 // Direktor dashboardidagi SVG ikonlar to'plami bilan bir xil — dizayn 1:1 bo'lishi uchun

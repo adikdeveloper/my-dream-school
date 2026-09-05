@@ -2,7 +2,26 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
 import styles from './StudentHome.module.css';
+import homeStyles from '../admin/AdminHome.module.css';
 import StudentAIWidget from './StudentAIWidget';
+
+// Direktor dizayn tizimiga mos SVG ikonlar (emoji o'rniga)
+const StudentHomeIcon = ({ name = 'grid', size = 20 }) => {
+  const paths = {
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
+    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
+    report: <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />,
+    coins: <><circle cx="9" cy="12" r="6" /><path d="M9 9v6M7 10h3a1.5 1.5 0 0 1 0 3H8M15 7a5 5 0 1 1 0 10" /></>,
+    bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    empty: <><path d="M4 5h16v14H4zM4 8l8 6 8-6" /></>
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.calendar}
+    </svg>
+  );
+};
 
 // Raw grade hujjatini 0–100% ga aylantiradi.
 // Kunlik baho maksimal 0.5; imtihon baho examMaxScore (o'qituvchi belgilaydi) bilan o'lchanadi.
@@ -183,32 +202,12 @@ const StudentHome = () => {
     });
   };
 
-  // Statistika kartalari
+  // Statistika kartalari (direktor dizayn tizimi — oq kartalar)
   const statCards = [
-    {
-      title: 'Davomat',
-      value: `${stats.attendance}%`,
-      icon: '✅',
-      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-    },
-    {
-      title: 'O\'rtacha baho',
-      value: `${stats.avgGrade}%`,
-      icon: '📊',
-      gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
-    },
-    {
-      title: 'Bajarilgan',
-      value: stats.completedTasks,
-      icon: '📋',
-      gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)'
-    },
-    {
-      title: 'Coinlar',
-      value: stats.coins,
-      icon: '🪙',
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-    }
+    { title: 'Davomat', value: `${stats.attendance}%`, iconName: 'calendar' },
+    { title: "O'rtacha baho", value: `${stats.avgGrade}%`, iconName: 'report' },
+    { title: 'Bajarilgan', value: stats.completedTasks, iconName: 'journal' },
+    { title: 'Coinlar', value: stats.coins, iconName: 'coins' }
   ];
 
   const currentLesson = getCurrentLesson();
@@ -225,192 +224,187 @@ const StudentHome = () => {
   }
 
   return (
-    <div className={styles.studentHome}>
+    <div className={homeStyles.adminHome}>
       {/* Welcome Section */}
-      <section className={styles.welcomeSection}>
-        <div className={styles.welcomeContent}>
-          <span className={styles.greeting}>{getGreeting()},</span>
-          <h1 className={styles.pageTitle}>
-            <span className={styles.wave}>👋</span>
-            {user?.firstName || 'O\'quvchi'}!
-          </h1>
-          <p className={styles.dateText}>{formatDate()}</p>
+      <div className={homeStyles.welcomeSection}>
+        <div className={homeStyles.welcomeContent}>
+          <h1 className={homeStyles.pageTitle}>{getGreeting()}, {user?.firstName || "O'quvchi"}!</h1>
+          <p className={homeStyles.pageDescription}>{formatDate()} — bugungi darslar, topshiriqlar va baholaringiz shu yerda.</p>
         </div>
-        <div className={styles.currentTime}>
-          <div className={styles.timeDisplay}>
+        <div className={homeStyles.currentTime}>
+          <div className={homeStyles.timeDisplay}>
             {currentTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </div>
+          <div className={homeStyles.dateDisplay}>{formatDate()}</div>
         </div>
-      </section>
+      </div>
 
       {/* Stats Grid */}
-      <section className={styles.statsGrid}>
-        {statCards.map((stat, index) => (
-          <div key={index} className={styles.statCard} style={{ background: stat.gradient }}>
-            <div className={styles.statIconWrapper}>
-              <div className={styles.statIcon}>{stat.icon}</div>
+      <div className={homeStyles.statsGrid}>
+        {statCards.map((s, i) => (
+          <div key={s.title} className={`${homeStyles.statCard} ${homeStyles[`statTone${i + 1}`]}`}>
+            <div className={homeStyles.statIconWrapper}>
+              <div className={homeStyles.statIcon}>
+                <StudentHomeIcon name={s.iconName} size={22} />
+              </div>
             </div>
-            <div className={styles.statContent}>
-              <div className={styles.statNumber}>{stat.value}</div>
-              <div className={styles.statLabel}>{stat.title}</div>
+            <div className={homeStyles.statContent}>
+              <div className={homeStyles.statNumber}>{s.value}</div>
+              <div className={homeStyles.statLabel}>{s.title}</div>
             </div>
-            <div className={styles.statDecoration}></div>
           </div>
         ))}
-      </section>
+      </div>
 
       {/* Current/Next Lesson Highlight */}
       {currentLesson && (
-        <section className={styles.currentLessonSection}>
-          <div className={`${styles.currentLessonCard} ${styles[currentLesson.status]}`}>
-            <div className={styles.lessonStatusBadge}>
-              {currentLesson.status === 'current' ? '🔴 Hozir' : '⏭️ Keyingi dars'}
-            </div>
-            <div className={styles.lessonMain}>
-              <h3>{currentLesson.subject}</h3>
-              <div className={styles.lessonDetails}>
-                <span>🕐 {currentLesson.time} - {currentLesson.endTime}</span>
-                {currentLesson.room && <span>🏫 {currentLesson.room}-xona</span>}
-              </div>
-            </div>
-            {currentLesson.status === 'current' && (() => {
-              const toMin = (t) => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
-              const startMin = toMin(currentLesson.time);
-              const endMin = toMin(currentLesson.endTime);
-              const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
-              const pct = endMin > startMin ? Math.min(100, Math.max(0, ((nowMin - startMin) / (endMin - startMin)) * 100)) : 0;
-              return (
-                <div className={styles.lessonProgress}>
-                  <div className={styles.progressBar}>
-                    <div className={styles.progressFill} style={{ width: `${pct}%` }}></div>
-                  </div>
-                </div>
-              );
-            })()}
+        <div className={homeStyles.quickActionsCard} style={{ marginBottom: '24px' }}>
+          <div className={homeStyles.cardHeader}>
+            <h2 className={homeStyles.cardTitle}>
+              <span className={homeStyles.titleIcon}><StudentHomeIcon name="clock" size={18} /></span>
+              {currentLesson.status === 'current' ? 'Hozirgi dars' : 'Keyingi dars'}
+            </h2>
+            <span className={homeStyles.viewAllBtn} style={{ cursor: 'default' }}>{currentLesson.time} - {currentLesson.endTime}</span>
           </div>
-        </section>
+          <div className={homeStyles.activityItem}>
+            <div className={homeStyles.activityIconWrapper}>
+              <StudentHomeIcon name="calendar" size={20} />
+            </div>
+            <div className={homeStyles.activityContent}>
+              <div className={homeStyles.activityMessage}>{currentLesson.subject}{currentLesson.room ? ` — ${currentLesson.room}-xona` : ''}</div>
+              <div className={homeStyles.activityTime}>{currentLesson.teacher || ''}</div>
+            </div>
+          </div>
+          {currentLesson.status === 'current' && (() => {
+            const toMin = (t) => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
+            const startMin = toMin(currentLesson.time);
+            const endMin = toMin(currentLesson.endTime);
+            const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+            const pct = endMin > startMin ? Math.min(100, Math.max(0, ((nowMin - startMin) / (endMin - startMin)) * 100)) : 0;
+            return (
+              <div className="st-progress"><div className="st-progress-fill" style={{ width: `${pct}%` }}></div></div>
+            );
+          })()}
+        </div>
       )}
 
       {/* Main Content Grid */}
-      <div className={styles.mainGrid}>
+      <div className={homeStyles.dashboardGrid}>
         {/* Today's Schedule */}
-        <section className={`${styles.card} ${styles.scheduleCard}`}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>📅</span>
+        <div className={homeStyles.activitiesCard}>
+          <div className={homeStyles.cardHeader}>
+            <h2 className={homeStyles.cardTitle}>
+              <span className={homeStyles.titleIcon}><StudentHomeIcon name="calendar" size={18} /></span>
               Bugungi darslar
             </h2>
-            <span className={styles.countBadge}>{todaySchedule.length} ta dars</span>
+            <span className={homeStyles.viewAllBtn} style={{ cursor: 'default' }}>{todaySchedule.length} ta dars</span>
           </div>
-          <div className={styles.scheduleList}>
+          <div className={homeStyles.activityList}>
             {todaySchedule.length > 0 ? (
               todaySchedule.map((lesson, index) => {
                 const isCurrent = currentLesson?.index === index && currentLesson?.status === 'current';
                 const isPast = currentLesson ? index < currentLesson.index : false;
 
                 return (
-                  <div key={lesson.id} className={`${styles.scheduleItem} ${isCurrent ? styles.current : ''} ${isPast ? styles.past : ''}`}>
-                    <div className={styles.scheduleTime}>
-                      <span className={styles.startTime}>{lesson.time}</span>
-                      <span className={styles.endTime}>{lesson.endTime}</span>
+                  <div key={lesson.id} className={homeStyles.activityItem} style={isPast ? { opacity: 0.55 } : undefined}>
+                    <div className={homeStyles.activityIconWrapper}>
+                      <StudentHomeIcon name="clock" size={18} />
                     </div>
-                    <div className={styles.scheduleDivider}>
-                      <div className={styles.dividerDot}></div>
-                      <div className={styles.dividerLine}></div>
+                    <div className={homeStyles.activityContent}>
+                      <div className={homeStyles.activityMessage}>{lesson.subject}{isCurrent ? ' — Hozir' : ''}</div>
+                      <div className={homeStyles.activityTime}>{lesson.time} - {lesson.endTime}{lesson.room ? ` • ${lesson.room}-xona` : ''}</div>
                     </div>
-                    <div className={styles.scheduleContent}>
-                      <h4>{lesson.subject}</h4>
-                      {lesson.room && <span className={styles.roomInfo}>{lesson.room}-xona</span>}
-                    </div>
-                    {isCurrent && <span className={styles.nowBadge}>Hozir</span>}
                   </div>
                 );
               })
             ) : (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>📭</span>
-                <p className={styles.emptyText}>Bugun darslar yo'q</p>
+              <div className={homeStyles.emptyState}>
+                <span className={homeStyles.emptyIcon}><StudentHomeIcon name="empty" size={24} /></span>
+                <p className={homeStyles.emptyText}>Bugun darslar yo'q</p>
               </div>
             )}
           </div>
-        </section>
+        </div>
 
         {/* Tasks */}
-        <section className={`${styles.card} ${styles.tasksCard}`}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>📝</span>
+        <div className={homeStyles.activitiesCard}>
+          <div className={homeStyles.cardHeader}>
+            <h2 className={homeStyles.cardTitle}>
+              <span className={homeStyles.titleIcon}><StudentHomeIcon name="journal" size={18} /></span>
               Topshiriqlar
             </h2>
-            <span className={styles.countBadge}>{pendingTasks.length} ta</span>
+            <span className={homeStyles.viewAllBtn} style={{ cursor: 'default' }}>{pendingTasks.length} ta</span>
           </div>
-          <div className={styles.tasksList}>
+          <div className={homeStyles.activityList}>
             {pendingTasks.length > 0 ? (
               pendingTasks.map((task) => (
-                <div key={task.id} className={`${styles.taskItem} ${task.dueToday ? styles.urgent : ''}`}>
-                  <div className={styles.taskCheckbox}>
-                    <div className={styles.checkbox}></div>
+                <div key={task.id} className={homeStyles.activityItem}>
+                  <div className={homeStyles.activityIconWrapper}>
+                    <StudentHomeIcon name="journal" size={18} />
                   </div>
-                  <div className={styles.taskContent}>
-                    <h4>{task.title}</h4>
-                    <span className={styles.taskSubject}>{task.subject}</span>
-                  </div>
-                  <span className={`${styles.taskDue} ${task.dueToday ? styles.today : ''}`}>
-                    {task.dueDateText}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>✅</span>
-                <p className={styles.emptyText}>Topshiriqlar yo'q</p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Grades */}
-        <section className={`${styles.card} ${styles.gradesCard}`}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}>📈</span>
-              So'nggi baholar
-            </h2>
-          </div>
-          <div className={styles.gradesList}>
-            {weeklyGrades.length > 0 ? (
-              weeklyGrades.map((item, index) => (
-                <div key={item.subject || index} className={styles.gradeItem}>
-                  <div className={styles.gradeInfo}>
-                    <h4>{item.subject}</h4>
-                    <div className={styles.gradeBar}>
-                      <div
-                        className={styles.gradeFill}
-                        style={{
-                          width: `${item.grade}%`,
-                          background: item.grade >= 90 ? '#10b981' : item.grade >= 80 ? '#22c55e' : '#f59e0b'
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className={styles.gradeValueWrapper}>
-                    <span className={`${styles.gradeValue} ${item.grade >= 90 ? styles.excellent : item.grade >= 80 ? styles.good : styles.average}`}>
-                      {item.grade}
-                    </span>
-                    {item.trend === 'up' && <span className={`${styles.trend} ${styles.up}`}>↑</span>}
-                    {item.trend === 'down' && <span className={`${styles.trend} ${styles.down}`}>↓</span>}
+                  <div className={homeStyles.activityContent}>
+                    <div className={homeStyles.activityMessage}>{task.title}</div>
+                    <div className={homeStyles.activityTime}>{task.subject} • {task.dueDateText}{task.dueToday ? ' — Bugun' : ''}</div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>📊</span>
-                <p className={styles.emptyText}>Baholar yo'q</p>
+              <div className={homeStyles.emptyState}>
+                <span className={homeStyles.emptyIcon}><StudentHomeIcon name="empty" size={24} /></span>
+                <p className={homeStyles.emptyText}>Topshiriqlar yo'q</p>
               </div>
             )}
           </div>
-        </section>
+        </div>
       </div>
+
+      {/* Grades */}
+      <div className={homeStyles.chartsSection}>
+        <div className={homeStyles.cardHeader}>
+          <h2 className={homeStyles.cardTitle}>
+            <span className={homeStyles.titleIcon}><StudentHomeIcon name="report" size={18} /></span>
+            So'nggi baholar
+          </h2>
+        </div>
+        {weeklyGrades.length > 0 ? (
+          <div className="st-grades">
+            {weeklyGrades.map((item, index) => (
+              <div key={item.subject || index} className="st-grade-row">
+                <div className="st-grade-info">
+                  <span className="st-grade-subject">{item.subject}</span>
+                  <div className="st-grade-bar">
+                    <div
+                      className="st-grade-fill"
+                      style={{
+                        width: `${item.grade}%`,
+                        background: item.grade >= 90 ? '#2563eb' : item.grade >= 80 ? '#16a34a' : '#f59e0b'
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <span className="st-grade-value">{item.grade}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={homeStyles.emptyState}>
+            <span className={homeStyles.emptyIcon}><StudentHomeIcon name="empty" size={24} /></span>
+            <p className={homeStyles.emptyText}>Baholar yo'q</p>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        .st-progress { height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; margin-top: 12px; }
+        .st-progress-fill { height: 100%; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 999px; transition: width .4s ease; }
+        .st-grades { display: flex; flex-direction: column; gap: 12px; }
+        .st-grade-row { display: flex; align-items: center; gap: 12px; }
+        .st-grade-info { flex: 1; min-width: 0; }
+        .st-grade-subject { display: block; font-size: 13px; font-weight: 650; color: #334155; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .st-grade-bar { height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+        .st-grade-fill { height: 100%; border-radius: 999px; transition: width .4s ease; }
+        .st-grade-value { min-width: 40px; text-align: right; font-size: 15px; font-weight: 750; color: #0f172a; font-variant-numeric: tabular-nums; }
+      `}</style>
 
       {/* Bosh sahifadagi suzuvchi AI yordamchi */}
       <StudentAIWidget />

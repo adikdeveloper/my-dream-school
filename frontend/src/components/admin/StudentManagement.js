@@ -271,14 +271,12 @@ const StudentManagement = () => {
           <h1>O'quvchilar</h1>
           <p>O'quvchilar ro'yxati, sinfi, holati va shaxsiy ma'lumotlarini boshqaring.</p>
         </div>
-        {!isReception && (
-          <Can perm="teacher.create_student">
-            <button className="students-primary-action" onClick={handleAddStudent}>
-              <StudentIcon name="plus" size={15} />
-              <span>Yangi o'quvchi</span>
-            </button>
-          </Can>
-        )}
+        <Can perm="teacher.create_student">
+          <button className="students-primary-action" onClick={handleAddStudent}>
+            <StudentIcon name="plus" size={15} />
+            <span>Yangi o'quvchi</span>
+          </button>
+        </Can>
       </header>
       {/* Loading Overlay */}
       {localLoading && <LoadingOverlay message="O'quvchilar yuklanmoqda" />}
@@ -295,7 +293,7 @@ const StudentManagement = () => {
       {/* Stats Cards */}
       <div className="stats-grid">
         <div className="stat-card stat-total">
-          <div className="stat-icon"><StudentIcon name="grid" size={18} /></div>
+          <div className="stat-icon">📊</div>
           <div className="stat-content">
             <div className="stat-value">{stats.total}</div>
             <div className="stat-label">Jami o'quvchilar</div>
@@ -304,7 +302,7 @@ const StudentManagement = () => {
         </div>
 
         <div className="stat-card stat-active">
-          <div className="stat-icon"><StudentIcon name="check" size={18} /></div>
+          <div className="stat-icon">✅</div>
           <div className="stat-content">
             <div className="stat-value">{stats.active}</div>
             <div className="stat-label">Faol o'quvchilar</div>
@@ -313,7 +311,7 @@ const StudentManagement = () => {
         </div>
 
         <div className="stat-card stat-inactive">
-          <div className="stat-icon"><StudentIcon name="pause" size={18} /></div>
+          <div className="stat-icon">⏸️</div>
           <div className="stat-content">
             <div className="stat-value">{stats.inactive}</div>
             <div className="stat-label">Nofaol o'quvchilar</div>
@@ -322,7 +320,7 @@ const StudentManagement = () => {
         </div>
 
         <div className="stat-card stat-new">
-          <div className="stat-icon"><StudentIcon name="spark" size={18} /></div>
+          <div className="stat-icon">🆕</div>
           <div className="stat-content">
             <div className="stat-value">{stats.new}</div>
             <div className="stat-label">Yangi (1 oy)</div>

@@ -5,6 +5,51 @@ import Logo from '../../components/common/Logo';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import NotificationBell from '../../components/common/NotificationBell';
 import './StudentDashboard.css';
+import '../director/DirectorDashboard.css';
+
+// Direktor dashboardidagi SVG ikonlar bilan bir xil — dizayn 1:1 bo'lishi uchun
+const StudentDashIcon = ({ name = 'grid', size = 20 }) => {
+  const paths = {
+    grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
+    ai: <><rect x="4" y="7" width="16" height="13" rx="4" /><path d="M12 7V3M9 3h6M8 13h.01M16 13h.01M9 17h6" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
+    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
+    exams: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /></>,
+    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    message: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
+    bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
+    report: <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />,
+    payments: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" /><circle cx="17" cy="15" r="1" /></>,
+    profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+    education: <><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></>,
+    refresh: <><path d="M20 6v5h-5" /><path d="M4 18v-5h5" /><path d="M18.5 9A7 7 0 0 0 6.2 6.2L4 9M5.5 15A7 7 0 0 0 17.8 17.8L20 15" /></>,
+    logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></>
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.grid}
+    </svg>
+  );
+};
+
+const menuIconName = (item = {}) => {
+  if (item.iconKey) return item.iconKey;
+  const iconByPath = {
+    '/student': 'grid',
+    '/student/ai': 'ai',
+    '/student/schedule': 'calendar',
+    '/student/homework': 'journal',
+    '/student/exams': 'exams',
+    '/student/my-class': 'users',
+    '/student/chat': 'message',
+    '/student/notifications': 'bell',
+    '/student/statistics': 'report',
+    '/student/payments': 'payments',
+    '/student/profile': 'profile'
+  };
+  if (iconByPath[item.path]) return iconByPath[item.path];
+  return 'grid';
+};
 
 // Lazy load components for code splitting and better performance
 const StudentHome = lazy(() => import('../../components/student/StudentHome'));
@@ -47,8 +92,6 @@ const LoadingFallback = () => (
   </div>
 );
 
-const GREEN = '#10b981';
-
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -61,11 +104,17 @@ const StudentDashboard = () => {
     return `${baseUrl}${user.profileImage}?t=${timestamp}`;
   }, [user?.profileImage, user?._updated]);
 
+  const userInitials = useMemo(() => {
+    const firstInitial = user?.firstName?.trim()?.charAt(0) || user?.username?.trim()?.charAt(0) || 'O';
+    const lastInitial = user?.lastName?.trim()?.charAt(0) || '';
+    return `${firstInitial}${lastInitial}`.toUpperCase();
+  }, [user?.firstName, user?.lastName, user?.username]);
+
   const menuItems = [
     {
       path: '/student',
       label: 'Bosh sahifa',
-      icon: '🏠',
+      iconKey: 'grid',
       end: true,
       badge: null,
       section: null
@@ -73,70 +122,70 @@ const StudentDashboard = () => {
     {
       path: '/student/ai',
       label: 'AI Yordamchi',
-      icon: '🤖',
+      iconKey: 'ai',
       badge: null,
       section: null
     },
     {
       path: '/student/schedule',
       label: 'Dars jadvali',
-      icon: '📅',
+      iconKey: 'calendar',
       badge: null,
       section: null
     },
     {
       path: '/student/homework',
       label: 'Uy vazifalar',
-      icon: '📝',
+      iconKey: 'journal',
       badge: null,
       section: null
     },
     {
       path: '/student/exams',
       label: 'Imtihonlar',
-      icon: '📋',
+      iconKey: 'exams',
       badge: null,
       section: null
     },
     {
       path: '/student/my-class',
       label: 'Mening sinfim',
-      icon: '🎓',
+      iconKey: 'users',
       badge: null,
       section: null
     },
     {
       path: '/student/chat',
       label: 'Chat',
-      icon: '💬',
+      iconKey: 'message',
       badge: null,
       section: null
     },
     {
       path: '/student/notifications',
       label: 'Bildirishnomalar',
-      icon: '📥',
+      iconKey: 'bell',
       badge: null,
       section: null
     },
     {
       path: '/student/statistics',
       label: 'Mening natijalarim',
-      icon: '📊',
+      iconKey: 'report',
       badge: null,
       section: null
     },
     {
       path: '/student/payments',
       label: "To'lovlarim",
-      icon: '💳',
+      iconKey: 'payments',
       badge: null,
       section: null
     },
     {
       path: '/student/profile',
       label: 'Profil',
-      icon: '👤',
+      iconKey: 'profile',
       badge: null,
       section: null
     }
@@ -155,8 +204,8 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="student-dashboard-layout">
-      {/* Header */}
+    <div className="admin-dashboard-layout">
+      {/* Header — direktor bilan 1:1 */}
       <header className="header">
         <div className="header-content">
           <div className="header-left">
@@ -173,40 +222,40 @@ const StudentDashboard = () => {
             </button>
             <Logo />
             <div className="page-info">
-              <h1 className="header-page-title">O'quvchi paneli</h1>
+              <div className="header-page-title">O'quvchi paneli</div>
               <p className="page-subtitle">O'quv jarayoningizni kuzatib boring</p>
             </div>
           </div>
           <div className="header-right">
-            <NotificationBell accent={GREEN} viewAllLink="/student/notifications" />
+            <NotificationBell accent="#2563eb" viewAllLink="/student/notifications" />
             <div className="user-info">
               <div
-                className={`user-avatar ${profileImageUrl ? 'has-image' : ''}`}
-                style={{
-                  backgroundImage: profileImageUrl ? `url(${profileImageUrl})` : 'none',
+                className={`user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}
+                style={profileImageUrl ? {
+                  backgroundImage: `url(${profileImageUrl})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
-                }}
+                } : undefined}
               >
                 {!profileImageUrl && (
-                  <>{user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}</>
+                  <span className="user-initials">{userInitials}</span>
                 )}
               </div>
               <div className="user-details">
                 <span className="user-name">{user?.firstName} {user?.lastName}</span>
-                <span className="user-role">O'quvchi</span>
+                <span className="user-role">{user?.role || "o'quvchi"}</span>
               </div>
             </div>
             <button
               onClick={() => window.location.reload()}
               className="refresh-btn"
               aria-label="Sahifani yangilash"
-              title="Sahifani yangilash"
+              title="Sahifani yangilash (Hard Refresh)"
             >
-              <span className="refresh-icon">🔄</span>
+              <span className="refresh-icon"><StudentDashIcon name="refresh" size={18} /></span>
             </button>
             <button onClick={handleLogout} className="logout-btn" aria-label="Tizimdan chiqish">
-              <span className="logout-icon">🚪</span>
+              <span className="logout-icon"><StudentDashIcon name="logout" size={18} /></span>
               <span className="logout-text">Chiqish</span>
             </button>
           </div>
@@ -214,15 +263,15 @@ const StudentDashboard = () => {
       </header>
 
       <div className="dashboard-container">
-        {/* Sidebar */}
+        {/* Sidebar — direktor bilan 1:1 */}
         <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-brand">
-              <span className="brand-icon">🎓</span>
-              <span className="brand-text">O'quvchi Paneli</span>
+              <span className="brand-icon"><StudentDashIcon name="education" size={18} /></span>
+              <span className="brand-text">O'quvchi</span>
             </div>
           </div>
-          <nav className="sidebar-nav">
+          <nav className="sidebar-nav" role="navigation" aria-label="Asosiy navigatsiya">
             <ul className="nav-list">
               {menuItems.map((item) => (
                 <li key={item.path} className="nav-item">
@@ -233,14 +282,14 @@ const StudentDashboard = () => {
                     }
                     end={item.end}
                     onClick={handleMenuItemClick}
+                    aria-label={item.label}
                   >
-                    <span className="nav-icon">{item.icon}</span>
+                    <span className="nav-icon" aria-hidden="true"><StudentDashIcon name={menuIconName(item)} /></span>
                     <span className="nav-text">
                       {item.label}
                     </span>
                     {item.badge > 0 && (
-                      <span className="notification-badge">
-                        <span className="notification-icon">🔔</span>
+                      <span className="notification-badge" aria-label={`${item.badge} ta yangi bildirishnoma`}>
                         {item.badge}
                       </span>
                     )}

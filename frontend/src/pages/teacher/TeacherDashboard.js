@@ -294,6 +294,14 @@ const TeacherDashboard = () => {
           text-overflow: ellipsis;
           white-space: nowrap;
         }
+        /* Sidebar header bilan menyu orasidagi bo'shliqni zichlash */
+        .admin-dashboard-layout .sidebar .sidebar-header {
+          padding-top: 4px;
+          padding-bottom: 4px;
+        }
+        .admin-dashboard-layout .sidebar .sidebar-nav {
+          padding-top: 2px;
+        }
       `}</style>
     </div>
   );

@@ -293,13 +293,19 @@ router.post('/login', verifyRecaptcha({ action: 'login' }), [
         }
       }
     }
-    if (!user || !user.isActive) {
+    if (!user) {
+      console.warn(`Login failed [PHONE_NOT_FOUND] phone=${phone}`);
+      return res.status(401).json({ message: 'Telefon raqami yoki parol noto\'g\'ri' });
+    }
+    if (!user.isActive) {
+      console.warn(`Login failed [INACTIVE] phone=${phone} userId=${user._id} role=${user.role}`);
       return res.status(401).json({ message: 'Telefon raqami yoki parol noto\'g\'ri' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.warn(`Login failed [WRONG_PASSWORD] phone=${phone} userId=${user._id} role=${user.role}`);
       return res.status(401).json({ message: 'Telefon raqami yoki parol noto\'g\'ri' });
     }
 

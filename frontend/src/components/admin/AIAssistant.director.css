@@ -101,10 +101,16 @@
 }
 
 .admin-dashboard-layout .ai-sessions {
-  gap: 8px;
-  padding: 12px;
+  gap: 10px;
+  padding: 16px 14px;
   background: var(--director-white);
   border-right: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .btn-new-chat {
+  min-height: 46px;
+  font-size: 14px;
+  border-radius: 12px;
 }
 
 .admin-dashboard-layout .btn-new-chat,
@@ -169,51 +175,62 @@
 
 .admin-dashboard-layout .ai-messages {
   gap: 20px;
-  padding: 24px var(--director-page-padding-x);
+  padding: 32px var(--director-page-padding-x);
 }
 
-.admin-dashboard-layout .ai-welcome { max-width: 720px; padding: 0 0 24px; }
-.admin-dashboard-layout .ai-welcome-icon { width: 112px; height: 112px; }
+.admin-dashboard-layout .ai-welcome { max-width: 760px; padding: 24px 0 28px; }
+.admin-dashboard-layout .ai-welcome-icon { width: 128px; height: 128px; margin-bottom: 12px; }
 
 .admin-dashboard-layout .ai-welcome h2 {
   color: var(--director-slate-900);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .admin-dashboard-layout .ai-welcome p {
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--director-slate-500);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 14.5px;
+  line-height: 1.65;
 }
 
 .admin-dashboard-layout .ai-suggestions {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .admin-dashboard-layout .ai-suggestion-btn {
-  min-height: 48px;
-  padding: 10px 12px;
+  min-height: 66px;
+  padding: 14px 16px;
+  gap: 12px;
   color: var(--director-slate-700);
   background: var(--director-white);
   border: 1px solid var(--director-slate-200);
-  border-radius: var(--director-radius-md);
-  box-shadow: none;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   transform: none;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .admin-dashboard-layout .ai-suggestion-btn:hover {
   color: var(--director-primary-700);
   background: var(--director-primary-50);
   border-color: var(--director-primary-200);
-  box-shadow: none;
-  transform: none;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+  transform: translateY(-2px);
 }
 
 .admin-dashboard-layout .suggestion-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   color: var(--director-primary-700);
   background: var(--director-primary-50);
+  flex-shrink: 0;
 }
 
 .admin-dashboard-layout .ai-message { max-width: min(82%, 760px); animation-duration: 200ms; }
@@ -239,10 +256,21 @@
 .admin-dashboard-layout .message-text { font-size: 14px; line-height: 1.55; }
 
 .admin-dashboard-layout .ai-input-area {
-  gap: 8px;
-  padding: 16px var(--director-page-padding-x);
+  gap: 10px;
+  padding: 16px var(--director-page-padding-x) 20px;
   background: var(--director-white);
   border-top: 1px solid var(--director-slate-200);
+}
+
+.admin-dashboard-layout .ai-input {
+  min-height: 48px;
+  border-radius: 14px;
+}
+
+.admin-dashboard-layout .ai-send-btn {
+  min-height: 48px;
+  min-width: 48px;
+  border-radius: 14px;
 }
 
 .admin-dashboard-layout .ai-input,

@@ -696,8 +696,18 @@ const DirectorDashboard = () => {
         <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-brand">
-              <span className="brand-icon"><DirectorIcon name="profile" size={18} /></span>
-              <span className="brand-text">Direktor</span>
+              <div
+                className="brand-avatar"
+                style={profileImageUrl ? {
+                  backgroundImage: `url(${profileImageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                } : undefined}
+                aria-hidden="true"
+              >
+                {!profileImageUrl && <span>{userInitials}</span>}
+              </div>
+              <span className="brand-text">{user?.firstName} {user?.lastName}</span>
             </div>
           </div>
           <nav className="sidebar-nav" role="navigation" aria-label="Asosiy navigatsiya">
@@ -1186,6 +1196,30 @@ const DirectorDashboard = () => {
         .brand-icon {
           font-size: 1rem;
           color: #3b82f6;
+        }
+
+        .sidebar-brand .brand-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.7rem;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          color: #fff;
+          background: #1e3a8a;
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+
+        .sidebar-brand .brand-text {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .brand-text {

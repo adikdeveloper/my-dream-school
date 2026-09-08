@@ -278,14 +278,17 @@ router.post('/login', verifyRecaptcha({ action: 'login' }), [
     // 1) avval tozalangan formatda qidiramiz (+998901234567)
     let user = await User.findOne({ phone })
       .populate('classId', 'name grade section');
-    // 2) fallback: eski buzilgan yozuvlar (+998-90-123-45-67) uchun oxirgi 9 raqam bo'yicha qidiramiz
+    // 2) fallback: eski yozuvlar (+998-97-562-30-01, probelli formatlar) uchun —
+    // raqamlar orasidagi chiziqcha/probel'larga e'tibor bermasdan qidiramiz
     // va topilsa — telefonni avtomatik to'g'rilab qo'yamiz (o'z-o'zini davolash)
     if (!user) {
       const last9 = phone.replace(/\D/g, '').slice(-9);
       if (/^\d{9}$/.test(last9)) {
-        user = await User.findOne({ phone: { $regex: last9 + '$' } })
+        const flexiblePattern = last9.split('').join('[-\\s]*') + '$';
+        user = await User.findOne({ phone: { $regex: flexiblePattern } })
           .populate('classId', 'name grade section');
         if (user && user.phone !== phone) {
+          console.warn(`Login auto-heal phone userId=${user._id} old=${user.phone} new=${phone}`);
           try {
             user.phone = phone;
             await user.save();

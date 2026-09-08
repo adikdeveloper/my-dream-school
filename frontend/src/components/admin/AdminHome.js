@@ -269,6 +269,12 @@ const AdminHome = () => {
         const cap = isExam ? Math.max(g.examMaxScore || g.maxScore || 100, 5) : 5;
         return cap > 0 ? Math.min(100, Math.round(((g.score || 0) / cap) * 100)) : 0;
       };
+      // Grafik o'qi max:5 (maktab 2-5 shkalasi) — sinf o'rtachasi 0-5 da hisoblanadi
+      const toFive = (g) => {
+        const isExam = g.isExam || g.type === 'exam' || !!g.examMaxScore;
+        const cap = isExam ? Math.max(g.examMaxScore || g.maxScore || 100, 5) : 5;
+        return cap > 0 ? Math.min(5, Math.max(0, ((g.score || 0) / cap) * 5)) : 0;
+      };
       const dist = { 5: 0, 4: 0, 3: 0, 2: 0 };
       const byClassMap = {};
       gradesArray.forEach(g => {
@@ -280,14 +286,14 @@ const AdminHome = () => {
         const cls = g.class;
         const className = (cls && (cls.name || `${cls.grade || ''}-${cls.section || ''}`)) || 'Sinf';
         if (!byClassMap[className]) byClassMap[className] = { total: 0, count: 0 };
-        byClassMap[className].total += pct;
+        byClassMap[className].total += toFive(g);
         byClassMap[className].count++;
       });
       gradeDistribution = {
         distribution: dist,
         byClass: Object.entries(byClassMap).map(([className, v]) => ({
           className,
-          average: Math.round(v.total / v.count)
+          average: Math.round((v.total / v.count) * 10) / 10
         })).sort((a, b) => b.average - a.average)
       };
     }

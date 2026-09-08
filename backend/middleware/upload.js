@@ -75,17 +75,20 @@ const compressImage = async (req, res, next) => {
 
 // Profil rasmidan MongoDB uchun ixcham data-URL yasaydi.
 // sharp bo'lsa 512px/JPEG ga siqadi, bo'lmasa asl faylni oladi. Hech qachon xato otmaydi.
-let sharpLib = null;
-try {
-  sharpLib = require('sharp');
-} catch (e) {
-  sharpLib = null;
-}
+// sharp lazy-load: server start'ni sekinlatmasligi uchun faqat kerak bo'lganda yuklanadi.
+const getSharp = () => {
+  try {
+    return require('sharp');
+  } catch (e) {
+    return null;
+  }
+};
 
 const buildProfileImageDataUrl = async (file) => {
   try {
     if (!file || !file.path) return null;
     const original = fs.readFileSync(file.path);
+    const sharpLib = getSharp();
     if (sharpLib) {
       const buf = await sharpLib(original)
         .rotate()

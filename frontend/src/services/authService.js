@@ -51,11 +51,10 @@ api.interceptors.response.use(
 );
 
 const authService = {
-  // Login user
+  // Login user (Render free uyg'onishi 50s+ olishi mumkin — timeout katta)
   login: async (phone, password, recaptchaToken) => {
-    const config = recaptchaToken
-      ? { headers: { 'X-Recaptcha-Token': recaptchaToken } }
-      : undefined;
+    const config = { timeout: 60000 };
+    if (recaptchaToken) config.headers = { 'X-Recaptcha-Token': recaptchaToken };
     const response = await api.post('/auth/login', { phone, password, recaptchaToken }, config);
     return response.data;
   },

@@ -140,7 +140,8 @@ const StudentHome = () => {
       const attendanceArray = Array.isArray(attendance) ? attendance : [];
       const presentCount = attendanceArray.filter(a => a.status === 'present' || a.status === 'keldi').length;
       const totalAttendance = attendanceArray.length;
-      const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
+      // Qoida: jurnalda "Yo'q" deb belgilanmaguncha davomat kamaymaydi — yozuv bo'lmasa 100%.
+      const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 100;
 
       const allScores = gradesArray.map(g => gradeToPercent(g));
       const avgGrade = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 0;

@@ -90,7 +90,9 @@ const StudentStatistics = () => {
   })();
 
   const attStats = (() => {
-    if (attendance.length === 0) return { present: 0, absent: 0, late: 0, rate: 0, total: 0 };
+    // Qoida: jurnalda "Yo'q"/"Kelmadi" deb belgilanmaguncha davomat kamaymaydi.
+    // Yozuv bo'lmasa — 100% (0% emas).
+    if (attendance.length === 0) return { present: 0, absent: 0, late: 0, rate: 100, total: 0 };
     // Sababli (excused) ham "kelmadi" (absent) ga qo'shiladi
     const present = attendance.filter(a => a.status === 'present' || a.status === 'keldi').length;
     const absent = attendance.filter(a => ['absent', 'kelmadi', 'excused', 'sababli'].includes(a.status)).length;

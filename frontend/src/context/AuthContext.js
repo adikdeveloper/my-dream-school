@@ -100,9 +100,11 @@ export const AuthProvider = ({ children }) => {
 
       return response;
     } catch (error) {
+      const serverMessage = error.response?.data?.message;
+      const isNetworkError = !error.response && (error.request || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED');
       dispatch({
         type: 'LOGIN_FAILURE',
-        payload: error.response?.data?.message || 'Kirish muvaffaqiyatsiz'
+        payload: serverMessage || (isNetworkError ? "Serverga ulanib bo'lmadi. Server uyg'onishi 1 daqiqa olishi mumkin — birozdan keyin qayta urining." : 'Kirish muvaffaqiyatsiz')
       });
       throw error;
     }

@@ -126,7 +126,10 @@ app.use('/api/ai', require('./ai'));
 // Routes - Statistics
 app.use('/api/stats', require('./routes/stats'));
 
-// Health check
+// Health check (Render healthCheckPath ham shu yerga qaraydi)
+app.get('/', (req, res) => {
+    res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
+});
 app.get('/api/health', (req, res) => {
     res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });

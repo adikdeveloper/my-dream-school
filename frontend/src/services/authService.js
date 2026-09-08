@@ -5,6 +5,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://my-dream-school.onrend
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,12 +32,19 @@ api.interceptors.request.use(
 );
 
 // Handle token expiration
+// Eslatma: /auth/login dagi 401 (noto'g'ri parol) da login sahifasidan
+// haydab yubormaymiz — aks holda xatolik matni ko'rinmay qoladi.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+    const isAuthCall = url.includes('/auth/login') || url.includes('/auth/me');
+    if (status === 401 && !isAuthCall) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

@@ -5,6 +5,7 @@ const User = require('../../models/users/User');
 const Class = require('../../models/academic/Class');
 const { auth } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
+const { buildProfileImageDataUrl } = require('../../middleware/upload');
 const { verifyRecaptcha } = require('../../middleware/recaptcha');
 const { ensureClassRoom, ensureGlobalGroup, STAFF_ROLES } = require('../../controllers/chat/chatHelpers');
 const { hasPermission } = require('../../middleware/permissions');
@@ -185,11 +186,13 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
       }
     }
 
-    // Add profile image if uploaded
+    // Add profile image if uploaded (ham diskka, ham MongoDB'ga — Render restart'da o'chmasligi uchun)
     if (req.file) {
       // Get the subdirectory based on role
       const roleSubdir = role === 'student' ? 'students' : role === 'teacher' ? 'teachers' : 'admins';
       userData.profileImage = `/uploads/profiles/${roleSubdir}/${req.file.filename}`;
+      const dataUrl = await buildProfileImageDataUrl(req.file);
+      if (dataUrl) userData.profileImageData = dataUrl;
     }
 
     if (role === 'student' && studentId) {

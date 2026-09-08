@@ -84,6 +84,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Profil rasmining MongoDB'dagi nusxasi (Render diski vaqtincha bo'lgani uchun).
+  // select:false — ro'yxatlar og'irlashmasligi uchun; faqat rasm endpoint'i o'qiydi.
+  profileImageData: {
+    type: String,
+    default: null,
+    select: false
+  },
   registrationDate: {
     type: Date,
     default: null

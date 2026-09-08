@@ -7,7 +7,7 @@ const Subject = require('../../models/academic/Subject');
 const Class = require('../../models/academic/Class');
 const { auth, authorize } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
-const { compressImage, getRoleSubdir } = require('../../middleware/upload');
+const { compressImage, getRoleSubdir, buildProfileImageDataUrl } = require('../../middleware/upload');
 const { syncUserToSchedule } = require('../../utils/scheduleSynchronizer');
 const { createUzbekSearchRegex } = require('../../utils/uzbekHelper');
 const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
@@ -406,9 +406,13 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
       // Use helper function to get role subdirectory
       const roleSubdir = getRoleSubdir(user.role);
       updateData.profileImage = `/uploads/profiles/${roleSubdir}/${req.file.filename}`;
+      // MongoDB nusxasi — Render restart'da rasm o'chib ketmasligi uchun
+      const dataUrl = await buildProfileImageDataUrl(req.file);
+      if (dataUrl) updateData.profileImageData = dataUrl;
     } else if (req.body.removeProfileImage === 'true' && !isStudentEditingOwnImage) {
       // Remove profile image if requested (not for students editing their own)
       updateData.profileImage = null;
+      updateData.profileImageData = null;
     }
 
     const oldClassIdForChat = user.classId ? user.classId.toString() : null;

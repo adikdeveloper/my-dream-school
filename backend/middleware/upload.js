@@ -73,6 +73,34 @@ const compressImage = async (req, res, next) => {
   next();
 };
 
+// Profil rasmidan MongoDB uchun ixcham data-URL yasaydi.
+// sharp bo'lsa 512px/JPEG ga siqadi, bo'lmasa asl faylni oladi. Hech qachon xato otmaydi.
+let sharpLib = null;
+try {
+  sharpLib = require('sharp');
+} catch (e) {
+  sharpLib = null;
+}
+
+const buildProfileImageDataUrl = async (file) => {
+  try {
+    if (!file || !file.path) return null;
+    const original = fs.readFileSync(file.path);
+    if (sharpLib) {
+      const buf = await sharpLib(original)
+        .rotate()
+        .resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 75 })
+        .toBuffer();
+      return 'data:image/jpeg;base64,' + buf.toString('base64');
+    }
+    const mime = file.mimetype || 'image/jpeg';
+    return `data:${mime};base64,` + original.toString('base64');
+  } catch (e) {
+    return null;
+  }
+};
+
 // Multer upload instance
 const upload = multer({
   storage: storage,
@@ -119,5 +147,6 @@ const homeworkUpload = multer({
 module.exports = upload;
 module.exports.compressImage = compressImage;
 module.exports.getRoleSubdir = getRoleSubdir;
+module.exports.buildProfileImageDataUrl = buildProfileImageDataUrl;
 module.exports.homeworkUpload = homeworkUpload;
 

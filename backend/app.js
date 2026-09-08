@@ -35,6 +35,24 @@ app.use((err, req, res, next) => {
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Profil rasmlari DB fallback: Render'da disk vaqtincha — restart'da fayl o'chib ketsa,
+// MongoDB'dagi nusxadan beramiz (frontend o'zgarmaydi, URL'lar bir xil qoladi).
+app.get('/uploads/profiles/*', async (req, res) => {
+    try {
+        const imagePath = '/uploads/profiles/' + (req.params[0] || '');
+        const user = await User.findOne({ profileImage: imagePath }).select('+profileImageData').lean();
+        const dataUrl = user && user.profileImageData;
+        if (!dataUrl) return res.status(404).end();
+        const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+        if (!match) return res.status(404).end();
+        res.set('Content-Type', match[1]);
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.send(Buffer.from(match[2], 'base64'));
+    } catch (e) {
+        return res.status(404).end();
+    }
+});
+
 // Database connection
 const connectDB = async () => {
     try {

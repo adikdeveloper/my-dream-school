@@ -10,20 +10,24 @@
  */
 const createUzbekSearchRegex = (text) => {
   if (!text || typeof text !== 'string') return text;
-  
-  // Escape regex special characters
-  let pattern = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  
-  // 1. First, replace any existing apostrophe variations in the search term with an OPTIONAL class
-  // This handles cases like "Po'lat" -> "Po['`...]?lat"
-  pattern = pattern.replace(/[\'\`\u2018\u2019]/g, "[\'\\`\\u2018\\u2019]?");
 
-  // 2. Then, make sure that 'o' and 'g' are followed by an OPTIONAL apostrophe class
-  // This handles cases like "Polat" -> "Po['`...]?lat"
-  pattern = pattern
-    .replace(/([oO])(?!\[\'\\`\\u2018\\u2019\]\?)/g, "$1[\'\\`\\u2018\\u2019]?")
-    .replace(/([gG])(?!\[\'\\`\\u2018\\u2019\]\?)/g, "$1[\'\\`\\u2018\\u2019]?");
-    
+  // E'tibor: natija MongoDB $regex (PCRE) da ham ishlaydi — \uXXXX escape ishlatmaymiz,
+  // apostrof variantlarini literal harflar (' ` ‘ ’) sifatida yozamiz.
+  const APOS_CLASS = "['`‘’]?";
+  let pattern = '';
+  for (const ch of text) {
+    if (ch === "'" || ch === '`' || ch === '‘' || ch === '’') {
+      pattern += APOS_CLASS;
+    } else if (ch === 'o' || ch === 'O' || ch === 'g' || ch === 'G') {
+      // "Polat" ham "Po'lat"ni topsin: o/g dan keyin apostrof ixtiyoriy
+      pattern += ch + APOS_CLASS;
+    } else if (/[.*+?^${}()|[\]\\]/.test(ch)) {
+      pattern += '\\' + ch;
+    } else {
+      pattern += ch;
+    }
+  }
+
   return pattern;
 };
 

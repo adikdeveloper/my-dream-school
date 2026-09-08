@@ -89,10 +89,17 @@ router.get('/', auth, authorize('admin', 'director', 'supervisor', 'accountant',
 
     const query = role ? { role } : {};
 
-    // Add search functionality
+    // Add search functionality (regex xatosi hech qachon 500 bermasligi uchun fallback bilan)
     if (search && search.trim()) {
       const searchTerm = sanitizeString(search.trim());
-      const uzbekPattern = createUzbekSearchRegex(searchTerm);
+      let uzbekPattern = searchTerm;
+      try {
+        uzbekPattern = createUzbekSearchRegex(searchTerm);
+        // Pattern yaroqliligini tekshiramiz (Mongo PCRE da ham o'tishi uchun)
+        new RegExp(uzbekPattern);
+      } catch (e) {
+        uzbekPattern = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
       query.$or = [
         { firstName: { $regex: uzbekPattern, $options: 'i' } },
         { lastName: { $regex: uzbekPattern, $options: 'i' } },

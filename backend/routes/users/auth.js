@@ -275,8 +275,24 @@ router.post('/login', verifyRecaptcha({ action: 'login' }), [
     phone = '+' + phone;
 
     // Check if user exists (populate classId for students)
-    const user = await User.findOne({ phone })
+    // 1) avval tozalangan formatda qidiramiz (+998901234567)
+    let user = await User.findOne({ phone })
       .populate('classId', 'name grade section');
+    // 2) fallback: eski buzilgan yozuvlar (+998-90-123-45-67) uchun oxirgi 9 raqam bo'yicha qidiramiz
+    // va topilsa — telefonni avtomatik to'g'rilab qo'yamiz (o'z-o'zini davolash)
+    if (!user) {
+      const last9 = phone.replace(/\D/g, '').slice(-9);
+      if (/^\d{9}$/.test(last9)) {
+        user = await User.findOne({ phone: { $regex: last9 + '$' } })
+          .populate('classId', 'name grade section');
+        if (user && user.phone !== phone) {
+          try {
+            user.phone = phone;
+            await user.save();
+          } catch (e) { /* dublikatsiya bo'lsa — login baribir davom etadi */ }
+        }
+      }
+    }
     if (!user || !user.isActive) {
       return res.status(401).json({ message: 'Telefon raqami yoki parol noto\'g\'ri' });
     }

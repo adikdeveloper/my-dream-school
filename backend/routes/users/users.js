@@ -41,6 +41,17 @@ const sanitizeString = (str) => {
   return str.replace(/<[^>]*>/g, '').trim();
 };
 
+// Telefonni login bilan bir xil formatga keltirish (+998901234567)
+// Sabab: frontend +998-90-123-45-67 (chiziqcha bilan) yuboradi,
+// login esa raqamlarni tozalab qidiradi. Tozalanmasa — "parol noto'g'ri" xatosi chiqadi.
+const normalizePhone = (raw) => {
+  if (raw === undefined || raw === null) return raw;
+  const cleaned = String(raw).replace(/\D/g, '');
+  if (!cleaned) return raw;
+  const withCode = cleaned.startsWith('998') ? cleaned : '998' + cleaned.slice(-9);
+  return '+' + withCode;
+};
+
 // Safe boolean conversion
 const parseBoolean = (value) => {
   if (value === true || value === 'true' || value === 1 || value === '1') {
@@ -260,7 +271,7 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
         updateData.email = email;
       }
     }
-    if (req.body.phone) updateData.phone = sanitizeString(req.body.phone);
+    if (req.body.phone) updateData.phone = normalizePhone(sanitizeString(req.body.phone));
     if (req.body.address) updateData.address = sanitizeString(req.body.address);
     if (req.body.dateOfBirth) updateData.dateOfBirth = req.body.dateOfBirth;
     if (req.body.studentId) updateData.studentId = sanitizeString(req.body.studentId);
@@ -268,7 +279,7 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
     if (req.body.passportSeriesNumber) updateData.passportSeriesNumber = sanitizeString(req.body.passportSeriesNumber).toUpperCase();
     if (req.body.jshshir) updateData.jshshir = sanitizeString(req.body.jshshir);
     if (req.body.parentName) updateData.parentName = sanitizeString(req.body.parentName);
-    if (req.body.parentPhone) updateData.parentPhone = sanitizeString(req.body.parentPhone);
+    if (req.body.parentPhone) updateData.parentPhone = normalizePhone(sanitizeString(req.body.parentPhone));
     if (req.body.parentJshshir) updateData.parentJshshir = sanitizeString(req.body.parentJshshir);
     if (req.body.specialty) updateData.specialty = sanitizeString(req.body.specialty);
     if (req.body.experience) updateData.experience = sanitizeString(req.body.experience);

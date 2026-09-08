@@ -475,11 +475,16 @@ const AdminHome = () => {
           </p>
         </div>
         <div className={styles.currentTime}>
-          <div className={styles.timeDisplay}>
-            {currentTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </div>
-          <div className={styles.dateDisplay}>
-            {currentTime.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long', year: 'numeric' })}
+          <span className={styles.clockIcon} aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+          </span>
+          <div className={styles.clockText}>
+            <div className={styles.timeDisplay}>
+              {currentTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </div>
+            <div className={styles.dateDisplay}>
+              {['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'][currentTime.getDay()]}, {currentTime.getDate()}-{MONTH_NAMES[currentTime.getMonth()].toLowerCase()} {currentTime.getFullYear()}
+            </div>
           </div>
         </div>
       </div>

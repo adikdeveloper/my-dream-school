@@ -177,21 +177,21 @@ const AdminHome = () => {
     try {
       setIsLoadingCharts(true);
 
-      // Parallel API chaqiruvlari
-      const [paymentStats, gradeDistribution, attendanceStats] = await Promise.all([
+      // Parallel API chaqiruvlari (backend shakliga moslab — massivlar ham bo'lishi mumkin)
+      const [paymentStats, gradesResp, attendanceResp] = await Promise.all([
         apiService.getPaymentStatistics().catch(() => null),
-        apiService.getGradeDistributionReport().catch(() => null),
+        apiService.getGradesPaginated({ limit: 1000 }).catch(() => null),
         apiService.getAttendanceSummaryReport().catch(() => null)
       ]);
 
       // To'lov statistikasini o'rnatish
       setPaymentChartData(paymentStats);
 
-      // Baholar statistikasini o'rnatish
-      setGradeChartData(gradeDistribution);
+      // Baholar statistikasini o'rnatish (massiv yoki {distribution, byClass})
+      setGradeChartData(gradesResp?.grades || gradesResp);
 
-      // Davomat statistikasini o'rnatish
-      setAttendanceChartData(attendanceStats);
+      // Davomat statistikasini o'rnatish (massiv yoki {present, excused, absent})
+      setAttendanceChartData(attendanceResp?.attendance || attendanceResp);
 
     } catch {
       // Grafik xatolari ekranga chiqarilmaydi
@@ -206,9 +206,29 @@ const AdminHome = () => {
    * To'lov grafigi ma'lumotlarini tayyorlaydi
    */
   const setPaymentChartData = (paymentStats) => {
-    if (paymentStats?.monthlyData) {
-      const months = paymentStats.monthlyData.map(item => MONTH_NAMES[item.month - 1] || `Oy ${item.month}`);
-      const incomeData = paymentStats.monthlyData.map(item => item.total || 0);
+    // Backend { byMonth: [{_id: "YYYY-MM", total}] } qaytaradi — uni grafik shakliga keltiramiz
+    let monthlyData = paymentStats?.monthlyData;
+    if (!monthlyData && Array.isArray(paymentStats?.byMonth) && paymentStats.byMonth.length > 0) {
+      const totals = {};
+      paymentStats.byMonth.forEach(item => {
+        const m = /^(\d{4})-(\d{1,2})$/.exec(String(item._id || ''));
+        if (!m) return;
+        const key = `${m[1]}-${String(m[2]).padStart(2, '0')}`;
+        totals[key] = (totals[key] || 0) + (item.total || 0);
+      });
+      monthlyData = Object.keys(totals).sort().slice(-12).map(key => ({
+        month: parseInt(key.split('-')[1], 10),
+        year: parseInt(key.split('-')[0], 10),
+        total: totals[key]
+      }));
+    }
+    if (monthlyData && monthlyData.length > 0) {
+      const currentYear = new Date().getFullYear();
+      const months = monthlyData.map(item => {
+        const name = MONTH_NAMES[(item.month || 1) - 1] || `Oy ${item.month}`;
+        return item.year && item.year !== currentYear ? `${name} ${item.year}` : name;
+      });
+      const incomeData = monthlyData.map(item => item.total || 0);
 
       setPaymentData({
         labels: months,
@@ -241,6 +261,36 @@ const AdminHome = () => {
    * Baholar grafigi ma'lumotlarini tayyorlaydi
    */
   const setGradeChartData = (gradeDistribution) => {
+    // Backend baholar massivini qaytaradi — taqsimot va sinflar kesimini shu yerda hisoblaymiz
+    const gradesArray = Array.isArray(gradeDistribution) ? gradeDistribution : null;
+    if (gradesArray && gradesArray.length > 0) {
+      const toPct = (g) => {
+        const isExam = g.isExam || g.type === 'exam' || !!g.examMaxScore;
+        const cap = isExam ? Math.max(g.examMaxScore || g.maxScore || 100, 5) : 5;
+        return cap > 0 ? Math.min(100, Math.round(((g.score || 0) / cap) * 100)) : 0;
+      };
+      const dist = { 5: 0, 4: 0, 3: 0, 2: 0 };
+      const byClassMap = {};
+      gradesArray.forEach(g => {
+        const pct = toPct(g);
+        if (pct >= 85) dist[5]++;
+        else if (pct >= 70) dist[4]++;
+        else if (pct >= 60) dist[3]++;
+        else dist[2]++;
+        const cls = g.class;
+        const className = (cls && (cls.name || `${cls.grade || ''}-${cls.section || ''}`)) || 'Sinf';
+        if (!byClassMap[className]) byClassMap[className] = { total: 0, count: 0 };
+        byClassMap[className].total += pct;
+        byClassMap[className].count++;
+      });
+      gradeDistribution = {
+        distribution: dist,
+        byClass: Object.entries(byClassMap).map(([className, v]) => ({
+          className,
+          average: Math.round(v.total / v.count)
+        })).sort((a, b) => b.average - a.average)
+      };
+    }
     if (gradeDistribution?.distribution) {
       const dist = gradeDistribution.distribution;
 
@@ -304,6 +354,17 @@ const AdminHome = () => {
    * Davomat grafigi ma'lumotlarini tayyorlaydi
    */
   const setAttendanceChartData = (attendanceStats) => {
+    // Backend davomat massivini qaytaradi — hisobni shu yerda chiqaramiz
+    if (Array.isArray(attendanceStats)) {
+      const isPresent = (s) => s === 'present' || s === 'keldi';
+      const isExcused = (s) => s === 'excused' || s === 'sababli';
+      const isAbsent = (s) => s === 'absent' || s === 'kelmadi';
+      attendanceStats = {
+        present: attendanceStats.filter(a => isPresent(a.status)).length,
+        excused: attendanceStats.filter(a => isExcused(a.status)).length,
+        absent: attendanceStats.filter(a => isAbsent(a.status)).length
+      };
+    }
     if (attendanceStats) {
       const present = attendanceStats.present || attendanceStats.totalPresent || 0;
       const excused = attendanceStats.excused || attendanceStats.totalExcused || 0;

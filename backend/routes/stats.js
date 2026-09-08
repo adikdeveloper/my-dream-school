@@ -112,7 +112,7 @@ router.get('/activities', auth, authorize('admin', 'accountant'), async (req, re
         .populate('student', 'firstName lastName')
         .populate('subject', 'name')
         .populate('class', 'name grade section')
-        .select('grade date')
+        .select('date student subject class')
         .sort({ date: -1 })
         .limit(5)
         .lean()
@@ -147,13 +147,17 @@ router.get('/activities', auth, authorize('admin', 'accountant'), async (req, re
       });
     });
 
-    // Add grade submissions
+    // Add grade submissions (sinf grade/section bo'sh bo'lsa name'dan ko'rsatamiz — undefined chiqmasligi uchun)
     recentGrades.forEach(grade => {
       if (grade.student && grade.subject && grade.class) {
+        const cls = grade.class;
+        const classLabel = (cls.grade !== undefined && cls.grade !== null && cls.grade !== '' && cls.section)
+          ? `${cls.grade}-${cls.section}`
+          : (cls.name || 'Sinf');
         activities.push({
           id: `grade_${grade._id}`,
           type: 'grade_submitted',
-          message: `${grade.class.grade}-${grade.class.section} sinf ${grade.subject.name} baholari kiritildi`,
+          message: `${classLabel} sinf ${grade.subject.name} baholari kiritildi`,
           time: getRelativeTime(grade.date),
           timestamp: grade.date,
           icon: '📊',

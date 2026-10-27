@@ -1,10 +1,12 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { PermissionsProvider } from './context/PermissionsContext';
 import Login from './pages/auth/Login';
 import LandingPage from './pages/LandingPage';
+import CoursesPage from './pages/CoursesPage';
+import CourseDetailPage from './pages/CourseDetailPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import DirectorDashboard from './pages/director/DirectorDashboard';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -97,6 +99,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/courses/:slug" element={<CourseDetailPage />} />
               <Route path="/" element={<LandingPage />} />
             </Routes>
           </div>

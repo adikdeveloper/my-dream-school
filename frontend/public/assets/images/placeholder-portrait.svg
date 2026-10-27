@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="Portret uchun joy">
+  <defs>
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M50 0H0V50" fill="none" stroke="#ffffff" stroke-opacity=".38" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".34"/>
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".2"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#grid)"/>
+  <circle cx="70" cy="80" r="180" fill="#ffffff" fill-opacity=".14"/>
+  <circle cx="560" cy="740" r="220" fill="#ffffff" fill-opacity=".12"/>
+  <rect width="600" height="800" fill="url(#sheen)"/>
+</svg>

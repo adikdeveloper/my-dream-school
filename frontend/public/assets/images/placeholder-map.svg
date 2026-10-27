@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Xarita uchun joy">
+  <rect width="800" height="600" fill="#eef3f8"/>
+  <rect x="60" y="70" width="210" height="140" rx="18" fill="#e4efe8"/>
+  <rect x="500" y="330" width="230" height="170" rx="20" fill="#e4efe8"/>
+  <path d="M-30 150C90 130 150 210 280 190s190-100 330-70 190 50 250 40" fill="none" stroke="#d3dee9" stroke-width="36"/>
+  <path d="M120 -20v640" fill="none" stroke="#d3dee9" stroke-width="28"/>
+  <path d="M-20 440h840" fill="none" stroke="#d3dee9" stroke-width="30"/>
+  <path d="M430 -20v300" fill="none" stroke="#d3dee9" stroke-width="18"/>
+  <path d="M560 160l180 180" fill="none" stroke="#d3dee9" stroke-width="20"/>
+  <circle cx="400" cy="285" r="36" fill="#0f2a5c"/>
+  <circle cx="400" cy="285" r="12" fill="#ffffff"/>
+  <path d="M400 321l-20 38h40z" fill="#0f2a5c"/>
+  <rect x="286" y="390" width="228" height="54" rx="12" fill="#ffffff" stroke="#dbe4ee"/>
+  <text x="400" y="424" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600" fill="#0f2a5c">My Dream School</text>
+</svg>

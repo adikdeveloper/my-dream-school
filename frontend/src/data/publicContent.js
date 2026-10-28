@@ -485,7 +485,7 @@ export const contactItems = [
   {
     icon: 'mapPin',
     label: 'Manzil',
-    value: "Toshkent shahri, Yashnobod tumani, 100170"
+    value: "Beruniy shahri, Qoraqalpog'iston Respublikasi"
   },
   {
     icon: 'phone',

@@ -438,12 +438,14 @@ const LandingPage = () => {
                 })}
               </div>
 
-              <PublicPhoto
-                variant="map"
-                tone="map"
-                className="lp-contact__map"
-                alt="Bu yerda My Dream School joylashgan xarita rasmi bo'lishi kerak"
-              />
+              <div className="lp-contact__map">
+                <iframe
+                  title="My Dream School manzili — Beruniy, Qoraqalpog'iston Respublikasi"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1397.679220210109!2d60.73817494626839!3d41.6901458014117!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x41dfd4aee2f118f5%3A0x810d7ccb81572a8f!2zTVBSUSszM1gsINCR0LXRgNGD0L3QuCwg0KDQtdGB0L_Rg9Cx0LvQuNC60LAg0JrQsNGA0LDQutCw0LvQv9Cw0LrRgdGC0LDQvSwg0KPQt9Cx0LXQutC40YHRgtCw0L0!5e1!3m2!1sru!2s!4v1793158802771!5m2!1sru!2s"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              </div>
 
               <form className="lp-contact__form" onSubmit={handleSubmit} noValidate>
                 <div className="lp-form__row">

@@ -7,27 +7,30 @@ const defaultLabels = {
 };
 
 /**
- * Rasm joylari uchun vaqtinchalik komponent.
- * `alt` maydoni har doim "Bu yerda ... rasmi bo'lishi kerak" ko'rinishida yoziladi.
- * Keyinchalik `src` ni haqiqiy rasm manziliga almashtirish kifoya.
+ * Rasm joylari uchun komponent.
+ * `src` berilmasa, vaqtinchalik placeholder va "Rasm uchun joy" belgisi ko'rsatiladi.
+ * Haqiqiy rasm qo'shish uchun `src` va tavsifiy `alt` berish kifoya.
  */
 const PublicPhoto = ({
   alt,
+  src,
   variant = 'landscape',
   tone = 'blue',
   className = '',
   label,
+  loading = 'lazy',
   children
 }) => {
-  const showLabel = variant !== 'map' && label !== false;
+  const isRealImage = Boolean(src);
+  const showLabel = !isRealImage && variant !== 'map' && label !== false;
   const labelText = label || defaultLabels[variant] || defaultLabels.landscape;
 
   return (
     <div className={`lp-photo lp-photo--${tone} ${className}`.trim()}>
       <img
-        src={`/assets/images/placeholder-${variant}.svg`}
+        src={src || `/assets/images/placeholder-${variant}.svg`}
         alt={alt}
-        loading="lazy"
+        loading={loading}
       />
       {showLabel && (
         <span className="lp-photo__badge" aria-hidden="true">

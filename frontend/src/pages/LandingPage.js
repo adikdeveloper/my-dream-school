@@ -120,7 +120,9 @@ const LandingPage = () => {
                 variant="landscape"
                 tone="blue"
                 className="lp-hero__photo"
-                alt="Bu yerda My Dream School binosi oldida o'quvchilar va o'qituvchilar rasmi bo'lishi kerak"
+                src="/assets/images/hero-main.jpg"
+                loading="eager"
+                alt="My Dream School binosi oldida o'quvchilar va o'qituvchilarning bayram tadbiridagi jamoaviy surati"
               />
 
               {heroStats.map((stat, index) => (

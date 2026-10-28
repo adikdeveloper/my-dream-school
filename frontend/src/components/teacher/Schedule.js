@@ -3,19 +3,19 @@ import apiService from '../../services/apiService';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Schedule.module.css';
 import TeacherUiIcon from './TeacherUiIcon';
+import { formatUzShortDate } from '../../utils/uzDate';
 
 const Schedule = () => {
   const { user } = useAuth();
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mobileGroup, setMobileGroup] = useState(0); // 0, 1, 2 for the 3 groups
-  const [weekSubs, setWeekSubs] = useState([]); // bu haftadagi almashtirishlar
+  const [mobileGroup, setMobileGroup] = useState(0);
+  const [weekSubs, setWeekSubs] = useState([]);
 
   const dayNamesUz = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
   const dayNamesEn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  // 3 groups of 2 days for mobile
   const groups = [
     { label: 'Dush — Sesh', uz: dayNamesUz.slice(0, 2), en: dayNamesEn.slice(0, 2) },
     { label: 'Chor — Pay', uz: dayNamesUz.slice(2, 4), en: dayNamesEn.slice(2, 4) },
@@ -58,14 +58,12 @@ const Schedule = () => {
   };
 
   const myId = user?._id;
-  // Mening o'z darsim o'rniga kim o'tgani (jadval katagiga belgi qo'yish uchun)
   const coveredOnMyCell = (dayEn, timeSlot) => weekSubs.find((s) =>
     s.originalTeacher && String(s.originalTeacher._id) === String(myId) &&
     `${s.day}-${s.startTime}-${s.endTime}` === `${dayEn}-${timeSlot}`
   );
-  const formatDateShort = (d) => new Date(d).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' });
+  const formatDateShort = (d) => formatUzShortDate(d);
 
-  // Get all unique time slots
   const getTimeSlots = () => {
     const slots = new Set();
     schedule.forEach(day => {
@@ -76,17 +74,16 @@ const Schedule = () => {
     return Array.from(slots).sort();
   };
 
-  // Get period for specific day and time
   const getPeriod = (dayEn, timeSlot) => {
     const daySchedule = schedule.find(d => d.day === dayEn);
     if (!daySchedule) return null;
-
-    return daySchedule.periods?.find(p =>
-      `${p.startTime}-${p.endTime}` === timeSlot
-    );
+    return daySchedule.periods?.find(p => `${p.startTime}-${p.endTime}` === timeSlot);
   };
 
   const timeSlots = getTimeSlots();
+  const activeDays = schedule.filter((day) => day.periods?.length > 0).length;
+  const mySubs = weekSubs.filter((s) => s.substituteTeacher && String(s.substituteTeacher._id) === String(myId));
+  const coveredSubs = weekSubs.filter((s) => s.originalTeacher && String(s.originalTeacher._id) === String(myId));
 
   const renderTable = (daysUz, daysEn) => (
     <div className={styles.tableWrapper}>
@@ -105,24 +102,23 @@ const Schedule = () => {
               <td className={styles.tdTime}>{timeSlot}</td>
               {daysEn.map(dayEn => {
                 const period = getPeriod(dayEn, timeSlot);
+                const covered = period ? coveredOnMyCell(dayEn, timeSlot) : null;
                 return (
                   <td key={`${dayEn}-${timeSlot}`} className={styles.tdPeriod}>
                     {period ? (
                       <div className={styles.periodContent}>
                         <div className={styles.periodSubject}>{period.subject?.name || 'Fan'}</div>
                         <div className={styles.periodClass}>{period.className || 'Sinf'}</div>
-                        {period.topic && (
-                          <div className={styles.periodTopic}>{period.topic}</div>
+                        {period.topic && <div className={styles.periodTopic}>{period.topic}</div>}
+                        {covered?.substituteTeacher && (
+                          <div className={styles.subBadge}>
+                            <TeacherUiIcon name="swap" size={12} />
+                            <span className={styles.subBadgeText}>
+                              <span>O'rniga: {covered.substituteTeacher.name}</span>
+                              <small>{formatDateShort(covered.date)}</small>
+                            </span>
+                          </div>
                         )}
-                        {(() => {
-                          const cov = coveredOnMyCell(dayEn, timeSlot);
-                          if (!cov || !cov.substituteTeacher) return null;
-                          return (
-                            <div style={{ marginTop: 4, background: '#fee2e2', color: '#991b1b', borderRadius: 4, padding: '2px 5px', fontSize: '0.62rem', fontWeight: 700 }}>
-                              <TeacherUiIcon name="swap" size={13} /> O'rniga: {cov.substituteTeacher.name} ({formatDateShort(cov.date)})
-                            </div>
-                          );
-                        })()}
                       </div>
                     ) : (
                       <div className={styles.periodEmpty}>—</div>
@@ -139,82 +135,152 @@ const Schedule = () => {
 
   if (loading) {
     return (
-      <div className={styles.scheduleContainer}>
-        <div className={styles.loading}>Yuklanmoqda...</div>
+      <div className={styles.page}>
+        <header className={styles.head}>
+          <div>
+            <p className={styles.eyebrow}>Dars jarayoni</p>
+            <h1 className={styles.title}>Haftalik dars jadvali</h1>
+            <p className={styles.subtitle}>Darslar yuklanmoqda...</p>
+          </div>
+        </header>
+        <div className={`td-card ${styles.card}`}>
+          <div className={styles.loading}>
+            {[1, 2, 3, 4, 5].map((item) => <div className={`td-skeleton ${styles.loadingRow}`} key={item} />)}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.scheduleContainer}>
-        <div className={styles.errorBox}>{error}</div>
+      <div className={styles.page}>
+        <header className={styles.head}>
+          <div>
+            <p className={styles.eyebrow}>Dars jarayoni</p>
+            <h1 className={styles.title}>Haftalik dars jadvali</h1>
+          </div>
+        </header>
+        <div className={`td-card ${styles.errorCard}`}>
+          <span className={styles.errorIcon}><TeacherUiIcon name="warning" size={22} /></span>
+          <strong>{error}</strong>
+          <p>Internet aloqasini tekshirib, qayta urinib ko'ring.</p>
+          <button type="button" className="td-btn td-btn--gold" onClick={fetchSchedule}>Qayta urinish</button>
+        </div>
       </div>
     );
   }
 
   if (!schedule || schedule.length === 0) {
     return (
-      <div className={styles.scheduleContainer}>
-        <div className={styles.header}>
-          <h1 className={styles.title}><TeacherUiIcon name="calendar" size={22} /> Dars jadvali</h1>
-        </div>
-        <div className={styles.emptyBox}>
-          <p>Dars jadvali topilmadi</p>
-          <small>Administrator bilan bog'laning</small>
+      <div className={styles.page}>
+        <header className={styles.head}>
+          <div>
+            <p className={styles.eyebrow}>Dars jarayoni</p>
+            <h1 className={styles.title}>Haftalik dars jadvali</h1>
+          </div>
+        </header>
+        <div className={`td-card ${styles.emptyCard}`}>
+          <span className={styles.emptyIcon}><TeacherUiIcon name="calendar" size={22} /></span>
+          <strong>Dars jadvali topilmadi</strong>
+          <p>Jadval hali shakllanmagan bo'lishi mumkin. Administrator bilan bog'laning.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.scheduleContainer}>
-      <div className={styles.header}>
-        <h1 className={styles.title}><TeacherUiIcon name="calendar" size={22} /> Haftalik dars jadvali</h1>
-        <p className={styles.subtitle}>Jami {timeSlots.length} ta dars soati</p>
-      </div>
-
-      {/* Desktop: full table */}
-      <div className={styles.desktopTable}>
-        {renderTable(dayNamesUz, dayNamesEn)}
-      </div>
-
-      {/* Mobile: split into groups of 2 days */}
-      <div className={styles.mobileTable}>
-        <div className={styles.mobileToggle}>
-          {groups.map((g, i) => (
-            <button
-              key={i}
-              className={`${styles.mobileToggleBtn} ${mobileGroup === i ? styles.mobileToggleActive : ''}`}
-              onClick={() => setMobileGroup(i)}
-            >
-              {g.label}
-            </button>
-          ))}
+    <div className={styles.page}>
+      <header className={styles.head}>
+        <div>
+          <p className={styles.eyebrow}>Dars jarayoni</p>
+          <h1 className={styles.title}>Haftalik dars jadvali</h1>
+          <p className={styles.subtitle}>Darslaringiz kun va vaqt bo'yicha bir joyda.</p>
         </div>
-        {renderTable(groups[mobileGroup].uz, groups[mobileGroup].en)}
-      </div>
+        <div className={styles.headChip}>
+          <TeacherUiIcon name="clock2" size={15} /> {timeSlots.length} ta dars soati
+        </div>
+      </header>
 
-      {/* Bu haftadagi almashtirishlar */}
-      {(() => {
-        const asSub = weekSubs.filter((s) => s.substituteTeacher && String(s.substituteTeacher._id) === String(myId));
-        const asOrig = weekSubs.filter((s) => s.originalTeacher && String(s.originalTeacher._id) === String(myId));
-        if (asSub.length === 0 && asOrig.length === 0) return null;
-        const row = (s, label) => (
-          <div key={s._id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9', fontSize: '0.85rem' }}>
-            <strong>{formatDateShort(s.date)}</strong> • {s.startTime}-{s.endTime} • {s.className}
-            {s.subjectName ? ` • ${s.subjectName}` : ''} — <span style={{ color: '#0c4a6e' }}>{label}</span>
-            {s.status === 'pending' && <span style={{ marginLeft: 6, color: '#92400e', fontSize: '0.72rem' }}>(tasdiq kutilmoqda)</span>}
+      <section className={styles.summary}>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryIcon}><TeacherUiIcon name="calendar" size={17} /></span>
+          <div><strong>{activeDays}</strong><span>Faol kunlar</span></div>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryIcon}><TeacherUiIcon name="clock2" size={17} /></span>
+          <div><strong>{timeSlots.length}</strong><span>Dars soatlari</span></div>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryIcon}><TeacherUiIcon name="swap" size={17} /></span>
+          <div><strong>{mySubs.length + coveredSubs.length}</strong><span>Bu hafta almashtirish</span></div>
+        </div>
+      </section>
+
+      <section className={`td-card ${styles.card}`}>
+        <div className="td-card-head">
+          <div>
+            <h2 className="td-card-title">Dars jadvali</h2>
+            <p className="td-card-sub">Dushanba — Shanba</p>
           </div>
-        );
-        return (
-          <div style={{ background: '#fff', borderRadius: 12, padding: '1rem 1.25rem', marginTop: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h2 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 7 }}><TeacherUiIcon name="swap" /> Bu haftadagi almashtirishlar</h2>
-            {asSub.map((s) => row(s, `Siz ${s.originalTeacher ? s.originalTeacher.name : ''} o'rniga o'tdingiz`))}
-            {asOrig.map((s) => row(s, `${s.substituteTeacher ? s.substituteTeacher.name : ''} sizning o'rningizga o'tdi`))}
+        </div>
+
+        <div className={styles.desktopTable}>
+          {renderTable(dayNamesUz, dayNamesEn)}
+        </div>
+
+        <div className={styles.mobileTable}>
+          <div className={styles.mobileToggle}>
+            {groups.map((g, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`${styles.mobileToggleBtn} ${mobileGroup === i ? styles.mobileToggleActive : ''}`}
+                onClick={() => setMobileGroup(i)}
+              >
+                {g.label}
+              </button>
+            ))}
           </div>
-        );
-      })()}
+          {renderTable(groups[mobileGroup].uz, groups[mobileGroup].en)}
+        </div>
+      </section>
+
+      {(mySubs.length > 0 || coveredSubs.length > 0) && (
+        <section className={`td-card ${styles.card} ${styles.subsCard}`}>
+          <div className="td-card-head">
+            <div>
+              <h2 className="td-card-title">Bu haftadagi almashtirishlar</h2>
+              <p className="td-card-sub">{mySubs.length + coveredSubs.length} ta yozuv</p>
+            </div>
+            <span className="td-chip td-chip--gold"><TeacherUiIcon name="swap" size={12} /> Almashtirish</span>
+          </div>
+          <div className={styles.subsList}>
+            {mySubs.map((s) => (
+              <div className={styles.subsRow} key={s._id}>
+                <span className={`${styles.subsIcon} ${styles.subsIconGold}`}><TeacherUiIcon name="star" size={15} /></span>
+                <div className={styles.subsInfo}>
+                  <strong>{s.className}{s.subjectName ? ` · ${s.subjectName}` : ''}</strong>
+                  <span>{formatDateShort(s.date)} · {s.startTime}-{s.endTime}</span>
+                </div>
+                <span className={styles.subsNote}>Siz {s.originalTeacher?.name || ''} o'rniga o'tdingiz</span>
+                {s.status === 'pending' && <span className="td-chip td-chip--amber">Tasdiq kutilmoqda</span>}
+              </div>
+            ))}
+            {coveredSubs.map((s) => (
+              <div className={styles.subsRow} key={s._id}>
+                <span className={styles.subsIcon}><TeacherUiIcon name="swap" size={15} /></span>
+                <div className={styles.subsInfo}>
+                  <strong>{s.className}{s.subjectName ? ` · ${s.subjectName}` : ''}</strong>
+                  <span>{formatDateShort(s.date)} · {s.startTime}-{s.endTime}</span>
+                </div>
+                <span className={styles.subsNote}>{s.substituteTeacher?.name || ''} sizning o'rningizga o'tdi</span>
+                {s.status === 'pending' && <span className="td-chip td-chip--amber">Tasdiq kutilmoqda</span>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

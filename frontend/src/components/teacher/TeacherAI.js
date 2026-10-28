@@ -29,7 +29,7 @@ const WEEK_DAYS = [
 
 const CHAT_SUGGESTIONS = [
   { icon: 'report', text: "Sinflarimdagi o'quvchilarning umumiy ahvolini tahlil qilib ber" },
-  { icon: '🏆', text: "Eng yaxshi natija ko'rsatayotgan o'quvchilarim kimlar?" },
+  { icon: 'star', text: "Eng yaxshi natija ko'rsatayotgan o'quvchilarim kimlar?" },
   { icon: 'warning', text: "Qaysi o'quvchilarimga ko'proq e'tibor berishim kerak?" },
   { icon: 'assignment', text: "Keyingi darsim uchun qiziqarli metodika tavsiya qil" },
   { icon: 'calendar', text: "Bu haftadagi darslarim jadvalini eslatib yubor" },
@@ -433,6 +433,7 @@ const TeacherAI = () => {
       <div className="tai-hero">
         <div className="tai-hero-icon"><TeacherUiIcon name="ai" size={29} /></div>
         <div className="tai-hero-text">
+          <p className="tai-eyebrow">Sun'iy intellekt</p>
           <h1>AI Yordamchi</h1>
           <p>Baholar tahlili, dars jadvali va test generatori — faqat sizning sinflaringiz ma'lumotlari asosida</p>
         </div>
@@ -465,7 +466,9 @@ const TeacherAI = () => {
       {activeTab === 'chat' && (
         <div className="tai-chat-layout">
           <aside className="tai-sessions">
-            <button className="tai-new-btn" onClick={newChat}>➕ Yangi suhbat</button>
+            <button className="tai-new-btn" onClick={newChat}>
+              <TeacherUiIcon name="plus" size={15} /> Yangi suhbat
+            </button>
             {sessions.length === 0 ? (
               <div className="tai-sessions-empty">Suhbatlar yo'q</div>
             ) : (
@@ -480,7 +483,8 @@ const TeacherAI = () => {
                     className="tai-session-del"
                     onClick={(e) => deleteSession(s._id, s.sessionId, e)}
                     title="O'chirish"
-                  >✕</button>
+                    aria-label="Suhbatni o'chirish"
+                  ><TeacherUiIcon name="close" size={13} /></button>
                 </div>
               ))
             )}
@@ -539,8 +543,8 @@ const TeacherAI = () => {
                 rows={1}
                 disabled={chatLoading}
               />
-              <button className="tai-send" onClick={handleSend} disabled={chatLoading || !input.trim()} title="Yuborish">
-                ➤
+              <button className="tai-send" onClick={handleSend} disabled={chatLoading || !input.trim()} title="Yuborish" aria-label="Yuborish">
+                <TeacherUiIcon name="send" size={17} />
               </button>
             </div>
           </main>
@@ -590,7 +594,7 @@ const TeacherAI = () => {
           {anError && <div className="tai-error">{anError}</div>}
 
           <button className="tai-action-btn" onClick={runAnalysis} disabled={anLoading || !anClassId}>
-            {anLoading ? <span className="tai-spinner" /> : '✨'} {anLoading ? 'Tahlil qilinmoqda...' : 'Tahlil qilish'}
+            {anLoading ? <span className="tai-spinner" /> : <TeacherUiIcon name="sparkle" size={16} />} {anLoading ? 'Tahlil qilinmoqda...' : 'Tahlil qilish'}
           </button>
 
           {anResult && (
@@ -725,7 +729,7 @@ const TeacherAI = () => {
           {schError && <div className="tai-error">{schError}</div>}
 
           <button className="tai-action-btn" onClick={runScheduleGen} disabled={schLoading || !schClassId}>
-            {schLoading ? <span className="tai-spinner" /> : '✨'} {schLoading ? 'Yaratilmoqda...' : 'Jadval yaratish'}
+            {schLoading ? <span className="tai-spinner" /> : <TeacherUiIcon name="sparkle" size={16} />} {schLoading ? 'Yaratilmoqda...' : 'Jadval yaratish'}
           </button>
 
           {schResult?.draft && (
@@ -830,7 +834,7 @@ const TeacherAI = () => {
           {tsError && <div className="tai-error">{tsError}</div>}
 
           <button className="tai-action-btn" onClick={runTestGen} disabled={tsLoading || !tsClassId || !tsSubjectId}>
-            {tsLoading ? <span className="tai-spinner" /> : '✨'} {tsLoading ? 'Savollar yaratilmoqda...' : 'Test yaratish'}
+            {tsLoading ? <span className="tai-spinner" /> : <TeacherUiIcon name="sparkle" size={16} />} {tsLoading ? 'Savollar yaratilmoqda...' : 'Test yaratish'}
           </button>
 
           {tsSaveSuccess && <div className="tai-success">{tsSaveSuccess}</div>}
@@ -912,9 +916,11 @@ const TeacherAI = () => {
                       <span className="tai-q-num">{i + 1}</span>
                       <span className="tai-q-text">{q.questionText}</span>
                       <span className="tai-q-meta">
-                        {q.questionType === 'single' ? '○ bir variantli' : q.questionType === 'multiple' ? '☐ ko\'p variantli' : '✎ yozma'} • {q.points} ball
+                        {q.questionType === 'single' ? 'Bir variantli' : q.questionType === 'multiple' ? "Ko'p variantli" : 'Yozma'} • {q.points} ball
                       </span>
-                      <button className="tai-q-del" onClick={() => removeQuestion(i)} title="Savolni o'chirish">✕</button>
+                      <button className="tai-q-del" onClick={() => removeQuestion(i)} title="Savolni o'chirish" aria-label="Savolni o'chirish">
+                        <TeacherUiIcon name="close" size={13} />
+                      </button>
                     </div>
                     {q.options.length > 0 ? (
                       <div className="tai-q-options">
@@ -922,7 +928,7 @@ const TeacherAI = () => {
                           <div key={oi} className={`tai-q-option ${opt.isCorrect ? 'correct' : ''}`}>
                             <span className="tai-q-letter">{String.fromCharCode(65 + oi)}</span>
                             <span>{opt.text}</span>
-                            {opt.isCorrect && <span className="tai-q-check">✓</span>}
+                            {opt.isCorrect && <span className="tai-q-check"><TeacherUiIcon name="check" size={13} /></span>}
                           </div>
                         ))}
                       </div>
@@ -993,7 +999,7 @@ const TeacherAI = () => {
           {plError && <div className="tai-error">{plError}</div>}
 
           <button className="tai-action-btn" onClick={runPlanGen} disabled={plLoading || !plClassId || !plSubjectId}>
-            {plLoading ? <span className="tai-spinner" /> : '✨'} {plLoading ? 'Reja tuzilmoqda...' : 'Dars reja tuzish'}
+            {plLoading ? <span className="tai-spinner" /> : <TeacherUiIcon name="sparkle" size={16} />} {plLoading ? 'Reja tuzilmoqda...' : 'Dars reja tuzish'}
           </button>
 
           {plResult && (
@@ -1008,7 +1014,7 @@ const TeacherAI = () => {
                     <TeacherUiIcon name={plCopied ? 'check' : 'copy'} size={16} /> {plCopied ? 'Nusxalandi' : 'Nusxalash'}
                   </button>
                   <button className="tai-plan-btn" onClick={downloadPlan}>
-                    ⬇️ Yuklab olish
+                    <TeacherUiIcon name="download" size={16} /> Yuklab olish
                   </button>
                 </div>
               </div>

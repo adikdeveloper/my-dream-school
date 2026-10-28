@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import styles from './Tests.module.css';
+import { formatUzShortDate } from '../../utils/uzDate';
 import TeacherUiIcon from './TeacherUiIcon';
 import { Can } from '../../context/PermissionsContext';
 
@@ -655,6 +656,7 @@ const Tests = () => {
       {/* Header */}
       <header className={styles.testsHeader}>
         <div className={styles.headerInfo}>
+          <p className={styles.eyebrow}>Ta'lim</p>
           <h1>Testlar</h1>
           <p>Nazorat testlarini yaratish va boshqarish</p>
         </div>
@@ -1161,7 +1163,7 @@ const Tests = () => {
                                         onChange={(e) => updateOption(qIndex, oIndex, 'isCorrect', e.target.checked, e)}
                                       />
                                       <span className={`${styles.checkmark} ${option.isCorrect ? styles.correct : ''}`}>
-                                        {option.isCorrect ? '✓' : String.fromCharCode(65 + oIndex)}
+                                        {option.isCorrect ? <TeacherUiIcon name="check" size={13} /> : String.fromCharCode(65 + oIndex)}
                                       </span>
                                     </label>
                                     <input
@@ -1273,7 +1275,7 @@ const Tests = () => {
                             <div key={oIndex} className={`${styles.previewOption} ${opt.isCorrect ? styles.correct : ''}`}>
                               <span className={styles.optionLetter}>{String.fromCharCode(65 + oIndex)}</span>
                               <span>{opt.text}</span>
-                              {opt.isCorrect && <span className={styles.correctMark}>✓</span>}
+                              {opt.isCorrect && <span className={styles.correctMark}><TeacherUiIcon name="check" size={13} /></span>}
                             </div>
                           ))}
                         </div>
@@ -1400,7 +1402,7 @@ const Tests = () => {
                             </td>
                             <td>
                               {result
-                                ? new Date(result.submittedAt).toLocaleDateString('uz-UZ')
+                                ? formatUzShortDate(result.submittedAt, { year: true })
                                 : '—'}
                             </td>
                             <td>
@@ -1417,7 +1419,7 @@ const Tests = () => {
                                   className={styles.btnSave}
                                   onClick={() => handleAddResult(student._id)}
                                 >
-                                  {result ? '✎' : '✓'}
+                                  <TeacherUiIcon name={result ? 'edit' : 'check'} size={14} />
                                 </button>
                               </div>
                             </td>

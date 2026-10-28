@@ -1,350 +1,584 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import apiService from '../../services/apiService';
+import { formatUzShortDate, formatUzWeekdayDate } from '../../utils/uzDate';
+import TeacherUiIcon from './TeacherUiIcon';
 import styles from './TeacherHome.module.css';
 
-const HomeIcon = ({ name, size = 20 }) => {
-  const paths = {
-    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
-    attendance: <><circle cx="9" cy="7" r="4" /><path d="M2 21a7 7 0 0 1 14 0M16 11l2 2 4-5" /></>,
-    grading: <><path d="M5 4h14v17H5zM9 4V2h6v2M9 10h6M9 14h6" /><path d="m9 18 1.5 1.5L14 16" /></>,
-    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
-    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
-    assignment: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /></>,
-    test: <><path d="M5 3h14v18H5zM9 7h6M9 11h6M9 15h3" /><path d="m14 16 1.5 1.5L19 14" /></>,
-    warning: <><path d="M12 3 2 21h20Z" /><path d="M12 9v5M12 17h.01" /></>,
-    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-    close: <path d="m6 6 12 12M18 6 6 18" />,
-    welcome: <><path d="M8 12V5a2 2 0 0 1 4 0v6M12 10V4a2 2 0 0 1 4 0v7M16 10V6a2 2 0 0 1 4 0v8a8 8 0 0 1-8 8h-1a8 8 0 0 1-8-8v-3a2 2 0 0 1 4 0v2" /></>,
-    lightning: <path d="m13 2-9 12h8l-1 8 9-12h-8Z" />
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.calendar}</svg>;
+const DAY_LABELS = [
+  { key: 'Monday', short: 'Du', full: 'Dushanba' },
+  { key: 'Tuesday', short: 'Se', full: 'Seshanba' },
+  { key: 'Wednesday', short: 'Ch', full: 'Chorshanba' },
+  { key: 'Thursday', short: 'Pa', full: 'Payshanba' },
+  { key: 'Friday', short: 'Ju', full: 'Juma' },
+  { key: 'Saturday', short: 'Sh', full: 'Shanba' }
+];
+
+const PRIORITY = {
+  urgent: { label: 'Shoshilinch', color: '#c5453b', bg: '#fbecea' },
+  high: { label: 'Muhim', color: '#c98a18', bg: '#fdf3df' },
+  normal: { label: "Oddiy", color: '#2f6fdb', bg: '#eaf1fd' },
+  low: { label: 'Past', color: '#667085', bg: '#f2f4f7' }
 };
 
-const TeacherHome = () => {
+const getGreeting = (date = new Date()) => {
+  const hour = date.getHours();
+  if (hour < 12) return 'Xayrli tong';
+  if (hour < 18) return 'Xayrli kun';
+  return 'Xayrli kech';
+};
+
+const toMinutes = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  const [hours, minutes] = value.split(':').map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+};
+
+const formatDate = (value) => formatUzShortDate(value);
+
+const formatLongDate = (date = new Date()) => formatUzWeekdayDate(date);
+
+const TeacherHome = ({ greeting }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { setLoading, setError } = useData();
-  const [todaySchedule, setTodaySchedule] = useState([]);
-  const [classStats, setClassStats] = useState({
+  const [now, setNow] = useState(new Date());
+  const [stats, setStats] = useState({
     totalStudents: 0,
     presentToday: 0,
+    absentToday: 0,
+    attendanceRate: 0,
     pendingGrades: 0,
-    upcomingAssignments: 0
+    activeAssignments: 0
   });
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
-  const [ungradedLessons, setUngradedLessons] = useState([]);
+  const [todaySchedule, setTodaySchedule] = useState([]);
+  const [weeklyCounts, setWeeklyCounts] = useState({});
+  const [ungraded, setUngraded] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showUngradedModal, setShowUngradedModal] = useState(false);
 
-  // Real-time clock update
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const timer = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
 
-  const loadSchedule = useCallback(async (dayOfWeek) => {
+  const loadSchedule = useCallback(async () => {
     try {
-      setIsLoadingSchedule(true);
-      const teacherSchedule = await apiService.getTeacherSchedule();
+      const schedule = await apiService.getTeacherSchedule();
+      const list = Array.isArray(schedule) ? schedule : [];
+      const todayKey = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      const todayPeriods = list.find((day) => day.day === todayKey)?.periods || [];
 
-      // Process today's schedule
-      const todayLessons = teacherSchedule
-        .find(day => day.day === dayOfWeek)?.periods || [];
+      const formatted = todayPeriods
+        .map((period, index) => ({
+          id: `${period.startTime || index}-${period.subject?._id || index}`,
+          start: period.startTime || '',
+          end: period.endTime || '',
+          subject: period.subject?.name || 'Fan',
+          className: period.className || period.class?.name || 'Sinf',
+          room: period.room || '',
+          teacher: period.teacher ? `${period.teacher.firstName || ''} ${period.teacher.lastName || ''}`.trim() : ''
+        }))
+        .sort((a, b) => (toMinutes(a.start) ?? 0) - (toMinutes(b.start) ?? 0));
 
-      const formattedSchedule = todayLessons.map((period, index) => ({
-        id: index + 1,
-        time: `${period.startTime} - ${period.endTime}`,
-        subject: period.subject?.name || 'N/A',
-        class: period.className || 'N/A',
-        room: period.room || 'N/A'
-      }));
+      setTodaySchedule(formatted);
 
-      setTodaySchedule(formattedSchedule);
-    } catch (error) {
+      const counts = {};
+      DAY_LABELS.forEach((day) => {
+        counts[day.key] = list.find((item) => item.day === day.key)?.periods?.length || 0;
+      });
+      setWeeklyCounts(counts);
+    } catch (err) {
       setTodaySchedule([]);
-    } finally {
-      setIsLoadingSchedule(false);
+      setWeeklyCounts({});
     }
   }, []);
 
-  const checkUngradedLessons = useCallback(async () => {
+  const loadUngraded = useCallback(async () => {
     try {
-      // Backend'dan bugungi baholarsiz darslarni olish
       const data = await apiService.getTeacherUngradedLessons();
-
-      if (!data || !data.ungradedLessons || data.ungradedLessons.length === 0) {
-        setUngradedLessons([]);
-        return;
-      }
-
-      // LocalStorage'da bugungi kun uchun modal ko'rsatilganligini tekshirish
-      const storageKey = `ungraded_modal_shown_${data.todayKey}`;
-      const alreadyShown = localStorage.getItem(storageKey);
-
-      // Eski kunlar uchun localStorage'ni tozalash (faqat bugungi kun qoladi)
-      const allKeys = Object.keys(localStorage);
-      allKeys.forEach(key => {
-        if (key.startsWith('ungraded_modal_shown_') && key !== storageKey) {
-          localStorage.removeItem(key);
-        }
-      });
-
-      // Darslarni formatlash
-      const formattedLessons = data.ungradedLessons.map(lesson => ({
-        date: new Date(lesson.date),
-        subject: lesson.subjectName,
-        class: lesson.className,
-        time: lesson.time,
-        classId: lesson.classId,
-        subjectId: lesson.subjectId
+      const lessons = data?.ungradedLessons || [];
+      const formatted = lessons.map((lesson, index) => ({
+        id: `${lesson.classId || index}-${lesson.subjectId || index}-${lesson.date || index}`,
+        date: lesson.date,
+        subject: lesson.subjectName || 'Fan',
+        className: lesson.className || 'Sinf',
+        time: lesson.time || ''
       }));
+      setUngraded(formatted);
 
-      setUngradedLessons(formattedLessons);
-
-      // Agar bugun modal ko'rsatilmagan bo'lsa va baholarsiz darslar bo'lsa
-      if (!alreadyShown && formattedLessons.length > 0) {
-        setShowUngradedModal(true);
-        // Bugungi kun uchun modal ko'rsatilganligini belgilash
-        localStorage.setItem(storageKey, 'true');
+      if (data?.todayKey && formatted.length > 0) {
+        const storageKey = `ungraded_modal_shown_${data.todayKey}`;
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('ungraded_modal_shown_') && key !== storageKey) {
+            localStorage.removeItem(key);
+          }
+        });
+        if (!localStorage.getItem(storageKey)) {
+          setShowUngradedModal(true);
+          localStorage.setItem(storageKey, 'true');
+        }
       }
-    } catch {
-      setUngradedLessons([]);
+    } catch (err) {
+      setUngraded([]);
     }
   }, []);
 
-  const loadTeacherData = useCallback(async () => {
+  const loadStats = useCallback(async () => {
     try {
-      setLoading(true);
-
-      // Get today's date info
-      const today = new Date();
-      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
-
-      // Load schedule
-      loadSchedule(dayOfWeek);
-
-      // Parallel API calls for better performance - REAL DATA
-      const [
-        todayStats
-      ] = await Promise.all([
-        apiService.getTeacherTodayStats()
-      ]);
-
-      // Real data from backend API
-      setClassStats({
-        totalStudents: todayStats.totalStudents || 0,
-        presentToday: todayStats.presentToday || 0,
-        pendingGrades: todayStats.pendingGrades || 0,
-        upcomingAssignments: todayStats.activeAssignments || 0
+      const data = await apiService.getTeacherTodayStats();
+      setStats({
+        totalStudents: data?.totalStudents || 0,
+        presentToday: data?.presentToday || 0,
+        absentToday: data?.absentToday || 0,
+        attendanceRate: Number(data?.attendanceRate) || 0,
+        pendingGrades: data?.pendingGrades || 0,
+        activeAssignments: data?.activeAssignments || 0
       });
-
-      // Bahosiz darslarni tekshirish
-      checkUngradedLessons();
-
-    } catch (error) {
-      setError(error.response?.data?.message || 'Ma\'lumotlarni yuklashda xatolik');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      setError(err.response?.data?.message || "Statistika ma'lumotlarini yuklashda xatolik");
     }
-  }, [setLoading, setError, loadSchedule, checkUngradedLessons]);
+  }, []);
+
+  const loadAnnouncements = useCallback(async () => {
+    try {
+      setAnnouncementsLoading(true);
+      const data = await apiService.getAnnouncements();
+      setAnnouncements(Array.isArray(data) ? data.slice(0, 3) : []);
+    } catch (err) {
+      setAnnouncements([]);
+    } finally {
+      setAnnouncementsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadTeacherData();
-  }, [loadTeacherData]);
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      await Promise.allSettled([loadSchedule(), loadStats(), loadUngraded()]);
+      if (mounted) setLoading(false);
+    })();
+    loadAnnouncements();
+    return () => { mounted = false; };
+  }, [loadSchedule, loadStats, loadUngraded, loadAnnouncements]);
 
-  const statCards = [
+  const lessonStatus = useCallback((lesson) => {
+    const start = toMinutes(lesson.start);
+    const end = toMinutes(lesson.end);
+    const current = now.getHours() * 60 + now.getMinutes();
+    if (start == null || end == null) return { key: 'upcoming', label: 'Kutilmoqda' };
+    if (current >= end) return { key: 'done', label: 'Tugagan' };
+    if (current >= start) return { key: 'live', label: 'Davom etmoqda' };
+    return { key: 'upcoming', label: 'Kutilmoqda' };
+  }, [now]);
+
+  const activeLesson = useMemo(
+    () => todaySchedule.find((lesson) => lessonStatus(lesson).key === 'live'),
+    [todaySchedule, lessonStatus]
+  );
+
+  const attendanceRate = useMemo(() => {
+    if (stats.attendanceRate > 0) return Math.min(100, Math.round(stats.attendanceRate));
+    if (!stats.totalStudents) return 0;
+    return Math.min(100, Math.round((stats.presentToday / stats.totalStudents) * 100));
+  }, [stats]);
+
+  const absenceCount = useMemo(() => {
+    if (stats.absentToday > 0) return stats.absentToday;
+    return Math.max(0, stats.totalStudents - stats.presentToday);
+  }, [stats]);
+
+  const weeklyMax = useMemo(() => {
+    const values = Object.values(weeklyCounts);
+    return Math.max(1, ...values);
+  }, [weeklyCounts]);
+
+  const todayKey = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const totalWeekLessons = useMemo(
+    () => Object.values(weeklyCounts).reduce((sum, value) => sum + value, 0),
+    [weeklyCounts]
+  );
+
+  const kpis = [
     {
-      title: 'Jami o\'quvchilar',
-      value: classStats.totalStudents,
+      label: "Jami o'quvchilar",
+      value: stats.totalStudents,
+      note: "Sinflaringizdagi o'quvchilar",
       icon: 'users',
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      change: '0%',
-      changeType: 'neutral'
+      tone: 'navy'
     },
     {
-      title: 'Bugun kelganlar',
-      value: classStats.presentToday,
-      icon: 'attendance',
-      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-      change: '0%',
-      changeType: 'neutral'
+      label: 'Bugun kelganlar',
+      value: stats.presentToday,
+      note: `${attendanceRate}% davomat`,
+      icon: 'check',
+      tone: 'green'
     },
     {
-      title: 'Kutilayotgan baholar',
-      value: classStats.pendingGrades,
-      icon: 'grading',
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      change: '0%',
-      changeType: 'neutral'
+      label: 'Kutilayotgan baholar',
+      value: stats.pendingGrades,
+      note: stats.pendingGrades > 0 ? 'Baholash navbatida' : 'Barchasi baholangan',
+      icon: 'assignment',
+      tone: 'amber'
     },
     {
-      title: 'Topshiriqlar soni',
-      value: classStats.upcomingAssignments,
-      icon: 'calendar',
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      change: '0%',
-      changeType: 'neutral'
+      label: 'Faol topshiriqlar',
+      value: stats.activeAssignments,
+      note: "O'quvchilar topshirishi kutilmoqda",
+      icon: 'test',
+      tone: 'blue'
     }
   ];
 
   const quickActions = [
-    { icon: 'journal', label: 'Sinf jurnalini ochish', handler: () => navigate('/teacher/journal') },
-    { icon: 'attendance', label: 'Davomat olish', handler: () => navigate('/teacher/journal') },
-    { icon: 'assignment', label: 'Topshiriq berish', handler: () => navigate('/teacher/assignments') },
-    { icon: 'test', label: 'Test yaratish', handler: () => navigate('/teacher/tests') }
+    { label: 'Davomat olish', icon: 'check', tone: 'green', onClick: () => navigate('/teacher/journal') },
+    { label: 'Baholash', icon: 'book', tone: 'amber', onClick: () => navigate('/teacher/journal') },
+    { label: 'Topshiriq berish', icon: 'assignment', tone: 'blue', onClick: () => navigate('/teacher/assignments') },
+    { label: 'Test yaratish', icon: 'test', tone: 'navy', onClick: () => navigate('/teacher/tests') }
   ];
 
   return (
-    <div className={styles.teacherHome}>
-      {/* Bahosiz darslar modal */}
-      {showUngradedModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowUngradedModal(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}><HomeIcon name="warning" size={21} /> Bahosiz darslar</h2>
-              <button className={styles.modalClose} onClick={() => setShowUngradedModal(false)}><HomeIcon name="close" size={18} /></button>
-            </div>
-            <div className={styles.modalBody}>
-              <p className={styles.modalDescription}>
-                Bugun {ungradedLessons.length} ta darsga baho kiritilmagan. Iltimos, baholarni kiriting.
-              </p>
-              <div className={styles.ungradedLessonsList}>
-                {ungradedLessons.map((lesson, index) => (
-                  <div key={index} className={styles.ungradedLessonItem}>
-                    <div className={styles.lessonDetails}>
-                      <span className={styles.lessonSubject}>{lesson.subject}</span>
-                      <span className={styles.lessonSeparator}>•</span>
-                      <span>{lesson.class}</span>
-                      <span className={styles.lessonSeparator}>•</span>
-                      <span><HomeIcon name="clock" size={15} /> {lesson.time}</span>
-                    </div>
-                  </div>
-                ))}
+    <div className={styles.home}>
+      {showUngradedModal && ungraded.length > 0 && (
+        <div className={styles.modalOverlay} role="presentation" onClick={() => setShowUngradedModal(false)}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="ungraded-title" onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <span className={styles.modalIcon}><TeacherUiIcon name="warning" size={20} /></span>
+              <div>
+                <h2 id="ungraded-title">Baholanmagan darslar</h2>
+                <p>Bugun {ungraded.length} ta darsga baho kiritilmagan.</p>
               </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={styles.btnCloseModal} onClick={() => setShowUngradedModal(false)}>
-                Tushunarli
+              <button type="button" className={styles.modalClose} onClick={() => setShowUngradedModal(false)} aria-label="Yopish">
+                <TeacherUiIcon name="close" size={17} />
               </button>
-              <button className={styles.btnGoJournal} onClick={() => { setShowUngradedModal(false); navigate('/teacher/journal'); }}>
-                Jurnalga o'tish
+            </div>
+            <div className={styles.modalList}>
+              {ungraded.map((lesson) => (
+                <div className={styles.modalRow} key={lesson.id}>
+                  <span className={styles.modalRowIcon}><TeacherUiIcon name="book" size={16} /></span>
+                  <div>
+                    <strong>{lesson.subject}</strong>
+                    <span>{lesson.className}{lesson.time ? ` · ${lesson.time}` : ''}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.modalFoot}>
+              <button type="button" className="td-btn td-btn--ghost" onClick={() => setShowUngradedModal(false)}>Keyinroq</button>
+              <button
+                type="button"
+                className="td-btn td-btn--gold"
+                onClick={() => { setShowUngradedModal(false); navigate('/teacher/journal'); }}
+              >
+                Jurnalga o'tish <TeacherUiIcon name="arrow" size={14} />
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className={styles.welcomeSection}>
-        <div className={styles.welcomeContent}>
-          <h1 className={styles.pageTitle}>
-            <span className={styles.wave}><HomeIcon name="welcome" size={28} /></span>
-            Xush kelibsiz, {user?.firstName}!
+      <header className={styles.head}>
+        <div>
+          <p className={styles.eyebrow}>{formatLongDate(now)}</p>
+          <h1 className={styles.title}>
+            {greeting || getGreeting(now)}, {user?.firstName || "o'qituvchi"}!
           </h1>
-          <p className={styles.pageDescription}>
-            Bugun sinflaringizda sodir bo'layotgan voqealar va darslar haqida ma'lumot.
+          <p className={styles.subtitle}>
+            {activeLesson
+              ? `Hozir ${activeLesson.subject} darsi davom etmoqda · ${activeLesson.className}`
+              : todaySchedule.length > 0
+                ? `Bugun sizda ${todaySchedule.length} ta dars bor. Kuningiz samarali o'tsin.`
+                : "Bugun darslaringiz yo'q. Vazifalar va baholashni tekshirib ko'ring."}
           </p>
         </div>
-        <div className={styles.currentTime}>
-          <div className={styles.timeDisplay}>
-            {currentTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </div>
-          <div className={styles.dateDisplay}>
-            {currentTime.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
+        <div className={styles.headActions}>
+          <button type="button" className="td-btn td-btn--gold" onClick={() => navigate('/teacher/journal')}>
+            <TeacherUiIcon name="check" size={15} /> Davomat olish
+          </button>
+          <button type="button" className="td-btn td-btn--ghost" onClick={() => navigate('/teacher/schedule')}>
+            <TeacherUiIcon name="calendar" size={15} /> Dars jadvali
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Stats Cards */}
-      <div className={styles.statsGrid}>
-        {statCards.map((stat, index) => (
-          <div key={index} className={styles.statCard} style={{ background: stat.gradient }}>
-            <div className={styles.statIconWrapper}>
-              <div className={styles.statIcon}><HomeIcon name={stat.icon} size={25} /></div>
+      {error && <div className="td-alert td-alert--error"><TeacherUiIcon name="warning" size={15} /> {error}</div>}
+
+      <section className={styles.kpis} aria-label="Asosiy ko'rsatkichlar">
+        {kpis.map((kpi) => (
+          <article className={styles.kpi} key={kpi.label}>
+            <span className={`${styles.kpiIcon} ${styles[`tone_${kpi.tone}`]}`}>
+              <TeacherUiIcon name={kpi.icon} size={19} />
+            </span>
+            <div className={styles.kpiBody}>
+              {loading ? <span className={`td-skeleton ${styles.kpiSkeleton}`} /> : <strong>{kpi.value}</strong>}
+              <span className={styles.kpiLabel}>{kpi.label}</span>
+              <small>{kpi.note}</small>
             </div>
-            <div className={styles.statContent}>
-              <div className={styles.statNumber}>{stat.value}</div>
-              <div className={styles.statLabel}>{stat.title}</div>
-            </div>
-            <div className={styles.statChange}>
-              <span className={styles.changeArrow}>
-                {stat.changeType === 'positive' ? '↑' : stat.changeType === 'negative' ? '↓' : '→'}
-              </span>
-              {stat.change}
-            </div>
-            <div className={styles.statDecoration}></div>
-          </div>
+          </article>
         ))}
-      </div>
+      </section>
 
-      <div className={styles.dashboardGrid}>
-        {/* Quick Actions */}
-        <div className={styles.quickActionsCard}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}><HomeIcon name="lightning" size={19} /></span>
-              Tezkor amallar
-            </h2>
-          </div>
-          <div className={styles.actionGrid}>
-            {quickActions.map((action, index) => (
-              <button
-                key={index}
-                className={styles.actionBtn}
-                onClick={action.handler}
-                aria-label={action.label}
-              >
-                <div className={styles.actionIcon}>
-                  <HomeIcon name={action.icon} size={22} />
-                </div>
-                <span className={styles.actionLabel}>{action.label}</span>
+      <div className={styles.grid}>
+        <div className={styles.mainCol}>
+          <section className={`td-card ${styles.card}`}>
+            <div className="td-card-head">
+              <div>
+                <h2 className="td-card-title">Bugungi darslar</h2>
+                <p className="td-card-sub">{todaySchedule.length > 0 ? `${todaySchedule.length} ta dars rejalashtirilgan` : "Bugun uchun dars yo'q"}</p>
+              </div>
+              <button type="button" className="td-card-link" onClick={() => navigate('/teacher/schedule')}>
+                Haftalik jadval <TeacherUiIcon name="arrow" size={13} />
               </button>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Today's Schedule */}
-        <div className={styles.scheduleCard}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <span className={styles.titleIcon}><HomeIcon name="calendar" size={19} /></span>
-              Bugungi dars jadvali
-            </h2>
-          </div>
-          <div className={styles.scheduleList}>
-            {isLoadingSchedule ? (
-              <>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className={`${styles.scheduleItem} ${styles.skeleton}`}>
-                    <div className={styles.skeletonTime}></div>
-                    <div className={styles.skeletonContent}>
-                      <div className={styles.skeletonText}></div>
-                      <div className={styles.skeletonTextSmall}></div>
+            {loading ? (
+              <div className={styles.lessonList}>
+                {[1, 2, 3].map((item) => (
+                  <div className={styles.lessonRow} key={item}>
+                    <span className={`td-skeleton ${styles.timeSkeleton}`} />
+                    <div className={styles.lessonBody}>
+                      <span className={`td-skeleton ${styles.lineSkeleton}`} />
+                      <span className={`td-skeleton ${styles.lineSkeletonSm}`} />
                     </div>
                   </div>
                 ))}
-              </>
+              </div>
             ) : todaySchedule.length === 0 ? (
-              <div className={styles.emptyState}>
-                <p className={styles.emptyText}>Bugun dars yo'q</p>
+              <div className="td-empty">
+                <span className="td-empty-icon"><TeacherUiIcon name="calendar" size={20} /></span>
+                <strong>Bugun dars yo'q</strong>
+                <span>Dars jadvalini tekshirib ko'ring yoki dam oling.</span>
               </div>
             ) : (
-              todaySchedule.map((item) => (
-                <div key={item.id} className={styles.scheduleItem}>
-                  <div className={styles.scheduleTime}>{item.time}</div>
-                  <div className={styles.scheduleDetails}>
-                    <div className={styles.scheduleSubject}>{item.subject}</div>
-                    <div className={styles.scheduleClass}>{item.class} • {item.room}</div>
+              <div className={styles.lessonList}>
+                {todaySchedule.map((lesson, index) => {
+                  const status = lessonStatus(lesson);
+                  return (
+                    <div className={`${styles.lessonRow} ${status.key === 'live' ? styles.lessonLive : ''}`} key={lesson.id}>
+                      <div className={styles.lessonTime}>
+                        <strong>{lesson.start}</strong>
+                        <span>{lesson.end}</span>
+                      </div>
+                      <span className={`${styles.timelineDot} ${styles[`dot_${status.key}`]}`} />
+                      <div className={styles.lessonBody}>
+                        <strong>{lesson.subject}</strong>
+                        <span>
+                          {lesson.className}
+                          {lesson.room ? ` · ${lesson.room}-xona` : ''}
+                        </span>
+                      </div>
+                      <span className={`td-chip ${status.key === 'live' ? 'td-chip--gold' : status.key === 'done' ? 'td-chip--gray' : 'td-chip--blue'}`}>
+                        {status.label}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.rowArrow}
+                        onClick={() => navigate('/teacher/journal')}
+                        aria-label={`${lesson.subject} jurnalini ochish`}
+                      >
+                        <TeacherUiIcon name="arrow" size={15} />
+                      </button>
+                      <span className={styles.rowIndex}>{String(index + 1).padStart(2, '0')}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <section className={`td-card ${styles.card}`}>
+            <div className="td-card-head">
+              <div>
+                <h2 className="td-card-title">Baholash navbati</h2>
+                <p className="td-card-sub">
+                  {ungraded.length > 0 ? `${ungraded.length} ta dars baholanishi kerak` : "Barcha darslar baholangan"}
+                </p>
+              </div>
+              <button type="button" className="td-card-link" onClick={() => navigate('/teacher/journal')}>
+                Jurnalga o'tish <TeacherUiIcon name="arrow" size={13} />
+              </button>
+            </div>
+
+            {ungraded.length === 0 ? (
+              <div className="td-empty">
+                <span className="td-empty-icon" style={{ background: 'var(--td-green-soft)', color: 'var(--td-green)' }}>
+                  <TeacherUiIcon name="check" size={20} />
+                </span>
+                <strong>Baholash navbati bo'sh</strong>
+                <span>Barcha o'tilgan darslar uchun baholar kiritilgan.</span>
+              </div>
+            ) : (
+              <div className={styles.queue}>
+                {ungraded.slice(0, 4).map((lesson) => (
+                  <div className={styles.queueRow} key={lesson.id}>
+                    <span className={styles.queueIcon}><TeacherUiIcon name="book" size={16} /></span>
+                    <div className={styles.queueInfo}>
+                      <strong>{lesson.subject}</strong>
+                      <span>{lesson.className}{lesson.time ? ` · ${lesson.time}` : ''}</span>
+                    </div>
+                    <span className={styles.queueDate}>{formatDate(lesson.date)}</span>
+                    <button type="button" className="td-btn td-btn--gold td-btn--sm" onClick={() => navigate('/teacher/journal')}>
+                      Baholash
+                    </button>
+                  </div>
+                ))}
+                {ungraded.length > 4 && (
+                  <button type="button" className={styles.queueMore} onClick={() => navigate('/teacher/journal')}>
+                    Yana {ungraded.length - 4} ta dars <TeacherUiIcon name="arrow" size={13} />
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+
+          <div className={styles.split}>
+            <section className={`td-card ${styles.card}`}>
+              <div className="td-card-head">
+                <div>
+                  <h2 className="td-card-title">Haftalik yuklama</h2>
+                  <p className="td-card-sub">Jami {totalWeekLessons} ta dars</p>
+                </div>
+              </div>
+              <div className={styles.chart}>
+                {DAY_LABELS.map((day) => {
+                  const count = weeklyCounts[day.key] || 0;
+                  const height = count > 0 ? Math.max(12, Math.round((count / weeklyMax) * 100)) : 4;
+                  return (
+                    <div className={styles.barCol} key={day.key} title={`${day.full}: ${count} ta dars`}>
+                      <span className={styles.barValue}>{count}</span>
+                      <div className={styles.barTrack}>
+                        <span
+                          className={`${styles.barFill} ${day.key === todayKey ? styles.barToday : ''}`}
+                          style={{ height: `${height}%` }}
+                        />
+                      </div>
+                      <span className={styles.barLabel}>{day.short}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className={`td-card ${styles.card}`}>
+              <div className="td-card-head">
+                <div>
+                  <h2 className="td-card-title">Davomat</h2>
+                  <p className="td-card-sub">Bugungi ko'rsatkich</p>
+                </div>
+              </div>
+              <div className={styles.attendance}>
+                <div className={styles.donutWrap}>
+                  <svg viewBox="0 0 108 108" className={styles.donut} role="img" aria-label={`Davomat ${attendanceRate}%`}>
+                    <circle cx="54" cy="54" r="44" className={styles.donutTrack} />
+                    <circle
+                      cx="54"
+                      cy="54"
+                      r="44"
+                      className={styles.donutValue}
+                      strokeDasharray={`${(attendanceRate / 100) * 276.46} 276.46`}
+                    />
+                  </svg>
+                  <div className={styles.donutCenter}>
+                    <strong>{attendanceRate}%</strong>
+                    <span>davomat</span>
                   </div>
                 </div>
-              ))
-            )}
+                <div className={styles.attendanceLegend}>
+                  <div>
+                    <span className={`${styles.legendDot} ${styles.legendGreen}`} />
+                    <span>Kelganlar</span>
+                    <strong>{stats.presentToday}</strong>
+                  </div>
+                  <div>
+                    <span className={`${styles.legendDot} ${styles.legendRed}`} />
+                    <span>Kelmaganlar</span>
+                    <strong>{absenceCount}</strong>
+                  </div>
+                  <div>
+                    <span className={`${styles.legendDot} ${styles.legendGray}`} />
+                    <span>Jami</span>
+                    <strong>{stats.totalStudents}</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
+
+        <aside className={styles.sideCol}>
+          <section className={`td-card ${styles.card}`}>
+            <div className="td-card-head">
+              <div>
+                <h2 className="td-card-title">Tezkor amallar</h2>
+                <p className="td-card-sub">Eng ko'p ishlatiladigan bo'limlar</p>
+              </div>
+            </div>
+            <div className={styles.quickGrid}>
+              {quickActions.map((action) => (
+                <button type="button" className={styles.quickBtn} key={action.label} onClick={action.onClick}>
+                  <span className={`${styles.quickIcon} ${styles[`tone_${action.tone}`]}`}>
+                    <TeacherUiIcon name={action.icon} size={18} />
+                  </span>
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className={`td-card ${styles.card}`}>
+            <div className="td-card-head">
+              <div>
+                <h2 className="td-card-title">E'lonlar</h2>
+                <p className="td-card-sub">Maktab yangiliklari</p>
+              </div>
+              <button type="button" className="td-card-link" onClick={() => navigate('/teacher/notifications')}>
+                Barchasi <TeacherUiIcon name="arrow" size={13} />
+              </button>
+            </div>
+            {announcementsLoading ? (
+              <div className={styles.announcements}>
+                {[1, 2, 3].map((item) => (
+                  <div className={styles.announcement} key={item}>
+                    <span className={`td-skeleton ${styles.annLine}`} />
+                    <span className={`td-skeleton ${styles.annLineSm}`} />
+                  </div>
+                ))}
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="td-empty">
+                <span className="td-empty-icon"><TeacherUiIcon name="bell" size={19} /></span>
+                <strong>Hozircha e'lonlar yo'q</strong>
+                <span>Yangi e'lonlar shu yerda ko'rinadi.</span>
+              </div>
+            ) : (
+              <div className={styles.announcements}>
+                {announcements.map((announcement) => {
+                  const priority = PRIORITY[announcement.priority] || PRIORITY.normal;
+                  return (
+                    <article className={styles.announcement} key={announcement._id}>
+                      <div className={styles.announcementTop}>
+                        <span className={styles.announcementDot} style={{ background: priority.color }} />
+                        <strong>{announcement.title}</strong>
+                        <span className={styles.announcementDate}>
+                          {formatDate(announcement.publishDate || announcement.createdAt)}
+                        </span>
+                      </div>
+                      <p>{announcement.content}</p>
+                      <span className={styles.announcementTag} style={{ color: priority.color, background: priority.bg }}>
+                        {priority.label}
+                      </span>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </aside>
       </div>
     </div>
   );

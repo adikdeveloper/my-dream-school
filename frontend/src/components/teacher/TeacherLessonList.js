@@ -1,25 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import apiService from '../../services/apiService';
 import { useAuth } from '../../context/AuthContext';
+import TeacherUiIcon from './TeacherUiIcon';
 import styles from './TeacherLessonList.module.css';
 
 const DAYS = [
   ['Monday', 'Dushanba'], ['Tuesday', 'Seshanba'], ['Wednesday', 'Chorshanba'],
   ['Thursday', 'Payshanba'], ['Friday', 'Juma'], ['Saturday', 'Shanba']
 ];
-
-const Icon = ({ name, size = 18 }) => {
-  const paths = {
-    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
-    plus: <path d="M12 5v14M5 12h14" />,
-    edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></>,
-    trash: <><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6" /></>,
-    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-    class: <><path d="M4 21V5l8-3 8 3v16M9 21v-4h6v4" /></>,
-    close: <path d="m6 6 12 12M18 6 6 18" />
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
-};
 
 const EMPTY_FORM = { classId: '', subject: '', day: 'Monday', startTime: '08:00', endTime: '08:45', room: '', note: '' };
 
@@ -33,8 +21,9 @@ const TeacherLessonList = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
-  const selectedClass = useMemo(() => options.find(item => item._id === form.classId), [options, form.classId]);
+  const selectedClass = useMemo(() => options.find((item) => item._id === form.classId), [options, form.classId]);
   const subjects = selectedClass?.subjects || [];
 
   const loadData = async () => {
@@ -49,19 +38,16 @@ const TeacherLessonList = () => {
       if (optionResult.status === 'fulfilled') {
         setOptions(Array.isArray(optionResult.value) ? optionResult.value : []);
       } else {
-        // Vercel frontend Render backenddan oldin deploy bo'lsa, mavjud sinflar
-        // endpointidan vaqtinchalik foydalanamiz. Yangi endpoint ishga tushgach
-        // keyingi yuklashda avtomatik ravishda asosiy API ishlaydi.
         const classResponse = await apiService.getClasses();
         const allClasses = classResponse?.classes || [];
         const teacherId = String(user?._id || '');
-        const fallbackOptions = allClasses.map(cls => ({
+        const fallbackOptions = allClasses.map((cls) => ({
           ...cls,
           subjects: (cls.subjects || [])
-            .filter(item => String(item.teacher?._id || item.teacher || '') === teacherId)
-            .map(item => item.subject)
+            .filter((item) => String(item.teacher?._id || item.teacher || '') === teacherId)
+            .map((item) => item.subject)
             .filter(Boolean)
-        })).filter(cls => cls.subjects.length > 0);
+        })).filter((cls) => cls.subjects.length > 0);
         setOptions(fallbackOptions);
       }
 
@@ -77,78 +63,258 @@ const TeacherLessonList = () => {
 
   useEffect(() => { loadData(); }, [user?._id]);
 
-  const resetForm = () => { setForm(EMPTY_FORM); setEditingId(null); setError(''); };
+  useEffect(() => {
+    if (!success) return undefined;
+    const timer = setTimeout(() => setSuccess(''), 4000);
+    return () => clearTimeout(timer);
+  }, [success]);
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    setError('');
+  };
+
+  const closeForm = () => {
+    resetForm();
+    setShowForm(false);
+  };
 
   const handleClassChange = (classId) => {
-    const cls = options.find(item => item._id === classId);
-    setForm(prev => ({ ...prev, classId, subject: cls?.subjects?.[0]?._id || '', room: cls?.room || '' }));
+    const cls = options.find((item) => item._id === classId);
+    setForm((prev) => ({ ...prev, classId, subject: cls?.subjects?.[0]?._id || '', room: cls?.room || '' }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!form.classId || !form.subject) return setError('Sinf va fanni tanlang');
+    if (!form.classId || !form.subject) {
+      setError('Sinf va fanni tanlang');
+      return;
+    }
     try {
-      setSaving(true); setError(''); setSuccess('');
+      setSaving(true);
+      setError('');
+      setSuccess('');
       if (editingId) await apiService.updateTeacherLesson(editingId, form);
       else await apiService.createTeacherLesson(form);
       setSuccess(editingId ? 'Dars yangilandi' : "Dars ro'yxatga qo'shildi");
       resetForm();
+      setShowForm(false);
       await loadData();
     } catch (err) {
       setError(err.response?.data?.message || 'Darsni saqlashda xatolik');
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (lesson) => {
     setEditingId(lesson._id);
     setForm({
-      classId: lesson.classId?._id || '', subject: lesson.subject?._id || '', day: lesson.day,
-      startTime: lesson.startTime, endTime: lesson.endTime, room: lesson.room || '', note: lesson.note || ''
+      classId: lesson.classId?._id || '',
+      subject: lesson.subject?._id || '',
+      day: lesson.day,
+      startTime: lesson.startTime,
+      endTime: lesson.endTime,
+      room: lesson.room || '',
+      note: lesson.note || ''
     });
-    setError(''); setSuccess(''); window.scrollTo({ top: 0, behavior: 'smooth' });
+    setError('');
+    setSuccess('');
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const removeLesson = async (id) => {
     if (!window.confirm("Darsni ro'yxatdan o'chirasizmi?")) return;
     try {
-      setError(''); setSuccess('');
+      setError('');
+      setSuccess('');
       await apiService.deleteTeacherLesson(id);
-      setLessons(prev => prev.filter(item => item._id !== id));
-      if (editingId === id) resetForm();
+      setLessons((prev) => prev.filter((item) => item._id !== id));
+      if (editingId === id) closeForm();
       setSuccess("Dars ro'yxatdan o'chirildi");
-    } catch (err) { setError(err.response?.data?.message || "Darsni o'chirishda xatolik"); }
+    } catch (err) {
+      setError(err.response?.data?.message || "Darsni o'chirishda xatolik");
+    }
   };
 
-  const grouped = DAYS.map(([key, label]) => ({ key, label, lessons: lessons.filter(item => item.day === key) }));
+  const grouped = DAYS.map(([key, label]) => ({
+    key,
+    label,
+    lessons: lessons
+      .filter((item) => item.day === key)
+      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+  }));
+
+  const activeDays = grouped.filter((day) => day.lessons.length > 0).length;
+  const totalMinutes = lessons.reduce((sum, lesson) => {
+    const [sh, sm] = (lesson.startTime || '0:0').split(':').map(Number);
+    const [eh, em] = (lesson.endTime || '0:0').split(':').map(Number);
+    return sum + Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+  }, 0);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div><h1><Icon name="calendar" size={25} /> Dars ro'yxati</h1><p>Haftalik darslaringizni sinf va vaqt bo'yicha boshqaring.</p></div>
-        <span className={styles.count}>{lessons.length} ta dars</span>
+    <div className={styles.page}>
+      <header className={styles.head}>
+        <div>
+          <p className={styles.eyebrow}>Ta'lim</p>
+          <h1 className={styles.title}>Dars ro'yxati</h1>
+          <p className={styles.subtitle}>Haftalik darslaringizni sinf va vaqt bo'yicha boshqaring.</p>
+        </div>
+        <button
+          type="button"
+          className="td-btn td-btn--gold"
+          onClick={() => { if (showForm) closeForm(); else setShowForm(true); }}
+        >
+          <TeacherUiIcon name={showForm ? 'close' : 'plus'} size={15} />
+          {showForm ? 'Bekor qilish' : "Dars qo'shish"}
+        </button>
       </header>
 
-      <section className={styles.formCard}>
-        <div className={styles.cardHead}><div><h2>{editingId ? 'Darsni tahrirlash' : "Yangi dars qo'shish"}</h2><p>Faqat sizga biriktirilgan sinf va fanlar ko‘rsatiladi.</p></div>{editingId && <button className={styles.iconButton} onClick={resetForm} title="Bekor qilish"><Icon name="close" /></button>}</div>
-        {error && <div className={styles.error}>{error}</div>}
-        {success && <div className={styles.success}>{success}</div>}
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
-          <label><span>Sinf</span><select value={form.classId} onChange={e => handleClassChange(e.target.value)} required><option value="">Sinfni tanlang</option>{options.map(cls => <option key={cls._id} value={cls._id}>{cls.name}</option>)}</select></label>
-          <label><span>Fan</span><select value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} required disabled={!form.classId}><option value="">Fanni tanlang</option>{subjects.map(subject => <option key={subject._id} value={subject._id}>{subject.name}</option>)}</select></label>
-          <label><span>Hafta kuni</span><select value={form.day} onChange={e => setForm({ ...form, day: e.target.value })}>{DAYS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-          <label><span>Boshlanish vaqti</span><input type="time" value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} required /></label>
-          <label><span>Tugash vaqti</span><input type="time" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} required /></label>
-          <label><span>Xona</span><input value={form.room} onChange={e => setForm({ ...form, room: e.target.value })} maxLength="60" placeholder="Masalan: 12-xona" /></label>
-          <label className={styles.noteField}><span>Izoh</span><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} maxLength="300" placeholder="Ixtiyoriy izoh" /></label>
-          <div className={styles.formActions}>{editingId && <button type="button" className={styles.secondaryButton} onClick={resetForm}>Bekor qilish</button>}<button type="submit" className={styles.primaryButton} disabled={saving || options.length === 0}><Icon name={editingId ? 'edit' : 'plus'} /> {saving ? 'Saqlanmoqda...' : editingId ? 'Yangilash' : "Dars qo'shish"}</button></div>
-        </form>
+      <section className={styles.summary}>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryIcon}><TeacherUiIcon name="grid" size={17} /></span>
+          <div><strong>{lessons.length}</strong><span>Jami darslar</span></div>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryIcon}><TeacherUiIcon name="calendar" size={17} /></span>
+          <div><strong>{activeDays}</strong><span>Faol kunlar</span></div>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryIcon}><TeacherUiIcon name="clock" size={17} /></span>
+          <div><strong>{Math.floor(totalMinutes / 60)} soat {totalMinutes % 60} daq</strong><span>Haftalik yuklama</span></div>
+        </div>
       </section>
 
-      <section className={styles.listCard}>
-        <div className={styles.cardHead}><div><h2>Haftalik ro'yxat</h2><p>Darslar kun va boshlanish vaqti bo‘yicha tartiblangan.</p></div></div>
-        {loading ? <div className={styles.empty}>Yuklanmoqda...</div> : lessons.length === 0 ? <div className={styles.empty}><Icon name="calendar" size={30} /><strong>Hozircha dars qo‘shilmagan</strong><span>Yuqoridagi forma orqali birinchi darsni qo‘shing.</span></div> : <div className={styles.days}>{grouped.map(day => day.lessons.length > 0 && <div className={styles.dayGroup} key={day.key}><h3>{day.label}<span>{day.lessons.length}</span></h3><div className={styles.lessonRows}>{day.lessons.map(lesson => <article className={styles.lessonRow} key={lesson._id}><div className={styles.time}><Icon name="clock" size={16} /><strong>{lesson.startTime}</strong><span>{lesson.endTime}</span></div><div className={styles.lessonMain}><strong>{lesson.subject?.name || 'Fan'}</strong><span><Icon name="class" size={15} /> {lesson.classId?.name || 'Sinf'}{lesson.room ? ` · ${lesson.room}` : ''}</span>{lesson.note && <small>{lesson.note}</small>}</div><div className={styles.rowActions}><button onClick={() => startEdit(lesson)} title="Tahrirlash"><Icon name="edit" size={17} /></button><button className={styles.deleteButton} onClick={() => removeLesson(lesson._id)} title="O'chirish"><Icon name="trash" size={17} /></button></div></article>)}</div></div>)}</div>}
-      </section>
-    </main>
+      {error && <div className="td-alert td-alert--error"><TeacherUiIcon name="warning" size={15} /> {error}</div>}
+      {success && <div className="td-alert td-alert--success"><TeacherUiIcon name="check" size={15} /> {success}</div>}
+
+      <div className={`${styles.layout} ${showForm ? styles.layoutWithForm : ''}`}>
+        {showForm && (
+          <section className={`td-card ${styles.formCard}`}>
+            <div className="td-card-head">
+              <div>
+                <h2 className="td-card-title">{editingId ? 'Darsni tahrirlash' : "Yangi dars qo'shish"}</h2>
+                <p className="td-card-sub">Sizga biriktirilgan sinf va fanlar</p>
+              </div>
+            </div>
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <label className="td-label">
+                Sinf
+                <select className="td-select" value={form.classId} onChange={(event) => handleClassChange(event.target.value)} required>
+                  <option value="">Sinfni tanlang</option>
+                  {options.map((cls) => <option key={cls._id} value={cls._id}>{cls.name}</option>)}
+                </select>
+              </label>
+              <label className="td-label">
+                Fan
+                <select className="td-select" value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })} required disabled={!form.classId}>
+                  <option value="">Fanni tanlang</option>
+                  {subjects.map((subject) => <option key={subject._id} value={subject._id}>{subject.name}</option>)}
+                </select>
+              </label>
+              <label className="td-label">
+                Hafta kuni
+                <select className="td-select" value={form.day} onChange={(event) => setForm({ ...form, day: event.target.value })}>
+                  {DAYS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>
+              <div className={styles.timeRow}>
+                <label className="td-label">
+                  Boshlanish
+                  <input className="td-input" type="time" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} required />
+                </label>
+                <label className="td-label">
+                  Tugash
+                  <input className="td-input" type="time" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} required />
+                </label>
+              </div>
+              <label className="td-label">
+                Xona
+                <input className="td-input" value={form.room} onChange={(event) => setForm({ ...form, room: event.target.value })} maxLength="60" placeholder="Masalan: 12-xona" />
+              </label>
+              <label className="td-label">
+                Izoh
+                <input className="td-input" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} maxLength="300" placeholder="Ixtiyoriy izoh" />
+              </label>
+              <div className={styles.formActions}>
+                <button type="button" className="td-btn td-btn--ghost" onClick={closeForm}>Bekor qilish</button>
+                <button type="submit" className="td-btn td-btn--gold" disabled={saving || options.length === 0}>
+                  <TeacherUiIcon name={editingId ? 'edit' : 'plus'} size={14} />
+                  {saving ? 'Saqlanmoqda...' : editingId ? 'Yangilash' : "Qo'shish"}
+                </button>
+              </div>
+              {options.length === 0 && !loading && (
+                <p className={styles.formHint}>Sizga biriktirilgan sinflar topilmadi. Administrator bilan bog'laning.</p>
+              )}
+            </form>
+          </section>
+        )}
+
+        <section className={`td-card ${styles.listCard}`}>
+          <div className="td-card-head">
+            <div>
+              <h2 className="td-card-title">Haftalik jadval</h2>
+              <p className="td-card-sub">Darslar kun va boshlanish vaqti bo'yicha</p>
+            </div>
+            <span className="td-chip td-chip--gray">{lessons.length} ta dars</span>
+          </div>
+
+          {loading ? (
+            <div className={styles.loading}>
+              {[1, 2, 3, 4].map((item) => <div className={`td-skeleton ${styles.loadingRow}`} key={item} />)}
+            </div>
+          ) : lessons.length === 0 ? (
+            <div className="td-empty">
+              <span className="td-empty-icon"><TeacherUiIcon name="calendar" size={20} /></span>
+              <strong>Hozircha dars qo'shilmagan</strong>
+              <span>Yuqoridagi tugma orqali birinchi darsni qo'shing.</span>
+            </div>
+          ) : (
+            <div className={styles.days}>
+              {grouped.map((day) => (
+                day.lessons.length > 0 && (
+                  <div className={styles.day} key={day.key}>
+                    <div className={styles.dayHead}>
+                      <span>{day.label}</span>
+                      <small>{day.lessons.length} ta dars</small>
+                    </div>
+                    <div className={styles.rows}>
+                      {day.lessons.map((lesson) => (
+                        <article className={styles.row} key={lesson._id}>
+                          <div className={styles.time}>
+                            <strong>{lesson.startTime}</strong>
+                            <span>{lesson.endTime}</span>
+                          </div>
+                          <span className={styles.rowDot} />
+                          <div className={styles.lessonInfo}>
+                            <strong>{lesson.subject?.name || 'Fan'}</strong>
+                            <span>
+                              {lesson.classId?.name || 'Sinf'}
+                              {lesson.room ? ` · ${lesson.room}` : ''}
+                            </span>
+                            {lesson.note && <small>{lesson.note}</small>}
+                          </div>
+                          <div className={styles.rowActions}>
+                            <button type="button" onClick={() => startEdit(lesson)} title="Tahrirlash" aria-label="Tahrirlash">
+                              <TeacherUiIcon name="edit" size={15} />
+                            </button>
+                            <button type="button" className={styles.deleteBtn} onClick={() => removeLesson(lesson._id)} title="O'chirish" aria-label="O'chirish">
+                              <TeacherUiIcon name="trash" size={15} />
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
   );
 };
 

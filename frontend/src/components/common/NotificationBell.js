@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../../services/apiService';
+import { formatUzShortDate } from '../../utils/uzDate';
 
 // Header uchun qo'ng'iroqcha (bell) — o'qilmagan soni badge + ochiladigan ro'yxat.
 // accent — paneldagi asosiy rang (default: teal).
@@ -79,7 +80,7 @@ const NotificationBell = ({ accent = '#0d9488', viewAllLink }) => {
     if (diff < 60) return 'hozir';
     if (diff < 3600) return `${Math.floor(diff / 60)} daq oldin`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} soat oldin`;
-    return new Date(date).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' });
+    return formatUzShortDate(date);
   };
 
   return (

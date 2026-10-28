@@ -1,602 +1,518 @@
-/* ============================================
-   TEACHER SCHEDULE - KOMPAKT DIZAYN
-   AdminHome.module.css asosida yaratilgan
-   ============================================ */
-
-/* Base Container - Kompakt */
-.scheduleContainer {
-    padding: 1rem;
-    max-width: 1600px;
-    margin: 0 auto;
-    background: #f8fafc;
-    min-height: 100vh;
+.page {
+  width: 100%;
 }
 
-/* Header - Kompakt */
-.header {
-    background: white;
-    padding: 0.875rem 1rem;
-    border-radius: 10px;
-    margin-bottom: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+/* ---------- Header ---------- */
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: #b98625;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  margin: 0;
+  color: #0b1f3a;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.18;
 }
 
 .subtitle {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin: 0;
-    font-weight: 500;
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 12px;
 }
 
-/* Table Wrapper - Kompakt */
+.headChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 11px;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+/* ---------- Summary ---------- */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  min-width: 0;
+}
+
+.summaryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #f8efdc;
+  color: #b98625;
+}
+
+.summaryItem > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.summaryItem strong {
+  color: #101828;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.summaryItem span {
+  margin-top: 1px;
+  color: #667085;
+  font-size: 9.5px;
+}
+
+/* ---------- Card ---------- */
+.card {
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* ---------- Table ---------- */
 .tableWrapper {
-    background: white;
-    border-radius: 10px;
-    overflow-x: auto;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e2e8f0;
+  width: 100%;
+  overflow-x: auto;
 }
 
-.tableWrapper::-webkit-scrollbar {
-    height: 8px;
-}
-
-.tableWrapper::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 8px;
-}
-
-.tableWrapper::-webkit-scrollbar-thumb {
-    background: #134e4a;
-    border-radius: 8px;
-}
-
-/* Schedule Table - Kompakt */
 .scheduleTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8125rem;
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-/* Header */
 .scheduleTable thead th {
-    background: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
-    color: white;
-    padding: 0.625rem 0.5rem;
-    text-align: center;
-    font-weight: 700;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
+  padding: 9px 10px;
+  background: #f8f9fb;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #f2f4f7;
+  color: #667085;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.scheduleTable thead th:last-child {
+  border-right: 0;
 }
 
 .thTime {
-    width: 90px;
-    min-width: 90px;
-    position: sticky;
-    left: 0;
-    z-index: 10;
-    background: linear-gradient(135deg, #134e4a 0%, #115e59 100%) !important;
+  width: 104px;
 }
 
 .thDay {
-    min-width: 120px;
+  width: auto;
 }
 
-/* Tbody - Kompakt */
 .scheduleTable tbody td {
-    padding: 0.5rem;
-    border: 1px solid #e2e8f0;
-    vertical-align: top;
+  padding: 7px 9px;
+  border-bottom: 1px solid #f2f4f7;
+  border-right: 1px solid #f7f8fa;
+  vertical-align: top;
 }
 
-.scheduleTable tbody tr:nth-child(even) {
-    background: #f8fafc;
+.scheduleTable tbody td:last-child {
+  border-right: 0;
 }
 
-.scheduleTable tbody tr:hover {
-    background: #ccfbf1;
-    transition: background 0.15s ease;
+.scheduleTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.scheduleTable tbody tr:hover td {
+  background: #fcfcfd;
 }
 
 .tdTime {
-    width: 90px;
-    min-width: 90px;
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    background: #f1f5f9 !important;
-    font-weight: 700;
-    text-align: center;
-    border-right: 2px solid #94a3b8;
-    font-size: 0.6875rem;
-    color: #1e293b;
-}
-
-.scheduleTable tbody tr:nth-child(even) .tdTime {
-    background: #e2e8f0 !important;
+  width: 104px;
+  color: #344054;
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .tdPeriod {
-    min-width: 120px;
-    background: white;
+  height: 68px;
 }
 
-/* Period Content - Kompakt */
 .periodContent {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 7px;
+  border-left: 2px solid #d9a441;
+  border-radius: 4px;
+  background: #fdf9f0;
 }
 
 .periodSubject {
-    font-weight: 700;
-    color: #1e293b;
-    font-size: 0.75rem;
-    line-height: 1.3;
+  color: #101828;
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .periodClass {
-    font-weight: 600;
-    color: #0d9488;
-    font-size: 0.625rem;
-    background: #ccfbf1;
-    padding: 0.125rem 0.375rem;
-    border-radius: 4px;
-    display: inline-block;
-    width: fit-content;
+  color: #667085;
+  font-size: 9px;
 }
 
 .periodTopic {
-    font-size: 0.5625rem;
-    color: #64748b;
-    font-style: italic;
-    margin-top: 0.25rem;
-    padding-top: 0.25rem;
-    border-top: 1px dashed #cbd5e1;
-    line-height: 1.3;
+  margin-top: 1px;
+  color: #98a2b3;
+  font-size: 8.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subBadge {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: #fbecea;
+  color: #c5453b;
+  font-size: 8px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.subBadge svg {
+  margin-top: 1px;
+  flex: 0 0 auto;
+}
+
+.subBadgeText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.subBadgeText > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subBadgeText small {
+  color: #a8453c;
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
 }
 
 .periodEmpty {
-    text-align: center;
-    color: #cbd5e1;
-    font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  color: #d0d5dd;
+  font-size: 12px;
 }
 
-/* States - Kompakt */
-.loading {
-    text-align: center;
-    padding: 3rem 1rem;
-    font-size: 0.9375rem;
-    color: #64748b;
-    font-weight: 500;
-}
-
-.errorBox {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    color: #991b1b;
-    padding: 0.875rem;
-    border-radius: 8px;
-    border: 1px solid #fca5a5;
-    margin: 0.75rem 0;
-    font-weight: 600;
-    font-size: 0.8125rem;
-}
-
-.emptyBox {
-    background: white;
-    padding: 3rem 1rem;
-    text-align: center;
-    border-radius: 10px;
-    border: 2px dashed #cbd5e1;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.emptyBox p {
-    font-size: 1rem;
-    color: #64748b;
-    margin: 0 0 0.375rem 0;
-    font-weight: 600;
-}
-
-.emptyBox small {
-    font-size: 0.8125rem;
-    color: #94a3b8;
-}
-
-/* Desktop / Mobile table visibility */
 .desktopTable {
-    display: block;
+  display: block;
 }
 
 .mobileTable {
-    display: none;
+  display: none;
 }
 
 .mobileToggle {
-    display: flex;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    margin-bottom: 0.75rem;
+  display: flex;
+  gap: 3px;
+  padding: 9px 10px;
+  border-bottom: 1px solid #eef0f3;
+  background: #fff;
 }
 
 .mobileToggleBtn {
-    flex: 1;
-    padding: 0.5rem 0.75rem;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-}
-
-.mobileToggleBtn:hover {
-    background: #f1f5f9;
-    color: #0d9488;
+  flex: 1;
+  min-height: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #667085;
+  font-size: 9.5px;
+  font-weight: 600;
 }
 
 .mobileToggleActive {
-    background: linear-gradient(135deg, #0d9488 0%, #8b5cf6 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  background: #0b1f3a;
+  border-color: #0b1f3a;
+  color: #fff;
 }
 
-/* ========== RESPONSIVE - KOMPAKT ========== */
-
-/* Laptop (769px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .scheduleContainer {
-        padding: 0.875rem;
-    }
-
-    .header {
-        padding: 0.75rem;
-        margin-bottom: 0.625rem;
-    }
-
-    .title {
-        font-size: 1rem;
-    }
-
-    .subtitle {
-        font-size: 0.6875rem;
-    }
-
-    .scheduleTable {
-        font-size: 0.75rem;
-    }
-
-    .scheduleTable thead th {
-        padding: 0.5rem 0.375rem;
-        font-size: 0.6875rem;
-    }
-
-    .thTime {
-        width: 80px;
-        min-width: 80px;
-    }
-
-    .thDay {
-        min-width: 100px;
-    }
-
-    .scheduleTable tbody td {
-        padding: 0.375rem;
-    }
-
-    .tdTime {
-        width: 80px;
-        min-width: 80px;
-        font-size: 0.625rem;
-    }
-
-    .tdPeriod {
-        min-width: 100px;
-    }
-
-    .periodSubject {
-        font-size: 0.6875rem;
-    }
-
-    .periodClass {
-        font-size: 0.5625rem;
-    }
-
-    .periodTopic {
-        font-size: 0.5rem;
-    }
+/* ---------- Weekly substitutions ---------- */
+.subsCard {
+  margin-bottom: 0;
 }
 
-/* Tablet (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-    .desktopTable {
-        display: none;
-    }
-
-    .mobileTable {
-        display: block;
-    }
-
-    .scheduleContainer {
-        padding: 0.75rem;
-    }
-
-    .header {
-        padding: 0.625rem;
-        margin-bottom: 0.5rem;
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .title {
-        font-size: 0.9375rem;
-    }
-
-    .subtitle {
-        font-size: 0.625rem;
-    }
-
-    .tableWrapper {
-        border-radius: 8px;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .scheduleTable {
-        font-size: 0.6875rem;
-        min-width: 600px;
-    }
-
-    .scheduleTable thead th {
-        padding: 0.5rem 0.25rem;
-        font-size: 0.625rem;
-    }
-
-    .thTime {
-        width: 70px;
-        min-width: 70px;
-    }
-
-    .thDay {
-        min-width: 90px;
-    }
-
-    .scheduleTable tbody td {
-        padding: 0.375rem 0.25rem;
-    }
-
-    .tdTime {
-        width: 70px;
-        min-width: 70px;
-        font-size: 0.5625rem;
-    }
-
-    .tdPeriod {
-        min-width: 90px;
-    }
-
-    .periodSubject {
-        font-size: 0.625rem;
-    }
-
-    .periodClass {
-        font-size: 0.5rem;
-        padding: 0.0625rem 0.25rem;
-    }
-
-    .periodTopic {
-        font-size: 0.4375rem;
-    }
-
-    .periodEmpty {
-        font-size: 0.875rem;
-    }
-
-    .loading {
-        padding: 2rem 0.75rem;
-        font-size: 0.8125rem;
-    }
-
-    .emptyBox {
-        padding: 2rem 0.75rem;
-    }
-
-    .emptyBox p {
-        font-size: 0.875rem;
-    }
-
-    .emptyBox small {
-        font-size: 0.75rem;
-    }
+.subsList {
+  padding: 3px 0;
 }
 
-/* Mobile (max 480px) */
-@media (max-width: 480px) {
-    .desktopTable {
-        display: none;
-    }
-
-    .mobileTable {
-        display: block;
-    }
-
-    .mobileToggleBtn {
-        font-size: 0.6875rem;
-        padding: 0.375rem 0.5rem;
-    }
-
-    .scheduleTable {
-        min-width: auto;
-    }
-
-    .scheduleContainer {
-        padding: 0.5rem;
-    }
-
-    .header {
-        padding: 0.5rem;
-        margin-bottom: 0.375rem;
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .title {
-        font-size: 0.875rem;
-    }
-
-    .subtitle {
-        font-size: 0.5625rem;
-    }
-
-    .tableWrapper {
-        border-radius: 6px;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .scheduleTable {
-        font-size: 0.625rem;
-        min-width: 500px;
-    }
-
-    .scheduleTable thead th {
-        padding: 0.375rem 0.1875rem;
-        font-size: 0.5625rem;
-        letter-spacing: 0;
-    }
-
-    .thTime {
-        width: 55px;
-        min-width: 55px;
-    }
-
-    .thDay {
-        min-width: 75px;
-    }
-
-    .scheduleTable tbody td {
-        padding: 0.25rem 0.1875rem;
-    }
-
-    .tdTime {
-        width: 55px;
-        min-width: 55px;
-        font-size: 0.5rem;
-        padding: 0.25rem 0.125rem;
-    }
-
-    .tdPeriod {
-        min-width: 75px;
-    }
-
-    .periodContent {
-        gap: 0.125rem;
-    }
-
-    .periodSubject {
-        font-size: 0.5625rem;
-        font-weight: 600;
-    }
-
-    .periodClass {
-        font-size: 0.4375rem;
-        padding: 0.0625rem 0.1875rem;
-        border-radius: 3px;
-    }
-
-    .periodTopic {
-        font-size: 0.375rem;
-        margin-top: 0.125rem;
-        padding-top: 0.125rem;
-    }
-
-    .periodEmpty {
-        font-size: 0.75rem;
-    }
-
-    .loading {
-        padding: 1.5rem 0.5rem;
-        font-size: 0.75rem;
-    }
-
-    .errorBox {
-        padding: 0.625rem;
-        font-size: 0.6875rem;
-        border-radius: 6px;
-    }
-
-    .emptyBox {
-        padding: 1.5rem 0.5rem;
-        border-radius: 8px;
-    }
-
-    .emptyBox p {
-        font-size: 0.75rem;
-    }
-
-    .emptyBox small {
-        font-size: 0.625rem;
-    }
+.subsRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  border-bottom: 1px solid #f2f4f7;
 }
 
-/* Very small (max 375px) */
-@media (max-width: 375px) {
-    .scheduleContainer {
-        padding: 0.375rem;
-    }
+.subsRow:last-child {
+  border-bottom: 0;
+}
 
-    .title {
-        font-size: 0.8125rem;
-    }
+.subsIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #eef2f7;
+  color: #0b1f3a;
+}
 
-    .scheduleTable {
-        min-width: 450px;
-    }
+.subsIconGold {
+  background: #f8efdc;
+  color: #b98625;
+}
 
-    .thTime {
-        width: 50px;
-        min-width: 50px;
-    }
+.subsInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 
-    .thDay {
-        min-width: 65px;
-    }
+.subsInfo strong {
+  color: #101828;
+  font-size: 11px;
+  font-weight: 650;
+}
 
-    .tdTime {
-        width: 50px;
-        min-width: 50px;
-    }
+.subsInfo span {
+  margin-top: 1px;
+  color: #98a2b3;
+  font-size: 9px;
+}
 
-    .tdPeriod {
-        min-width: 65px;
-    }
+.subsNote {
+  margin-left: auto;
+  color: #667085;
+  font-size: 9.5px;
+  text-align: right;
+}
 
-    .periodSubject {
-        font-size: 0.5rem;
-    }
+/* ---------- Loading / error / empty ---------- */
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
+}
 
-    .periodClass {
-        font-size: 0.375rem;
-    }
+.loadingRow {
+  height: 52px;
+  border-radius: 8px;
+}
+
+.errorCard,
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 44px 20px;
+  text-align: center;
+}
+
+.errorIcon,
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  background: #fbecea;
+  color: #c5453b;
+}
+
+.emptyIcon {
+  background: #f8efdc;
+  color: #b98625;
+}
+
+.errorCard strong,
+.emptyCard strong {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.errorCard p,
+.emptyCard p {
+  max-width: 360px;
+  margin: 0 0 8px;
+  color: #98a2b3;
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1023px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .title {
+    font-size: 21px;
+  }
+
+  .headChip {
+    align-self: flex-start;
+  }
+
+  .summary {
+    gap: 8px;
+  }
+
+  .summaryItem {
+    padding: 10px;
+    gap: 7px;
+  }
+
+  .summaryIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .summaryItem strong {
+    font-size: 14px;
+  }
+
+  .summaryItem span {
+    font-size: 8.5px;
+  }
+
+  .desktopTable {
+    display: none;
+  }
+
+  .mobileTable {
+    display: block;
+  }
+
+  .scheduleTable {
+    min-width: 0;
+  }
+
+  .scheduleTable thead th {
+    padding: 8px 6px;
+    font-size: 8px;
+  }
+
+  .scheduleTable tbody td {
+    padding: 5px;
+  }
+
+  .periodContent {
+    padding: 5px;
+  }
+
+  .periodSubject {
+    font-size: 9.5px;
+  }
+
+  .periodClass {
+    font-size: 8.5px;
+  }
+
+  .subBadge {
+    padding: 2px 4px;
+    font-size: 7px;
+  }
+
+  .thTime,
+  .tdTime {
+    width: 62px;
+    font-size: 9px;
+  }
+
+  .subsRow {
+    flex-wrap: wrap;
+    padding: 9px 13px;
+  }
+
+  .subsNote {
+    flex-basis: 100%;
+    margin-left: 39px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 390px) {
+  .summaryItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mobileToggleBtn {
+    font-size: 8.5px;
+  }
 }

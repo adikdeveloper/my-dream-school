@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import TeacherUiIcon from '../teacher/TeacherUiIcon';
 
 function getCurrentAcademicYear() {
   const now = new Date();
@@ -220,7 +221,7 @@ const QuarterGrades = () => {
           disabled={loadingGrades || !selectedClass}
           title="Qayta hisoblash"
         >
-          ↻ Yangilash
+          <TeacherUiIcon name="swap" size={14} /> Yangilash
         </button>
       </div>
 
@@ -233,7 +234,7 @@ const QuarterGrades = () => {
         </div>
       ) : classes.length === 0 ? (
         <div className="qg-empty-state">
-          <span className="qg-empty-icon">🏫</span>
+          <span className="qg-empty-icon"><TeacherUiIcon name="book" size={30} /></span>
           <h2>Sinf topilmadi</h2>
           <p>Chorak baholarini ko'rish uchun avval sinf yaratilishi kerak.</p>
         </div>
@@ -285,7 +286,7 @@ const QuarterGrades = () => {
               </div>
             ) : students.length === 0 ? (
               <div className="qg-empty-state compact">
-                <span className="qg-empty-icon">📭</span>
+                <span className="qg-empty-icon"><TeacherUiIcon name="report" size={30} /></span>
                 <h2>Ma'lumot yo'q</h2>
                 <p>Bu sinfda o'quvchilar yoki chorak baholari topilmadi.</p>
               </div>
@@ -493,6 +494,10 @@ const styles = `
   }
 
   .qg-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
     min-height: 38px;
     padding: .55rem 1rem;
     margin-left: auto;
@@ -896,7 +901,10 @@ const styles = `
   }
 
   .qg-empty-icon {
-    font-size: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b98625;
   }
 
   .qg-empty-state h2 {

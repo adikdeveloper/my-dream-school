@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../services/authService';
 import { Can } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
+import { formatUzShortDate } from '../../utils/uzDate';
 import styles from './Assignments.module.css';
 import TeacherUiIcon from './TeacherUiIcon';
 
@@ -219,9 +220,13 @@ const Assignments = () => {
   return (
     <div className={styles.assignmentsContainer}>
       <div className={styles.assignmentsHeader}>
-        <h1 className={styles.pageTitle}><TeacherUiIcon name="assignment" size={24} /> Uyga vazifalar</h1>
+        <div>
+          <p className={styles.eyebrow}>Ta'lim</p>
+          <h1 className={styles.pageTitle}>Uyga vazifalar</h1>
+          <p className={styles.pageSubtitle}>Topshiriqlar, muddatlar va baholash bir joyda</p>
+        </div>
         <Can perm="assignment.create"><button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowCreateModal(true)}>
-          ➕ Yangi Vazifa
+          <TeacherUiIcon name="plus" size={15} /> Yangi vazifa
         </button></Can>
       </div>
 
@@ -241,6 +246,7 @@ const Assignments = () => {
 
       {assignments.length === 0 ? (
         <div className={styles.emptyState}>
+          <span className={styles.emptyIcon}><TeacherUiIcon name="assignment" size={24} /></span>
           <h3>Hali vazifalar yo'q</h3>
           <p>Yangi vazifa yaratib boshlang!</p>
         </div>
@@ -280,7 +286,7 @@ const Assignments = () => {
                   <div className={styles.metaItem}>
                     <span className={styles.metaLabel}>Muddat:</span>
                     <span className={`${styles.metaValue} ${isOverdueAssignment ? styles.metaValueOverdue : ''}`}>
-                      {new Date(assignment.dueDate).toLocaleDateString('uz-UZ')}
+                      {formatUzShortDate(assignment.dueDate, { year: true })}
                     </span>
                   </div>
                   <div className={styles.metaItem}>
@@ -315,7 +321,7 @@ const Assignments = () => {
                             </span>
                             {getStatusBadge(submission)}
                             {submission.isLate && (
-                              <span style={{ marginLeft: '0.4rem', fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '0.12rem 0.45rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>⏰ Kech</span>
+                              <span className={styles.lateBadge}>Kech</span>
                             )}
                           </div>
 
@@ -329,7 +335,7 @@ const Assignments = () => {
                                   href={`${FILE_BASE}${submission.attachmentUrl}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', fontWeight: 600, color: '#0f766e', textDecoration: 'none', background: '#f0fdfa', padding: '0.35rem 0.7rem', borderRadius: '8px', marginBottom: '0.4rem' }}
+                                  className={styles.attachmentLink}
                                 >
                                   <TeacherUiIcon name="attach" size={14} /> {submission.attachmentName || 'Biriktirilgan fayl'}
                                 </a>
@@ -366,7 +372,9 @@ const Assignments = () => {
                 className={styles.modalClose}
                 onClick={() => setShowCreateModal(false)}
                 aria-label="Yopish"
-              >✕</button>
+              >
+                <TeacherUiIcon name="close" size={17} />
+              </button>
             </div>
 
             <form onSubmit={handleCreateAssignment} className={styles.form}>
@@ -490,7 +498,9 @@ const Assignments = () => {
                 className={styles.modalClose}
                 onClick={() => setShowGradeModal(false)}
                 aria-label="Yopish"
-              >✕</button>
+              >
+                <TeacherUiIcon name="close" size={17} />
+              </button>
             </div>
 
             <div className={styles.submissionPreview}>
@@ -531,14 +541,14 @@ const Assignments = () => {
               </div>
 
               <div className={styles.formGroup}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.75rem', background: gradeData.awardCoin ? '#fffbeb' : '#f8fafc', border: `1px solid ${gradeData.awardCoin ? '#fcd34d' : '#e2e8f0'}`, borderRadius: '10px' }}>
+                <label className={`${styles.coinToggle} ${gradeData.awardCoin ? styles.coinToggleActive : ''}`}>
                   <input
                     type="checkbox"
                     checked={gradeData.awardCoin}
                     onChange={(e) => setGradeData(prev => ({ ...prev, awardCoin: e.target.checked }))}
-                    style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
                   />
-                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>🪙 Coin berish — a'lo bajargan uy vazifa uchun (1 dars = 1 coin)</span>
+                  <TeacherUiIcon name="coins" size={17} />
+                  <span>Coin berish — a'lo bajargan uy vazifasi uchun (1 dars = 1 coin)</span>
                 </label>
               </div>
 

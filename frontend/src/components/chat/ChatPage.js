@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import { formatUzLongDate, formatUzShortDate } from '../../utils/uzDate';
+import TeacherUiIcon from '../teacher/TeacherUiIcon';
 import './ChatLayout.css';
 
 const POLL_INTERVAL_MS = 4000;
@@ -49,7 +51,7 @@ const formatRoomDate = (date) => {
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   if (d.toDateString() === yesterday.toDateString()) return 'Kecha';
-  return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' });
+  return formatUzShortDate(d);
 };
 
 const formatDayDivider = (date) => {
@@ -59,11 +61,18 @@ const formatDayDivider = (date) => {
   yest.setDate(today.getDate() - 1);
   if (d.toDateString() === today.toDateString()) return 'Bugun';
   if (d.toDateString() === yest.toDateString()) return 'Kecha';
-  return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: 'long', year: 'numeric' });
+  return formatUzLongDate(d, { year: true });
 };
 
 const getInitials = (firstName = '', lastName = '') => {
   return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
+};
+
+const ROOM_ICONS = {
+  class: 'book',
+  teachers_group: 'users',
+  staff_group: 'users',
+  custom_group: 'users'
 };
 
 const RoomAvatar = ({ room, displayName, displayAvatar, size }) => {
@@ -75,21 +84,16 @@ const RoomAvatar = ({ room, displayName, displayAvatar, size }) => {
     if (displayAvatar) {
       style.backgroundImage = `url(${apiHost}${displayAvatar})`;
     }
-  } else if (room.type === 'class') {
-    initials = '🎓';
-  } else if (room.type === 'teachers_group') {
-    initials = '👨‍🏫';
-  } else if (room.type === 'staff_group') {
-    initials = '🧑‍💼';
-  } else if (room.type === 'custom_group') {
-    initials = '👥';
   }
+  const groupIcon = room.type !== 'private' ? ROOM_ICONS[room.type] || 'users' : null;
   return (
     <div
       className={`chat-room-avatar ${room.type}`}
       style={{ ...style, width: size, height: size, minWidth: size }}
     >
-      {!displayAvatar && initials}
+      {!displayAvatar && (groupIcon
+        ? <TeacherUiIcon name={groupIcon} size={Math.max(15, Math.round((size || 44) * 0.42))} />
+        : initials)}
     </div>
   );
 };
@@ -144,9 +148,12 @@ const NewChatModal = ({ onClose, onPick }) => {
       <div className="chat-modal" onClick={(e) => e.stopPropagation()}>
         <div className="chat-modal-header">
           <h3 className="chat-modal-title">Yangi suhbat</h3>
-          <button className="chat-modal-close" onClick={onClose}>×</button>
+          <button className="chat-modal-close" onClick={onClose} aria-label="Yopish">
+            <TeacherUiIcon name="close" size={17} />
+          </button>
         </div>
         <div className="chat-modal-search">
+          <span className="chat-search-icon"><TeacherUiIcon name="search" size={16} /></span>
           <input
             type="text"
             placeholder="Foydalanuvchi qidirish..."
@@ -271,7 +278,7 @@ const MessageBubble = ({ message, prevMessage, currentUserId, onReply, onEdit, o
             <div className="chat-msg-reply-author">{message.replyTo.sender?.firstName || ''} {message.replyTo.sender?.lastName || ''}</div>
             <div className="chat-msg-reply-text">
               {message.replyTo.messageType === 'sticker'
-                ? `${message.replyTo.sticker || '🖼'} Stiker`
+                ? 'Stiker'
                 : (message.replyTo.text || '...')}
             </div>
           </div>
@@ -289,26 +296,30 @@ const MessageBubble = ({ message, prevMessage, currentUserId, onReply, onEdit, o
         </div>
         {!message.isDeleted && (
           <div className="chat-msg-actions">
-            <button className="chat-msg-action-btn" title="Javob berish" onClick={() => onReply(message)}>↩</button>
-            <button className="chat-msg-action-btn" title="Ko'proq" onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(isMenuOpen ? null : message._id); }}>⋮</button>
+            <button className="chat-msg-action-btn" title="Javob berish" onClick={() => onReply(message)}>
+              <TeacherUiIcon name="reply" size={14} />
+            </button>
+            <button className="chat-msg-action-btn" title="Ko'proq" onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(isMenuOpen ? null : message._id); }}>
+              <TeacherUiIcon name="more" size={14} />
+            </button>
           </div>
         )}
         {isMenuOpen && (
           <div className="chat-msg-context-menu" ref={menuRef}>
             <button className="chat-msg-menu-item" onClick={() => { onReply(message); setActiveMenuMsgId(null); }}>
-              <span className="chat-msg-menu-icon">↩</span> Javob berish
+              <span className="chat-msg-menu-icon"><TeacherUiIcon name="reply" size={14} /></span> Javob berish
             </button>
             {canEdit && (
               <button className="chat-msg-menu-item" onClick={() => { onEdit(message); setActiveMenuMsgId(null); }}>
-                <span className="chat-msg-menu-icon">✏️</span> Tahrirlash
+                <span className="chat-msg-menu-icon"><TeacherUiIcon name="edit" size={14} /></span> Tahrirlash
               </button>
             )}
             <button className="chat-msg-menu-item" onClick={() => { navigator.clipboard?.writeText(isSticker ? message.sticker : message.text); setActiveMenuMsgId(null); }}>
-              <span className="chat-msg-menu-icon">📋</span> Nusxa olish
+              <span className="chat-msg-menu-icon"><TeacherUiIcon name="copy" size={14} /></span> Nusxa olish
             </button>
             <div className="chat-msg-menu-divider" />
             <button className="chat-msg-menu-item danger" onClick={() => { onDelete(message); setActiveMenuMsgId(null); }}>
-              <span className="chat-msg-menu-icon">🗑</span> O'chirish
+              <span className="chat-msg-menu-icon"><TeacherUiIcon name="trash" size={14} /></span> O'chirish
             </button>
           </div>
         )}
@@ -330,11 +341,11 @@ const DeleteModal = ({ message, isOwn, onConfirm, onCancel }) => {
         <div className="chat-delete-options">
           {isOwn && (
             <button className="chat-delete-option danger" onClick={() => onConfirm('everyone')}>
-              🗑 Hammasi uchun o'chirish
+              <TeacherUiIcon name="trash" size={15} /> Hammasi uchun o'chirish
             </button>
           )}
           <button className="chat-delete-option danger" onClick={() => onConfirm('me')}>
-            👁 O'zim uchun o'chirish
+            <TeacherUiIcon name="eye" size={15} /> O'zim uchun o'chirish
           </button>
           <button className="chat-delete-option cancel" onClick={onCancel}>
             Bekor qilish
@@ -468,12 +479,16 @@ const ChatPage = () => {
     return () => clearInterval(interval);
   }, [activeRoomId, pollNewMessages]);
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new messages. `loadingMessages` ham kerak: xabarlar
+  // yuklanayotganda ro'yxat hali DOM'da bo'lmaydi, shuning uchun yuklanish
+  // tugagach yana bir marta eng pastga tushamiz.
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length, activeRoomId]);
+    if (loadingMessages) return;
+    const end = messagesEndRef.current;
+    if (!end) return;
+    const container = end.parentElement;
+    if (container) container.scrollTop = container.scrollHeight;
+  }, [messages.length, activeRoomId, loadingMessages]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -619,13 +634,16 @@ const ChatPage = () => {
     <div className="chat-page">
       <aside className={`chat-sidebar ${mobileOpenRoom ? 'mobile-hidden' : ''}`}>
         <div className="chat-sidebar-header">
-          <h2 className="chat-sidebar-title">💬 Chatlar</h2>
-          <button className="chat-new-btn" onClick={() => setShowNewChat(true)} title="Yangi suhbat">+</button>
+          <h2 className="chat-sidebar-title"><TeacherUiIcon name="chat" size={18} /> Chatlar</h2>
+          <button className="chat-new-btn" onClick={() => setShowNewChat(true)} title="Yangi suhbat" aria-label="Yangi suhbat">
+            <TeacherUiIcon name="plus" size={17} />
+          </button>
         </div>
         <div className="chat-search">
+          <span className="chat-search-icon"><TeacherUiIcon name="search" size={15} /></span>
           <input
             type="text"
-            placeholder="🔍 Qidirish..."
+            placeholder="Qidirish..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -634,8 +652,9 @@ const ChatPage = () => {
           {loadingRooms && <div className="chat-loading"><div className="chat-spinner" /></div>}
           {!loadingRooms && filteredRooms.length === 0 && (
             <div className="chat-empty-list">
-              Hali chatlar yo'q.<br />
-              <small>Yangi suhbat boshlash uchun "+" tugmasini bosing</small>
+              <span className="chat-empty-list-icon"><TeacherUiIcon name="chat" size={20} /></span>
+              <strong>Hali chatlar yo'q</strong>
+              <small>Yangi suhbat boshlash uchun yuqoridagi tugmani bosing</small>
             </div>
           )}
           {!loadingRooms && filteredRooms.map((r) => (
@@ -653,14 +672,16 @@ const ChatPage = () => {
       <section className={`chat-conversation ${!mobileOpenRoom ? 'mobile-hidden' : ''}`}>
         {!activeRoom ? (
           <div className="chat-empty">
-            <div className="chat-empty-icon">💬</div>
+            <span className="chat-empty-icon"><TeacherUiIcon name="chat" size={26} /></span>
             <div className="chat-empty-title">Suhbatni tanlang</div>
             <div>Chap tarafdagi ro'yxatdan biror chatni tanlang yoki yangisini yarating</div>
           </div>
         ) : (
           <>
             <div className="chat-conv-header">
-              <button className="chat-back-btn" onClick={() => setMobileOpenRoom(false)}>‹</button>
+              <button className="chat-back-btn" onClick={() => setMobileOpenRoom(false)} aria-label="Orqaga">
+                <TeacherUiIcon name="back" size={20} />
+              </button>
               <RoomAvatar room={activeRoom} displayName={activeRoom.displayName} displayAvatar={activeRoom.displayAvatar} />
               <div className="chat-conv-header-info">
                 <h3 className="chat-conv-name">{activeRoom.displayName || activeRoom.name}</h3>
@@ -676,7 +697,7 @@ const ChatPage = () => {
               {loadingMessages && <div className="chat-loading"><div className="chat-spinner" /></div>}
               {!loadingMessages && messages.length === 0 && (
                 <div className="chat-empty">
-                  <div className="chat-empty-icon">👋</div>
+                  <span className="chat-empty-icon"><TeacherUiIcon name="sparkle" size={24} /></span>
                   <div>Bu yerda hali xabarlar yo'q.<br />Birinchi bo'lib salom bering!</div>
                 </div>
               )}
@@ -711,9 +732,10 @@ const ChatPage = () => {
                 className="chat-sticker-btn"
                 onClick={() => setShowStickers((s) => !s)}
                 title="Stikerlar"
+                aria-label="Stikerlar"
                 type="button"
               >
-                😀
+                <TeacherUiIcon name="smile" size={19} />
               </button>
               <div style={{ flex: 1, position: 'relative' }}>
                 {showStickers && (
@@ -722,9 +744,11 @@ const ChatPage = () => {
                 {editingMsg && (
                   <div className="chat-input-edit-bar">
                     <div className="edit-text">
-                      ✏️ Tahrirlash: {editingMsg.text?.slice(0, 60) || '...'}
+                      <TeacherUiIcon name="edit" size={13} /> Tahrirlash: {editingMsg.text?.slice(0, 60) || '...'}
                     </div>
-                    <button className="edit-close" onClick={handleCancelEdit}>×</button>
+                    <button className="edit-close" onClick={handleCancelEdit} aria-label="Bekor qilish">
+                      <TeacherUiIcon name="close" size={14} />
+                    </button>
                   </div>
                 )}
                 {!editingMsg && replyTo && (
@@ -732,10 +756,12 @@ const ChatPage = () => {
                     <div className="reply-text">
                       <strong>{replyTo.sender?.firstName}: </strong>
                       {replyTo.messageType === 'sticker'
-                        ? `${replyTo.sticker || '🖼'} Stiker`
+                        ? 'Stiker'
                         : (replyTo.text?.slice(0, 60) || '...')}
                     </div>
-                    <button className="reply-close" onClick={() => setReplyTo(null)}>×</button>
+                    <button className="reply-close" onClick={() => setReplyTo(null)} aria-label="Bekor qilish">
+                      <TeacherUiIcon name="close" size={14} />
+                    </button>
                   </div>
                 )}
                 <div className="chat-input-wrapper">
@@ -755,8 +781,9 @@ const ChatPage = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
                 title={editingMsg ? 'Saqlash' : 'Yuborish'}
+                aria-label={editingMsg ? 'Saqlash' : 'Yuborish'}
               >
-                {editingMsg ? '✓' : '➤'}
+                <TeacherUiIcon name={editingMsg ? 'check' : 'send'} size={17} />
               </button>
             </div>
           </>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../services/authService';
 import { usePermissions } from '../../context/PermissionsContext';
+import { formatUzLongDate } from '../../utils/uzDate';
 import styles from './StudentLists.module.css';
 import TeacherUiIcon from './TeacherUiIcon';
 
@@ -320,9 +321,10 @@ const StudentLists = () => {
   return (
     <div className={styles.studentLists}>
       <div className={styles.pageHeader}>
-        <div className={styles.headerContent} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className={styles.headerContent}>
           <div>
-            <h1 className={styles.pageTitle}>Mening O'quvchilarim</h1>
+            <p className={styles.eyebrow}>O'quvchilar</p>
+            <h1 className={styles.pageTitle}>Mening o'quvchilarim</h1>
             <p className={styles.pageSubtitle}>
               Jami {filteredStudents.length} ta o'quvchi
             </p>
@@ -331,9 +333,8 @@ const StudentLists = () => {
             <button
               className={`${styles.btn} ${styles.btnPrimary}`}
               onClick={handleOpenAdd}
-              style={{ whiteSpace: 'nowrap' }}
             >
-              ➕ Yangi o'quvchi
+              <TeacherUiIcon name="plus" size={15} /> Yangi o'quvchi
             </button>
           )}
         </div>
@@ -362,7 +363,7 @@ const StudentLists = () => {
 
             {(searchQuery || filterClass) && (
               <button className={`${styles.btn} ${styles.btnOutline} ${styles.clearBtn}`} onClick={handleClearFilters}>
-                ✕ Tozalash
+                <TeacherUiIcon name="close" size={14} /> Tozalash
               </button>
             )}
           </div>
@@ -390,7 +391,7 @@ const StudentLists = () => {
                       className={`${styles.classBox} ${filterClass === cls ? styles.classBoxActive : ''}`}
                       onClick={() => setFilterClass(cls)}
                     >
-                      <div className={styles.classBoxIcon}>🎓</div>
+                      <div className={styles.classBoxIcon}><TeacherUiIcon name="book" size={20} /></div>
                       <div className={styles.classBoxLabel}>{cls}</div>
                       <div className={styles.classBoxCount}>{classStudentCount}</div>
                     </div>
@@ -519,7 +520,7 @@ const StudentLists = () => {
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                   >
-                    ← Oldingi
+                    <TeacherUiIcon name="back" size={14} /> Oldingi
                   </button>
 
                   <div className={styles.paginationNumbers}>
@@ -550,7 +551,7 @@ const StudentLists = () => {
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                   >
-                    Keyingi →
+                    Keyingi <TeacherUiIcon name="arrow" size={14} />
                   </button>
                 </div>
               )}
@@ -565,7 +566,9 @@ const StudentLists = () => {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>O'quvchi profili</h2>
-              <button className={styles.modalClose} onClick={handleCloseModal}>✕</button>
+              <button className={styles.modalClose} onClick={handleCloseModal} aria-label="Yopish">
+                <TeacherUiIcon name="close" size={17} />
+              </button>
             </div>
             <div className={styles.modalBody}>
               <div className={styles.profileAvatarLarge}>
@@ -685,7 +688,7 @@ const StudentLists = () => {
                     {selectedStudent.dateOfBirth && (
                       <div className={styles.detailRow}>
                         <span className={styles.detailLabel}>Tug'ilgan sana:</span>
-                        <span className={styles.detailValue}>{new Date(selectedStudent.dateOfBirth).toLocaleDateString('uz-UZ')}</span>
+                        <span className={styles.detailValue}>{formatUzLongDate(selectedStudent.dateOfBirth, { year: true }) || '—'}</span>
                       </div>
                     )}
                     {selectedStudent.address && (
@@ -721,15 +724,14 @@ const StudentLists = () => {
                 <>
                   {can('teacher.edit_student_info') && (
                     <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleStartEdit}>
-                      ✏️ Tahrirlash
+                      <TeacherUiIcon name="edit" size={14} /> Tahrirlash
                     </button>
                   )}
                   {canDelete && (
                     <button
-                      className={`${styles.btn} ${styles.btnDanger}`}
+                      className={`${styles.btn} ${styles.btnDangerSolid}`}
                       onClick={handleDeleteStudent}
                       disabled={deleting}
-                      style={{ background: '#ef4444', color: '#fff' }}
                     >
                       {deleting ? 'O\'chirilmoqda...' : <><TeacherUiIcon name="trash" size={16} /> O'chirish</>}
                     </button>
@@ -762,7 +764,9 @@ const StudentLists = () => {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>Yangi o'quvchi qo'shish</h2>
-              <button className={styles.modalClose} onClick={() => !adding && setShowAddModal(false)}>✕</button>
+              <button className={styles.modalClose} onClick={() => !adding && setShowAddModal(false)} aria-label="Yopish">
+                <TeacherUiIcon name="close" size={17} />
+              </button>
             </div>
             <form onSubmit={handleAddSubmit}>
               <div className={styles.modalBody}>
@@ -785,7 +789,7 @@ const StudentLists = () => {
                       ))}
                     </select>
                     {myClasses.length === 0 && (
-                      <small style={{ color: '#ef4444' }}>
+                      <small className={styles.formHintError}>
                         Sizga biriktirilgan sinf topilmadi. O'quvchi qo'shish uchun avval sinfga biriktirilishingiz kerak.
                       </small>
                     )}

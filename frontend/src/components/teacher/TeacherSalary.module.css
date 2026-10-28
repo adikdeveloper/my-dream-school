@@ -1,932 +1,616 @@
-/* ============================================
-   TEACHER SALARY - KOMPAKT DIZAYN
-   TeacherHome.module.css asosida yaratilgan
-   ============================================ */
-
-/* Base Container - Kompakt */
-.teacherSalary {
-    padding: 1rem;
-    max-width: 1400px;
-    margin: 0 auto;
+.salary {
+  width: 100%;
 }
 
-.fadeIn {
-    animation: fadeIn 0.3s ease-out;
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.eyebrow {
+  margin: 0 0 5px;
+  color: #b98625;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.loadingMessage {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: #64748b;
-    font-size: 0.8125rem;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    animation: pulse 1.5s ease-in-out infinite;
+.title {
+  margin: 0;
+  color: #0b1f3a;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.18;
 }
 
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 0.6;
-    }
-
-    50% {
-        opacity: 1;
-    }
+.subtitle {
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 12px;
 }
 
-/* ==================== HEADER - Kompakt ==================== */
-.salaryHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    background: white;
-    padding: 0.875rem 1rem;
-    border-radius: 10px;
-    margin-bottom: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.pageTitle {
+.monthPicker {
   display: flex;
   align-items: center;
-  gap: 9px;
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
-.errorBox {
+.monthPicker button {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #667085;
+}
+
+.monthPicker button:hover {
+  background: #f4f5f7;
+  color: #0b1f3a;
+}
+
+.prevIcon {
+  transform: rotate(90deg);
+}
+
+.monthPicker span {
+  min-width: 108px;
+  padding: 0 4px;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ---------- Loading ---------- */
+.loadingGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.loadingHero {
+  height: 176px;
+  border-radius: 14px;
+}
+
+.loadingCards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.loadingCard {
+  height: 86px;
+  border-radius: 12px;
+}
+
+/* ---------- Error ---------- */
+.errorCard {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b91c1c;
-    border-radius: 10px;
-    padding: 0.75rem 0.875rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
+  padding: 42px 20px;
+  text-align: center;
 }
 
-.retryBtn {
-    padding: 0.4375rem 0.875rem;
-    background: linear-gradient(135deg, #0f766e, #0d9488);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+.errorIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  background: #fbecea;
+  color: #c5453b;
 }
 
-.retryBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4);
+.errorCard strong {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
 }
 
-.monthSelector {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #f8fafc;
-    padding: 0.25rem 0.375rem;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
+.errorCard p {
+  margin: 0 0 8px;
+  color: #98a2b3;
+  font-size: 11px;
 }
 
-.monthSelector:hover {
-    border-color: #cbd5e1;
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 28px;
+  padding: 24px 26px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: #0b1f3a;
+  color: #fff;
+  overflow: hidden;
 }
 
-.monthNavBtn {
-    background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 700;
-    transition: all 0.2s ease;
+.hero::after {
+  content: '';
+  position: absolute;
+  right: -40px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border: 1px solid rgba(217, 164, 65, 0.18);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.monthNavBtn:hover {
-    background: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
-    transform: scale(1.05);
+.heroMain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
 }
 
-.monthNavBtn:active {
-    transform: scale(0.95);
+.heroLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.currentMonth {
-    font-weight: 700;
-    color: #1e293b;
-    min-width: 110px;
-    text-align: center;
-    font-size: 0.8125rem;
+.heroAmount {
+  margin-top: 7px;
+  color: #fff;
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  word-break: break-word;
 }
 
-/* ==================== INFO BANNER - Kompakt ==================== */
-.salaryInfoBanner {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    padding: 0.625rem 0.875rem;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    border: 1px solid #fcd34d;
+.heroPeriod {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10.5px;
 }
 
-.infoIcon {
-    font-size: 1rem;
-    flex-shrink: 0;
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  margin-top: 13px;
+  border-radius: 99px;
+  background: rgba(217, 164, 65, 0.14);
+  color: #e6b457;
+  font-size: 9.5px;
+  font-weight: 650;
 }
 
-.infoText {
-    font-size: 0.75rem;
-    color: #92400e;
-    line-height: 1.4;
+.heroBreakdown {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  padding-left: 26px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.infoText strong {
-    color: #78350f;
-    font-weight: 700;
+.heroBreakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* ==================== SUMMARY CARD - Kompakt ==================== */
-.salarySummaryCard {
-    background: linear-gradient(135deg, #0c4a6e 0%, #0f766e 55%, #0d9488 100%);
-    color: white;
-    padding: 1rem 1.25rem;
-    margin-bottom: 0.75rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
-    position: relative;
-    overflow: hidden;
+.heroBreakdown > div:last-child {
+  border-bottom: 0;
 }
 
-.salarySummaryCard::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 160px;
-    height: 160px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
+.heroBreakdown span {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10.5px;
 }
 
-.salaryAmountSection {
-    text-align: center;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-    position: relative;
-    z-index: 1;
-}
-
-.salaryLabel {
-    font-size: 0.6875rem;
-    opacity: 0.9;
-    margin-bottom: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-}
-
-.salaryAmount {
-    font-size: 1.75rem;
-    font-weight: 800;
-    margin-bottom: 0.125rem;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-}
-
-.salaryPeriod {
-    font-size: 0.75rem;
-    opacity: 0.85;
-    font-weight: 500;
-}
-
-.salaryBreakdown {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    position: relative;
-    z-index: 1;
-}
-
-.breakdownItem {
-    background: rgba(255, 255, 255, 0.15);
-    padding: 0.5rem 0.625rem;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.2s ease;
-}
-
-.breakdownItem:hover {
-    background: rgba(255, 255, 255, 0.22);
+.heroBreakdown strong {
+  font-size: 11px;
+  font-weight: 650;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .positive {
-    /* Daromad turi - holder class */
+  color: #5fd39c;
 }
 
 .negative {
-    /* Chegirma turi - holder class */
+  color: #f08b82;
 }
 
-.bonus {
-    /* Bonus turi - holder class */
+.heroBreakdown .positive {
+  color: #7fdcb2;
 }
 
-.breakdownLabel {
-    font-size: 0.625rem;
-    opacity: 0.9;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.heroBreakdown .negative {
+  color: #f3a29b;
 }
 
-.breakdownValue {
-    font-size: 0.875rem;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ==================== STATS GRID - Kompakt ==================== */
-.salaryStatsGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+/* ---------- Stats ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .statCard {
-    background: white;
-    padding: 0.625rem 0.75rem;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    transition: all 0.2s ease;
-    border-left: 3px solid #e2e8f0;
-    overflow: hidden;
-}
-
-.statCard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.graded {
-    border-left-color: #10b981;
-}
-
-.missed {
-    border-left-color: #ef4444;
-}
-
-.covered {
-    border-left-color: #f59e0b;
-}
-
-.payment {
-    border-left-color: #8b5cf6;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  min-width: 0;
 }
 
 .statIcon {
-    font-size: 1rem;
-    background: #f8fafc;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  flex-shrink: 0;
+  border-radius: 8px;
 }
 
-.statContent {
-    flex: 1;
-    min-width: 0;
-    text-align: left;
+.tone_green { background: #e9f7f0; color: #1f9d68; }
+.tone_red { background: #fbecea; color: #c5453b; }
+.tone_gold { background: #f8efdc; color: #b98625; }
+.tone_navy { background: #eef2f7; color: #0b1f3a; }
+.tone_gray { background: #f2f4f7; color: #667085; }
+
+.statCard > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .statValue {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #1e293b;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  color: #101828;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.statValueCompact {
+  color: #101828;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .statLabel {
-    font-size: 0.6875rem;
-    color: #64748b;
-    font-weight: 500;
-    line-height: 1.3;
+  margin-top: 2px;
+  color: #344054;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ==================== TRANSACTIONS - Kompakt ==================== */
-.transactionsSection {
-    background: white;
-    padding: 0.875rem 1rem;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.statCard small {
+  margin-top: 1px;
+  color: #98a2b3;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sectionTitle {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 0.75rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e2e8f0;
+/* ---------- Grid ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.85fr);
+  gap: 14px;
+  align-items: start;
 }
 
-.transactionsList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.card {
+  overflow: hidden;
 }
 
-.transactionItem {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 0.625rem;
-    padding: 0.625rem 0.75rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    border-left: 3px solid #e2e8f0;
-    transition: all 0.2s ease;
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 
-.transactionItem:hover {
-    background: #f1f5f9;
-    transform: translateX(3px);
+/* ---------- Transactions ---------- */
+.transactions {
+  padding: 3px 0;
 }
 
-.transactionPositive {
-    border-left-color: #10b981;
+.transaction {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #f2f4f7;
 }
 
-.transactionNegative {
-    border-left-color: #ef4444;
+.transaction:last-child {
+  border-bottom: 0;
 }
 
 .transactionIcon {
-    font-size: 1rem;
-    width: 32px;
-    height: 32px;
-    background: white;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border: 1px solid #e2e8f0;
-}
-
-.transactionDetails {
-    flex: 1;
-    min-width: 0;
-}
-
-.transactionTitle {
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 0.125rem;
-    font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  flex-shrink: 0;
+  border-radius: 8px;
 }
 
 .transactionInfo {
-    font-size: 0.6875rem;
-    color: #64748b;
-    line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
-.transactionDescription {
-    font-size: 0.6875rem;
-    color: #64748b;
-    margin-top: 0.375rem;
-    font-style: italic;
-    padding: 0.375rem 0.5rem;
-    background: white;
-    border-radius: 6px;
-    border-left: 2px solid #cbd5e1;
+.transactionInfo strong {
+  color: #101828;
+  font-size: 11.5px;
+  font-weight: 650;
 }
 
-.transactionNote {
-    font-size: 0.625rem;
-    color: #0f766e;
-    margin-top: 0.375rem;
-    padding: 0.375rem 0.5rem;
-    background: #ccfbf1;
-    border-radius: 6px;
-    font-weight: 600;
-    border: 1px solid #99f6e4;
+.transactionInfo span {
+  margin-top: 1px;
+  color: #667085;
+  font-size: 9.5px;
+}
+
+.transactionInfo small {
+  margin-top: 2px;
+  color: #98a2b3;
+  font-size: 9px;
+  line-height: 1.4;
 }
 
 .transactionAmount {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    flex-shrink: 0;
-    text-align: right;
-    white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.amountPositive {
-    color: #10b981;
+/* ---------- Breakdown ---------- */
+.breakdown {
+  padding: 10px 16px 14px;
 }
 
-.amountNegative {
-    color: #ef4444;
+.breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f2f4f7;
 }
 
-.noTransactions {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: #64748b;
-    font-size: 0.8125rem;
+.breakdown > div:last-child {
+  border-bottom: 0;
 }
 
-/* ============================================
-   RESPONSIVE DESIGN - KOMPAKT
-   ============================================ */
-
-/* Katta ekran / Desktop (1025px va undan yuqori) */
-@media (min-width: 1025px) {
-    .teacherSalary {
-        padding: 1.5rem;
-    }
-
-    .salaryAmount {
-        font-size: 2rem;
-    }
-
-    .salaryBreakdown {
-        gap: 0.625rem;
-    }
-
-    .breakdownValue {
-        font-size: 0.9375rem;
-    }
-
-    .salaryStatsGrid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.625rem;
-    }
-
-    .statValue {
-        font-size: 1.25rem;
-    }
+.breakdown span {
+  color: #667085;
+  font-size: 10.5px;
 }
 
-/* Kichik desktop / Laptop (769px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .teacherSalary {
-        padding: 1rem;
-    }
-
-    .salaryHeader {
-        padding: 0.75rem 1rem;
-    }
-
-    .pageTitle {
-        font-size: 1rem;
-    }
-
-    .salaryAmount {
-        font-size: 1.625rem;
-    }
-
-    .salaryBreakdown {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.5rem;
-    }
-
-    .breakdownValue {
-        font-size: 0.8125rem;
-    }
-
-    .salaryStatsGrid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
-    }
-
-    .statIcon {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
-    }
-
-    .statValue {
-        font-size: 1.0625rem;
-    }
-
-    .statLabel {
-        font-size: 0.625rem;
-    }
+.breakdown strong {
+  color: #344054;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: right;
 }
 
-/* Tablet (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-    .teacherSalary {
-        padding: 0.875rem;
-    }
-
-    .salaryHeader {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.625rem;
-        padding: 0.75rem;
-    }
-
-    .pageTitle {
-        font-size: 1rem;
-        text-align: center;
-    }
-
-    .monthSelector {
-        justify-content: space-between;
-    }
-
-    .currentMonth {
-        flex: 1;
-        font-size: 0.8125rem;
-    }
-
-    .salarySummaryCard {
-        padding: 0.875rem 1rem;
-    }
-
-    .salaryAmount {
-        font-size: 1.5rem;
-    }
-
-    .salaryBreakdown {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.375rem;
-    }
-
-    .breakdownItem {
-        padding: 0.5rem;
-    }
-
-    .breakdownLabel {
-        font-size: 0.5625rem;
-    }
-
-    .breakdownValue {
-        font-size: 0.75rem;
-    }
-
-    .salaryStatsGrid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.375rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .statCard {
-        padding: 0.5rem 0.625rem;
-    }
-
-    .statIcon {
-        width: 28px;
-        height: 28px;
-        font-size: 0.875rem;
-    }
-
-    .statValue {
-        font-size: 1rem;
-    }
-
-    .statLabel {
-        font-size: 0.5625rem;
-    }
-
-    .transactionsSection {
-        padding: 0.75rem;
-    }
-
-    .sectionTitle {
-        font-size: 0.875rem;
-    }
-
-    .transactionItem {
-        padding: 0.5rem 0.625rem;
-        gap: 0.5rem;
-    }
-
-    .transactionIcon {
-        width: 28px;
-        height: 28px;
-        font-size: 0.875rem;
-    }
-
-    .transactionTitle {
-        font-size: 0.75rem;
-    }
-
-    .transactionInfo {
-        font-size: 0.625rem;
-    }
-
-    .transactionAmount {
-        font-size: 0.875rem;
-    }
+.breakdown .breakdownTotal {
+  margin-top: 5px;
+  padding-top: 11px;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 0;
 }
 
-/* Mobil (max 480px) */
+.breakdownTotal span {
+  color: #101828;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.breakdownTotal strong {
+  color: #0b1f3a;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.infoCard {
+  display: flex;
+  gap: 10px;
+  padding: 14px 15px;
+  border: 1px solid #efe2c4;
+  border-radius: 12px;
+  background: #fdf9f0;
+}
+
+.infoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: #f8efdc;
+  color: #b98625;
+}
+
+.infoCard strong {
+  display: block;
+  color: #7a5a16;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.infoCard p {
+  margin: 4px 0 0;
+  color: #8a7443;
+  font-size: 9.5px;
+  line-height: 1.55;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.85fr);
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.9fr);
+    gap: 20px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 767px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 11px;
+  }
+
+  .title {
+    font-size: 21px;
+  }
+
+  .monthPicker {
+    align-self: flex-start;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .heroBreakdown {
+    padding-left: 0;
+    padding-top: 13px;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .heroAmount {
+    font-size: 25px;
+  }
+
+  .side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .loadingCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 480px) {
-    .teacherSalary {
-        padding: 0.5rem;
-    }
+  .stats {
+    gap: 8px;
+  }
 
-    .salaryHeader {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
-        padding: 0.625rem;
-        border-radius: 8px;
-        margin-bottom: 0.625rem;
-    }
+  .statCard {
+    padding: 11px;
+    gap: 8px;
+  }
 
-    .pageTitle {
-        font-size: 0.9375rem;
-        text-align: center;
-    }
+  .statIcon {
+    width: 29px;
+    height: 29px;
+  }
 
-    .monthSelector {
-        justify-content: space-between;
-        padding: 0.25rem 0.375rem;
-    }
+  .statValue {
+    font-size: 17px;
+  }
 
-    .monthNavBtn {
-        width: 28px;
-        height: 28px;
-        font-size: 0.8125rem;
-    }
+  .statValueCompact {
+    font-size: 10.5px;
+  }
 
-    .currentMonth {
-        font-size: 0.75rem;
-        min-width: auto;
-        flex: 1;
-    }
+  .statLabel {
+    font-size: 9.5px;
+  }
 
-    .salaryInfoBanner {
-        padding: 0.5rem 0.625rem;
-        margin-bottom: 0.625rem;
-        gap: 0.375rem;
-        border-radius: 8px;
-    }
+  .statCard small {
+    display: none;
+  }
 
-    .infoIcon {
-        font-size: 0.875rem;
-    }
+  .transaction {
+    flex-wrap: wrap;
+    padding: 10px 13px;
+  }
 
-    .infoText {
-        font-size: 0.6875rem;
-    }
+  .transactionInfo {
+    flex-basis: calc(100% - 48px);
+  }
 
-    .salarySummaryCard {
-        padding: 0.75rem 0.875rem;
-        margin-bottom: 0.625rem;
-        border-radius: 8px;
-    }
-
-    .salaryAmountSection {
-        margin-bottom: 0.625rem;
-        padding-bottom: 0.625rem;
-    }
-
-    .salaryLabel {
-        font-size: 0.625rem;
-    }
-
-    .salaryAmount {
-        font-size: 1.375rem;
-    }
-
-    .salaryPeriod {
-        font-size: 0.6875rem;
-    }
-
-    .salaryBreakdown {
-        grid-template-columns: 1fr;
-        gap: 0.375rem;
-    }
-
-    .breakdownItem {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0.625rem;
-    }
-
-    .breakdownLabel {
-        font-size: 0.625rem;
-    }
-
-    .breakdownValue {
-        font-size: 0.8125rem;
-    }
-
-    .salaryStatsGrid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.375rem;
-        margin-bottom: 0.625rem;
-    }
-
-    .statCard {
-        padding: 0.5rem;
-        gap: 0.5rem;
-        border-radius: 8px;
-    }
-
-    .statIcon {
-        width: 28px;
-        height: 28px;
-        font-size: 0.875rem;
-        border-radius: 6px;
-    }
-
-    .statValue {
-        font-size: 0.9375rem;
-    }
-
-    .statLabel {
-        font-size: 0.5625rem;
-    }
-
-    .transactionsSection {
-        padding: 0.625rem 0.75rem;
-        border-radius: 8px;
-    }
-
-    .sectionTitle {
-        font-size: 0.875rem;
-        margin-bottom: 0.625rem;
-    }
-
-    .transactionsList {
-        gap: 0.375rem;
-    }
-
-    .transactionItem {
-        grid-template-columns: auto 1fr;
-        grid-template-rows: auto auto;
-        gap: 0.5rem;
-        padding: 0.5rem 0.625rem;
-        border-radius: 8px;
-    }
-
-    .transactionItem:hover {
-        transform: none;
-    }
-
-    .transactionIcon {
-        width: 28px;
-        height: 28px;
-        font-size: 0.875rem;
-        border-radius: 6px;
-    }
-
-    .transactionDetails {
-        grid-column: 2 / 3;
-    }
-
-    .transactionTitle {
-        font-size: 0.75rem;
-    }
-
-    .transactionInfo {
-        font-size: 0.625rem;
-    }
-
-    .transactionDescription {
-        font-size: 0.625rem;
-    }
-
-    .transactionNote {
-        font-size: 0.5625rem;
-    }
-
-    .transactionAmount {
-        grid-column: 1 / 3;
-        text-align: right;
-        font-size: 0.875rem;
-        padding-top: 0.375rem;
-        border-top: 1px solid #e2e8f0;
-    }
-
-    .noTransactions {
-        padding: 1.5rem 0.75rem;
-        font-size: 0.75rem;
-    }
-
-    .loadingMessage {
-        padding: 1.5rem 0.75rem;
-        font-size: 0.75rem;
-        border-radius: 8px;
-    }
-
-    .errorBox {
-        padding: 0.625rem 0.75rem;
-        font-size: 0.75rem;
-        border-radius: 8px;
-    }
-}
-
-/* Juda kichik ekranlar (375px gacha) */
-@media (max-width: 375px) {
-    .teacherSalary {
-        padding: 0.375rem;
-    }
-
-    .salaryHeader {
-        padding: 0.5rem;
-    }
-
-    .pageTitle {
-        font-size: 0.8125rem;
-    }
-
-    .salaryAmount {
-        font-size: 1.25rem;
-    }
-
-    .salaryStatsGrid {
-        gap: 0.25rem;
-    }
-
-    .statCard {
-        padding: 0.375rem 0.5rem;
-    }
-
-    .statIcon {
-        width: 24px;
-        height: 24px;
-        font-size: 0.75rem;
-    }
-
-    .statValue {
-        font-size: 0.875rem;
-    }
-
-    .statLabel {
-        font-size: 0.5rem;
-    }
-
-    .breakdownValue {
-        font-size: 0.75rem;
-    }
+  .transactionAmount {
+    margin-left: 41px;
+    padding-top: 0;
+  }
 }

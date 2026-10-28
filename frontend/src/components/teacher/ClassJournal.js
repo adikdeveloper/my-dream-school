@@ -554,7 +554,7 @@ const ClassJournal = () => {
     Object.values(grades).forEach(sg => {
       Object.values(sg).forEach(g => { if (g !== null && g > 0) { total += g; count++; } });
     });
-    return count > 0 ? Math.round(total / count) : 0;
+    return count > 0 ? Math.round((total / count) / 5 * 100) : 0;
   };
 
   // Calculate monthly attendance rate
@@ -726,29 +726,34 @@ const ClassJournal = () => {
       )}
 
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}><JournalIcon name="book" size={24} /> Sinf jurnali</h1>
-        <p className={styles.pageSubtitle}>Jami {classes.length} ta sinf mavjud</p>
+        <div className={styles.headerTop}>
+          <div>
+            <p className={styles.eyebrow}>Dars jarayoni</p>
+            <h1 className={styles.pageTitle}>Sinf jurnali</h1>
+            <p className={styles.pageSubtitle}>Jami {classes.length} ta sinf · baho va davomat bir joyda</p>
+          </div>
 
-        {/* View Type Toggle */}
-        <div className={styles.viewToggle}>
-          <button
-            className={`${styles.viewToggleBtn} ${viewType === 'day' ? styles.viewToggleBtnActive : ''}`}
-            onClick={() => setViewType('day')}
-          >
-            <JournalIcon name="day" size={16} /> Kunlik
-          </button>
-          <button
-            className={`${styles.viewToggleBtn} ${viewType === 'week' ? styles.viewToggleBtnActive : ''}`}
-            onClick={() => setViewType('week')}
-          >
-            <JournalIcon name="calendar" size={16} /> Haftalik
-          </button>
-          <button
-            className={`${styles.viewToggleBtn} ${viewType === 'month' ? styles.viewToggleBtnActive : ''}`}
-            onClick={() => setViewType('month')}
-          >
-            <JournalIcon name="calendar" size={16} /> Oylik
-          </button>
+          {/* View Type Toggle */}
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.viewToggleBtn} ${viewType === 'day' ? styles.viewToggleBtnActive : ''}`}
+              onClick={() => setViewType('day')}
+            >
+              <JournalIcon name="day" size={15} /> Kunlik
+            </button>
+            <button
+              className={`${styles.viewToggleBtn} ${viewType === 'week' ? styles.viewToggleBtnActive : ''}`}
+              onClick={() => setViewType('week')}
+            >
+              <JournalIcon name="calendar" size={15} /> Haftalik
+            </button>
+            <button
+              className={`${styles.viewToggleBtn} ${viewType === 'month' ? styles.viewToggleBtnActive : ''}`}
+              onClick={() => setViewType('month')}
+            >
+              <JournalIcon name="calendar" size={15} /> Oylik
+            </button>
+          </div>
         </div>
 
         <div className={styles.journalControls}>

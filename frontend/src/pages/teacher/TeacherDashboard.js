@@ -1,7 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import Logo from '../../components/common/Logo';
 import TeacherHome from '../../components/teacher/TeacherHome';
 import ClassJournal from '../../components/teacher/ClassJournal';
 import Schedule from '../../components/teacher/Schedule';
@@ -13,252 +12,402 @@ import TeacherReports from '../../components/teacher/TeacherReports';
 import QuarterGrades from '../../components/admin/QuarterGrades';
 import TeacherCoins from '../../components/teacher/TeacherCoins';
 import TeacherSalary from '../../components/teacher/TeacherSalary';
-import Profile from '../../components/admin/Profile';
+import TeacherProfile from '../../components/teacher/TeacherProfile';
 import TeacherAI from '../../components/teacher/TeacherAI';
 import Substitutions from '../../components/common/Substitutions';
 import ChatPage from '../../components/chat/ChatPage';
 import NotificationInbox from '../../components/common/NotificationInbox';
-import NotificationBell from '../../components/common/NotificationBell';
+import TeacherUiIcon from '../../components/teacher/TeacherUiIcon';
 import apiService from '../../services/apiService';
+import { formatUzShortDate } from '../../utils/uzDate';
 import './TeacherDashboard.css';
-import '../director/DirectorDashboard.css';
 
-const TEACHER_BLUE = '#2563eb';
+const NAV_SECTIONS = [
+  {
+    label: 'Kundalik',
+    items: [
+      { path: '/teacher', label: 'Bosh sahifa', icon: 'home', end: true },
+      { path: '/teacher/journal', label: 'Sinf jurnali', icon: 'book' },
+      { path: '/teacher/schedule', label: 'Dars jadvali', icon: 'calendar' }
+    ]
+  },
+  {
+    label: "Ta'lim",
+    items: [
+      { path: '/teacher/lesson-list', label: "Dars ro'yxati", icon: 'grid' },
+      { path: '/teacher/substitutions', label: 'Almashtirish', icon: 'swap' },
+      { path: '/teacher/students', label: "O'quvchilar", icon: 'users' },
+      { path: '/teacher/tests', label: 'Testlar', icon: 'test' },
+      { path: '/teacher/quarters', label: 'Chorak baholari', icon: 'report' },
+      { path: '/teacher/assignments', label: 'Vazifalar', icon: 'assignment', badge: 'pendingGrading' }
+    ]
+  },
+  {
+    label: 'Yordam',
+    items: [
+      { path: '/teacher/ai', label: 'AI yordamchi', icon: 'ai' },
+      { path: '/teacher/chat', label: 'Chat', icon: 'chat' },
+      { path: '/teacher/reports', label: 'Hisobotlar', icon: 'report' }
+    ]
+  },
+  {
+    label: 'Shaxsiy',
+    items: [
+      { path: '/teacher/coins', label: 'Coinlar', icon: 'coins' },
+      { path: '/teacher/salary', label: 'Maosh', icon: 'salary' },
+      { path: '/teacher/profile', label: 'Profil', icon: 'profile' }
+    ]
+  }
+];
 
-const TeacherNavIcon = ({ name, size = 20 }) => {
-  const paths = {
-    home: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
-    journal: <><path d="M5 3h13a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2ZM5 3v16M9 7h7M9 11h7M9 15h5" /></>,
-    schedule: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
-    list: <><path d="M9 6h12M9 12h12M9 18h12" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></>,
-    substitution: <><path d="M7 7h11l-3-3M17 17H6l3 3" /><path d="M18 7l-3 3M6 17l3-3" /></>,
-    students: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
-    tests: <><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 16h4" /><path d="m3 15 2 2 3-4" /></>,
-    ai: <><rect x="4" y="7" width="16" height="13" rx="4" /><path d="M12 7V3M9 3h6M8 13h.01M16 13h.01M9 17h6" /></>,
-    assignments: <><path d="M5 4h14v17H5zM9 4V2h6v2M9 10h6M9 14h6M9 18h4" /></>,
-    chat: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
-    notifications: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
-    reports: <><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" /></>,
-    coins: <><circle cx="9" cy="12" r="6" /><path d="M9 9v6M7 10h3a1.5 1.5 0 0 1 0 3H8M15 7a5 5 0 1 1 0 10" /></>,
-    salary: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" /><circle cx="17" cy="15" r="1" /></>,
-    profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
-    refresh: <><path d="M20 6v5h-5M4 18v-5h5" /><path d="M18.5 9A7 7 0 0 0 6.2 6.2L4 9M5.5 15A7 7 0 0 0 17.8 17.8L20 15" /></>,
-    logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></>
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.home}</svg>;
+const ALL_ITEMS = NAV_SECTIONS.flatMap((section) =>
+  section.items.map((item) => ({ ...item, section: section.label }))
+);
+
+const PAGE_TITLES = {
+  '/teacher': 'Bosh sahifa',
+  '/teacher/journal': 'Sinf jurnali',
+  '/teacher/schedule': 'Dars jadvali',
+  '/teacher/lesson-list': "Dars ro'yxati",
+  '/teacher/substitutions': 'Almashtirish',
+  '/teacher/students': "O'quvchilar",
+  '/teacher/tests': 'Testlar',
+  '/teacher/quarters': 'Chorak baholari',
+  '/teacher/assignments': 'Vazifalar',
+  '/teacher/ai': 'AI yordamchi',
+  '/teacher/chat': 'Chat',
+  '/teacher/notifications': 'Bildirishnomalar',
+  '/teacher/reports': 'Hisobotlar',
+  '/teacher/coins': 'Coinlar',
+  '/teacher/salary': 'Maosh',
+  '/teacher/profile': 'Profil'
 };
 
-const menuIconName = (item = {}) => {
-  if (item.iconKey) return item.iconKey;
-  const iconByPath = {
-    '/teacher': 'home',
-    '/teacher/journal': 'journal',
-    '/teacher/schedule': 'schedule',
-    '/teacher/lesson-list': 'list',
-    '/teacher/substitutions': 'substitution',
-    '/teacher/students': 'students',
-    '/teacher/tests': 'tests',
-    '/teacher/quarters': 'reports',
-    '/teacher/ai': 'ai',
-    '/teacher/assignments': 'assignments',
-    '/teacher/chat': 'chat',
-    '/teacher/notifications': 'notifications',
-    '/teacher/reports': 'reports',
-    '/teacher/coins': 'coins',
-    '/teacher/salary': 'salary',
-    '/teacher/profile': 'profile'
-  };
-  if (iconByPath[item.path]) return iconByPath[item.path];
-  return 'home';
+const MOBILE_ITEMS = [
+  { path: '/teacher', label: 'Bosh sahifa', icon: 'home', end: true },
+  { path: '/teacher/journal', label: 'Jurnal', icon: 'book' },
+  { path: '/teacher/schedule', label: 'Jadval', icon: 'calendar' },
+  { path: '/teacher/assignments', label: 'Vazifalar', icon: 'assignment' },
+  { path: '/teacher/profile', label: 'Profil', icon: 'profile' }
+];
+
+const getGreeting = (date = new Date()) => {
+  const hour = date.getHours();
+  if (hour < 12) return 'Xayrli tong';
+  if (hour < 18) return 'Xayrli kun';
+  return 'Xayrli kech';
 };
 
 const TeacherDashboard = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notificationCounts, setNotificationCounts] = useState({
-    pendingGrading: 0
-  });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [notificationCounts, setNotificationCounts] = useState({ pendingGrading: 0 });
+  const searchRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const profileRef = useRef(null);
+
+  const pageTitle = PAGE_TITLES[location.pathname] || 'O\'qituvchi paneli';
+  const isFlushPage = location.pathname === '/teacher/chat';
+
+  const fetchNotificationCounts = useCallback(async () => {
+    try {
+      const counts = await apiService.getTeacherNotificationCounts();
+      setNotificationCounts(counts || { pendingGrading: 0 });
+    } catch (error) {
+      // Bildirishnoma soni kritik emas — jim o'tkazamiz.
+    }
+  }, []);
+
+  const fetchUnread = useCallback(async () => {
+    try {
+      const count = await apiService.getInboxUnreadCount();
+      setUnread(Number(count) || 0);
+    } catch (error) {
+      // jim
+    }
+  }, []);
 
   useEffect(() => {
     fetchNotificationCounts();
-    const interval = setInterval(fetchNotificationCounts, 60000);
+    fetchUnread();
+    const interval = setInterval(() => {
+      fetchNotificationCounts();
+      fetchUnread();
+    }, 60000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchNotificationCounts, fetchUnread]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+    setSearchOpen(false);
+    setSearchQuery('');
+    setProfileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) setSearchOpen(false);
+      if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false);
+    };
+    const handleKey = (event) => {
+      if (event.key === 'Escape') {
+        setSearchOpen(false);
+        setProfileOpen(false);
+        setSidebarOpen(false);
+      }
+      if ((event.key === '/' || (event.key === 'k' && (event.metaKey || event.ctrlKey))) &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, []);
 
-  const fetchNotificationCounts = async () => {
-    try {
-      const counts = await apiService.getTeacherNotificationCounts();
-      setNotificationCounts(counts);
-    } catch (error) {
-      // Silently fail - notification counts are not critical
-    }
-  };
-
-  // Generate profile image URL with cache busting
   const profileImageUrl = useMemo(() => {
     if (!user?.profileImage) return null;
     const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://my-dream-school.onrender.com';
-    const timestamp = user._updated || Date.now();
-    return `${baseUrl}${user.profileImage}?t=${timestamp}`;
+    return `${baseUrl}${user.profileImage}?t=${user._updated || Date.now()}`;
   }, [user?.profileImage, user?._updated]);
 
-  const userInitials = useMemo(() => {
-    const firstInitial = user?.firstName?.trim()?.charAt(0) || user?.username?.trim()?.charAt(0) || 'O';
-    const lastInitial = user?.lastName?.trim()?.charAt(0) || '';
-    return `${firstInitial}${lastInitial}`.toUpperCase();
+  const initials = useMemo(() => {
+    const first = user?.firstName?.trim()?.charAt(0) || user?.username?.trim()?.charAt(0) || 'O';
+    const last = user?.lastName?.trim()?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase();
   }, [user?.firstName, user?.lastName, user?.username]);
 
-  const menuItems = [
-    { path: '/teacher',             label: 'Bosh sahifa',     iconKey: 'home', end: true, badge: null, section: null },
-    { path: '/teacher/journal',     label: 'Sinf jurnali',    iconKey: 'journal', badge: null, section: null },
-    { path: '/teacher/schedule',    label: 'Dars jadvali',    iconKey: 'schedule', badge: null, section: null },
-    { path: '/teacher/lesson-list', label: "Dars ro'yxati",  iconKey: 'list', badge: null, section: null },
-    { path: '/teacher/substitutions', label: 'Almashtirish',  iconKey: 'substitution', badge: null, section: null },
-    { path: '/teacher/students',    label: "O'quvchilar",     iconKey: 'students', badge: null, section: null },
-    { path: '/teacher/tests',       label: 'Testlar',         iconKey: 'tests', badge: null, section: null },
-    { path: '/teacher/quarters',    label: 'Chorak baholari', iconKey: 'reports', badge: null, section: null },
-    { path: '/teacher/ai',          label: 'AI Yordamchi',    iconKey: 'ai', badge: null, section: null },
-    { path: '/teacher/assignments', label: 'Vazifalar',       iconKey: 'assignments', badge: notificationCounts.pendingGrading, section: 'assignments' },
-    { path: '/teacher/chat',        label: 'Chat',            iconKey: 'chat', badge: null, section: null },
-    { path: '/teacher/notifications', label: 'Bildirishnomalar', iconKey: 'notifications', badge: null, section: null },
-    { path: '/teacher/reports',     label: 'Hisobotlar',      iconKey: 'reports', badge: null, section: null },
-    { path: '/teacher/coins',       label: 'Coinlar',         iconKey: 'coins', badge: null, section: null },
-    { path: '/teacher/salary',      label: 'Maosh',           iconKey: 'salary', badge: null, section: null },
-    { path: '/teacher/profile',     label: 'Profil',          iconKey: 'profile', badge: null, section: null }
-  ];
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.username || "O'qituvchi";
+  const roleLabel = user?.role === 'teacher' ? "O'qituvchi" : (user?.role || "O'qituvchi");
+  const greeting = getGreeting();
 
-  const handleMenuItemClick = async (section) => {
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return ALL_ITEMS;
+    return ALL_ITEMS.filter((item) =>
+      item.label.toLowerCase().includes(query) || item.section.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  const handleMenuItemClick = async (item) => {
     setSidebarOpen(false);
-    if (section && notificationCounts.pendingGrading > 0) {
+    if (item?.badge && notificationCounts[item.badge] > 0) {
       try {
-        await apiService.markSectionAsViewed(section);
+        await apiService.markSectionAsViewed(item.badge === 'pendingGrading' ? 'assignments' : item.badge);
         await fetchNotificationCounts();
       } catch (error) {
-        // Silently fail
+        // jim
       }
     }
   };
 
-  const handleLogout = () => logout();
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const handleLogout = () => {
+    setProfileOpen(false);
+    logout();
+    navigate('/login');
+  };
+
+  const goToSearchResult = (item) => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    navigate(item.path);
+  };
+
+  const badgeFor = (item) => {
+    if (!item.badge) return 0;
+    return Number(notificationCounts[item.badge]) || 0;
+  };
 
   return (
-    <div className="admin-dashboard-layout">
-      {/* ─────────── HEADER — direktor bilan 1:1 ─────────── */}
-      <header className="header">
-        <div className="header-content">
-          <div className="header-left">
-            <button
-              className="sidebar-toggle"
-              onClick={toggleSidebar}
-              aria-label={sidebarOpen ? 'Menyuni yopish' : 'Menyuni ochish'}
-              aria-expanded={sidebarOpen}
-            >
-              <span className="hamburger" />
-              <span className="hamburger" />
-              <span className="hamburger" />
-            </button>
-            <Logo />
-            <div className="page-info">
-              <div className="header-page-title">O'qituvchi paneli</div>
-              <p className="page-subtitle">Sinf boshqaruvi va o'qitish vositalari</p>
+    <div className="td-app">
+      <aside className={`td-sidebar ${sidebarOpen ? 'is-open' : ''}`} aria-label="Asosiy navigatsiya">
+        <div className="td-brand">
+          <span className="td-brand-mark">
+            <img src="/assets/images/logo-mark.png" alt="My Dream School" />
+          </span>
+          <span className="td-brand-text">
+            <strong>MY DREAM</strong>
+            <span>SCHOOL</span>
+          </span>
+        </div>
+        <div className="td-brand-caption">O'qituvchi paneli</div>
+
+        <nav className="td-nav">
+          {NAV_SECTIONS.map((section) => (
+            <div className="td-nav-section" key={section.label}>
+              <div className="td-nav-label">{section.label}</div>
+              {section.items.map((item) => {
+                const count = badgeFor(item);
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.end}
+                    onClick={() => handleMenuItemClick(item)}
+                    className={({ isActive }) => `td-nav-link ${isActive ? 'is-active' : ''}`}
+                  >
+                    <span className="td-nav-icon"><TeacherUiIcon name={item.icon} size={18} /></span>
+                    <span className="td-nav-text">{item.label}</span>
+                    {count > 0 && <span className="td-nav-badge">{count > 99 ? '99+' : count}</span>}
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <div className="td-sidebar-foot">
+          <div className="td-help-card">
+            <span className="td-help-icon"><TeacherUiIcon name="sparkle" size={18} /></span>
+            <div>
+              <strong>Yordam kerakmi?</strong>
+              <p>AI yordamchi har qanday savolga javob beradi.</p>
+              <button type="button" onClick={() => navigate('/teacher/ai')}>
+                Suhbatlashish <TeacherUiIcon name="arrow" size={13} />
+              </button>
             </div>
           </div>
-          <div className="header-right">
-            <NotificationBell accent={TEACHER_BLUE} viewAllLink="/teacher/notifications" />
-            <div className="user-info">
-              <div
-                className={`user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}
-                style={profileImageUrl ? {
-                  backgroundImage: `url(${profileImageUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : undefined}
-              >
-                {!profileImageUrl && <span className="user-initials">{userInitials}</span>}
+          <button type="button" className="td-sidebar-user" onClick={() => navigate('/teacher/profile')}>
+            <span className="td-avatar td-avatar--sm" style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})` } : undefined}>
+              {!profileImageUrl && initials}
+            </span>
+            <span className="td-sidebar-user-text">
+              <strong>{fullName}</strong>
+              <span>{roleLabel}</span>
+            </span>
+            <TeacherUiIcon name="arrow" size={15} />
+          </button>
+        </div>
+      </aside>
+
+      {sidebarOpen && <button type="button" className="td-overlay" aria-label="Menyuni yopish" onClick={() => setSidebarOpen(false)} />}
+
+      <header className="td-topbar">
+        <button
+          type="button"
+          className="td-menu-btn"
+          aria-label="Menyuni ochish"
+          aria-expanded={sidebarOpen}
+          onClick={() => setSidebarOpen((open) => !open)}
+        >
+          <TeacherUiIcon name={sidebarOpen ? 'close' : 'menu'} size={20} />
+        </button>
+
+        <div className="td-page-meta">
+          <span className="td-page-eyebrow">O'qituvchi paneli</span>
+          <h1>{pageTitle}</h1>
+        </div>
+
+        <div className="td-search" ref={searchRef}>
+          <span className="td-search-icon"><TeacherUiIcon name="search" size={17} /></span>
+          <input
+            ref={searchInputRef}
+            type="search"
+            placeholder="Bo'lim yoki sahifa qidirish..."
+            value={searchQuery}
+            onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true); }}
+            onFocus={() => setSearchOpen(true)}
+            aria-label="Qidirish"
+          />
+          <span className="td-search-hint">/</span>
+          {searchOpen && (
+            <div className="td-search-dropdown">
+              <div className="td-search-dropdown-head">
+                {searchQuery ? `"${searchQuery}" bo'yicha natijalar` : "Tez o'tish"}
               </div>
-              <div className="user-details">
-                <span className="user-name">{user?.firstName} {user?.lastName}</span>
-                <span className="user-role">{user?.role || "o'qituvchi"}</span>
-              </div>
+              {searchResults.length === 0 ? (
+                <div className="td-search-empty">Sahifa topilmadi</div>
+              ) : (
+                searchResults.map((item) => (
+                  <button type="button" key={item.path} className="td-search-result" onClick={() => goToSearchResult(item)}>
+                    <span className="td-search-result-icon"><TeacherUiIcon name={item.icon} size={16} /></span>
+                    <span>
+                      <strong>{item.label}</strong>
+                      <small>{item.section}</small>
+                    </span>
+                    <TeacherUiIcon name="arrow" size={14} />
+                  </button>
+                ))
+              )}
             </div>
+          )}
+        </div>
+
+        <div className="td-topbar-actions">
+          <span className="td-today">{formatUzShortDate(new Date(), { year: true })}</span>
+          <NavLink to="/teacher/notifications" className="td-icon-btn" aria-label="Bildirishnomalar">
+            <TeacherUiIcon name="bell" size={18} />
+            {unread > 0 && <span className="td-bell-dot">{unread > 9 ? '9+' : unread}</span>}
+          </NavLink>
+
+          <div className="td-profile" ref={profileRef}>
             <button
-              onClick={() => window.location.reload()}
-              className="refresh-btn"
-              aria-label="Sahifani yangilash"
-              title="Sahifani yangilash (Hard Refresh)"
+              type="button"
+              className={`td-profile-btn ${profileOpen ? 'is-open' : ''}`}
+              onClick={() => setProfileOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
             >
-              <span className="refresh-icon"><TeacherNavIcon name="refresh" size={18} /></span>
+              <span className="td-avatar" style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})` } : undefined}>
+                {!profileImageUrl && initials}
+              </span>
+              <span className="td-profile-text">
+                <strong>{fullName}</strong>
+                <span>{roleLabel}</span>
+              </span>
+              <span className={`td-chevron ${profileOpen ? 'is-open' : ''}`}><TeacherUiIcon name="chevron" size={15} /></span>
             </button>
-            <button
-              onClick={handleLogout}
-              className="logout-btn"
-              aria-label="Tizimdan chiqish"
-            >
-              <span className="logout-icon"><TeacherNavIcon name="logout" size={18} /></span>
-              <span className="logout-text">Chiqish</span>
-            </button>
+
+            {profileOpen && (
+              <div className="td-profile-menu" role="menu">
+                <div className="td-profile-menu-head">
+                  <span className="td-avatar" style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})` } : undefined}>
+                    {!profileImageUrl && initials}
+                  </span>
+                  <div>
+                    <strong>{fullName}</strong>
+                    <span>{user?.phone || user?.email || roleLabel}</span>
+                  </div>
+                </div>
+                <button type="button" role="menuitem" onClick={() => navigate('/teacher/profile')}>
+                  <TeacherUiIcon name="profile" size={17} /> Profil
+                </button>
+                <button type="button" role="menuitem" onClick={() => navigate('/teacher/notifications')}>
+                  <TeacherUiIcon name="bell" size={17} /> Bildirishnomalar
+                  {unread > 0 && <span className="td-menu-count">{unread}</span>}
+                </button>
+                <button type="button" role="menuitem" onClick={() => navigate('/teacher/salary')}>
+                  <TeacherUiIcon name="salary" size={17} /> Maosh
+                </button>
+                <div className="td-profile-menu-divider" />
+                <button type="button" role="menuitem" className="is-danger" onClick={handleLogout}>
+                  <TeacherUiIcon name="logout" size={17} /> Tizimdan chiqish
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* ─────────── DASHBOARD CONTAINER ─────────── */}
-      <div className="dashboard-container">
-        {/* SIDEBAR — direktor bilan 1:1 */}
-        <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-          <div className="sidebar-header">
-            <div className="sidebar-brand">
-              <div
-                className="brand-avatar"
-                style={profileImageUrl ? {
-                  backgroundImage: `url(${profileImageUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : undefined}
-                aria-hidden="true"
-              >
-                {!profileImageUrl && <span>{userInitials}</span>}
-              </div>
-              <span className="brand-text">{user?.firstName} {user?.lastName}</span>
-            </div>
-          </div>
-
-          <nav className="sidebar-nav" role="navigation" aria-label="Asosiy navigatsiya">
-            <ul className="nav-list">
-              {menuItems.map((item, index) => (
-                <li key={index} className="nav-item">
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                    end={item.end}
-                    onClick={() => handleMenuItemClick(item.section)}
-                    aria-label={item.label}
-                  >
-                    <span className="nav-icon" aria-hidden="true"><TeacherNavIcon name={menuIconName(item)} /></span>
-                    <span className="nav-text">{item.label}</span>
-                    {item.badge > 0 && (
-                      <span className="notification-badge" aria-label={`${item.badge} ta yangi bildirishnoma`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-
-        {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
-
-        {/* MAIN */}
-        <main className="main-content" role="main">
+      <main className={`td-main ${isFlushPage ? 'is-flush' : ''}`}>
+        <div className={`td-content ${isFlushPage ? 'is-flush' : ''}`}>
           <Routes>
-            <Route path="/" element={<TeacherHome />} />
+            <Route path="/" element={<TeacherHome greeting={greeting} />} />
             <Route path="/journal" element={<ClassJournal />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/lesson-list" element={<TeacherLessonList />} />
-            <Route path="/substitutions" element={<Substitutions accent={TEACHER_BLUE} />} />
+            <Route path="/substitutions" element={<Substitutions accent="#d9a441" />} />
             <Route path="/students" element={<StudentLists />} />
             <Route path="/tests" element={<Tests />} />
             <Route path="/quarters" element={<QuarterGrades />} />
@@ -269,44 +418,25 @@ const TeacherDashboard = () => {
             <Route path="/reports" element={<TeacherReports />} />
             <Route path="/coins" element={<TeacherCoins />} />
             <Route path="/salary" element={<TeacherSalary />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<TeacherProfile />} />
             <Route path="*" element={<Navigate to="/teacher" replace />} />
           </Routes>
-        </main>
-      </div>
+        </div>
+      </main>
 
-      <style>{`
-        .admin-dashboard-layout .sidebar .brand-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.7rem;
-          font-weight: 800;
-          letter-spacing: 0.02em;
-          color: #fff;
-          background: #2563eb;
-          flex-shrink: 0;
-          overflow: hidden;
-        }
-        .admin-dashboard-layout .sidebar-brand .brand-text {
-          flex: 1;
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        /* Sidebar header bilan menyu orasidagi bo'shliqni zichlash */
-        .admin-dashboard-layout .sidebar .sidebar-header {
-          padding-top: 4px;
-          padding-bottom: 4px;
-        }
-        .admin-dashboard-layout .sidebar .sidebar-nav {
-          padding-top: 2px;
-        }
-      `}</style>
+      <nav className="td-mobile-nav" aria-label="Mobil navigatsiya">
+        {MOBILE_ITEMS.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.end}
+            className={({ isActive }) => `td-mobile-link ${isActive ? 'is-active' : ''}`}
+          >
+            <TeacherUiIcon name={item.icon} size={20} />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 };

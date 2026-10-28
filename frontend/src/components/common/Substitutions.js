@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
+import { formatUzLongDate } from '../../utils/uzDate';
 import './Substitutions.css';
 import TeacherUiIcon from '../teacher/TeacherUiIcon';
 
@@ -10,7 +11,7 @@ import TeacherUiIcon from '../teacher/TeacherUiIcon';
 // admin/direktor hamma narsani boshqaradi + oylik hisobot ko'radi.
 const MONTHS = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
 
-const Substitutions = ({ accent = '#3b82f6' }) => {
+const Substitutions = ({ accent = '#d9a441' }) => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const role = user?.role;
@@ -24,7 +25,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
   const [mine, setMine] = useState({ asSubstitute: [], asOriginal: [] });
   const [report, setReport] = useState({ substitutions: [], summary: [] });
   const [loading, setLoading] = useState(true);
-  const [banner, setBanner] = useState(null); // {type, text}
+  const [banner, setBanner] = useState(null);
 
   // Belgilash modali
   const [showModal, setShowModal] = useState(false);
@@ -42,7 +43,7 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
     return `${dt.getFullYear()}-${m}-${day}`;
   }
 
-  const formatDate = (d) => new Date(d).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long', year: 'numeric' });
+  const formatDate = (d) => formatUzLongDate(d, { year: true }) || '—';
   const teacherName = (t) => (t ? `${t.firstName} ${t.lastName}` : '—');
   const flash = (type, text) => { setBanner({ type, text }); setTimeout(() => setBanner(null), 3500); };
 
@@ -156,127 +157,166 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
     }
   };
 
-  // ---- styles ----
-  const card = { background: '#fff', borderRadius: 12, padding: '1rem 1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: '1rem' };
-  const th = { textAlign: 'left', padding: '0.6rem 0.75rem', fontSize: '0.8rem', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' };
-  const td = { padding: '0.6rem 0.75rem', fontSize: '0.85rem', color: '#1e293b', borderBottom: '1px solid #f1f5f9', verticalAlign: 'middle' };
-  const btn = (bg) => ({ background: bg, color: '#fff', border: 'none', padding: '0.4rem 0.7rem', borderRadius: 7, cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem', marginRight: 6 });
-
   const StatusBadge = ({ status }) => {
     const map = {
-      pending: { bg: '#fef3c7', c: '#92400e', t: 'Kutilmoqda' },
-      confirmed: { bg: '#dcfce7', c: '#166534', t: 'Tasdiqlangan' },
-      rejected: { bg: '#fee2e2', c: '#991b1b', t: 'Rad etilgan' }
+      pending: { c: 'pending', t: 'Kutilmoqda' },
+      confirmed: { c: 'confirmed', t: 'Tasdiqlangan' },
+      rejected: { c: 'rejected', t: 'Rad etilgan' }
     };
     const s = map[status] || map.pending;
-    return <span className={`sub-status sub-status-${status || 'pending'}`}>{s.t}</span>;
+    return <span className={`sub-status sub-status-${s.c}`}>{s.t}</span>;
   };
 
-  const periodLabel = (s) => `${formatDate(s.date)} • ${s.startTime}-${s.endTime}${s.subjectName ? ' • ' + s.subjectName : ''}`;
+  const periodLabel = (s) => `${formatDate(s.date)} · ${s.startTime}-${s.endTime}${s.subjectName ? ' · ' + s.subjectName : ''}`;
+  const pendingOriginal = mine.asOriginal.filter((s) => s.status === 'pending');
 
   if (!allowed) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-        <div style={{ color: '#64748b' }}><TeacherUiIcon name="lock" size={34} /></div>
-        <h2 style={{ color: '#1e293b' }}>Ruxsat yo'q</h2>
-        <p>Dars almashtirish bo'limidan foydalanish uchun sizda ruxsat yo'q. Administrator yoki direktorga murojaat qiling.</p>
+      <div className="sub-page">
+        <div className="sub-locked">
+          <span className="sub-locked-icon"><TeacherUiIcon name="lock" size={24} /></span>
+          <h2>Ruxsat yo'q</h2>
+          <p>Dars almashtirish bo'limidan foydalanish uchun sizda ruxsat yo'q. Administrator yoki direktorga murojaat qiling.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="sub-page">
-      <div className="sub-hero">
+    <div className="sub-page" style={{ '--sub-accent': accent }}>
+      <header className="sub-head">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.4rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}><TeacherUiIcon name="swap" size={24} /> Dars almashtirish</h1>
-          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-            O'qituvchi kelmaganda o'rniga kim o'tganini belgilash va tasdiqlash
-          </p>
+          <p className="sub-eyebrow">Dars jarayoni</p>
+          <h1 className="sub-title">Dars almashtirish</h1>
+          <p className="sub-subtitle">O'qituvchi kelmaganda o'rniga kim o'tganini belgilang va tasdiqlang.</p>
         </div>
-        <button onClick={openModal} className="sub-primary" style={{ '--sub-accent': accent }}>
-          ➕ Yangi belgilash
+        <button type="button" onClick={openModal} className="sub-primary">
+          <TeacherUiIcon name="plus" size={15} /> Yangi belgilash
         </button>
-      </div>
+      </header>
 
-      {/* Oy/yil tanlash */}
       <div className="sub-filters">
-        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} style={{ padding: '0.45rem 0.6rem', borderRadius: 8, border: '1px solid #cbd5e1' }}>
+        <span className="sub-filters-label"><TeacherUiIcon name="calendar" size={15} /> Davr</span>
+        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label="Oy">
           {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
         </select>
-        <select value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ padding: '0.45rem 0.6rem', borderRadius: 8, border: '1px solid #cbd5e1' }}>
+        <select value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Yil">
           {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
       </div>
 
       {banner && (
-        <div style={{ padding: '0.7rem 1rem', borderRadius: 8, marginBottom: '1rem', fontWeight: 600, fontSize: '0.85rem',
-          background: banner.type === 'error' ? '#fee2e2' : '#dcfce7', color: banner.type === 'error' ? '#991b1b' : '#166534' }}>
-          <TeacherUiIcon name={banner.type === 'error' ? 'warning' : 'check'} size={16} /> {banner.text}
+        <div className={`sub-alert sub-alert--${banner.type}`}>
+          <TeacherUiIcon name={banner.type === 'error' ? 'warning' : 'check'} size={16} />
+          <span>{banner.text}</span>
         </div>
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Yuklanmoqda...</div>
+        <div className="sub-loading">
+          <span className="sub-spinner" />
+          <span>Yuklanmoqda...</span>
+        </div>
       ) : isManager ? (
-        /* ========== ADMIN / DIREKTOR KO'RINISHI ========== */
         <>
-          {/* Oylik xulosa: kim necha soat */}
-          <div style={card} className="sub-card">
-            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 7 }}><TeacherUiIcon name="report" /> {MONTHS[month - 1]} oyi — kim necha soat o'rniga o'tdi</h2>
+          <section className="sub-card">
+            <div className="sub-card-head">
+              <div>
+                <h2>{MONTHS[month - 1]} oyi — kim necha soat o'rniga o'tdi</h2>
+                <p>O'qituvchilar bo'yicha oylik yuklama</p>
+              </div>
+              <span className="sub-chip">{report.summary.length} o'qituvchi</span>
+            </div>
             {report.summary.length === 0 ? (
-              <p style={{ color: '#94a3b8', margin: 0 }}>Bu oyda almashtirishlar yo'q</p>
+              <div className="sub-empty">
+                <span className="sub-empty-icon"><TeacherUiIcon name="report" size={20} /></span>
+                <strong>Bu oyda almashtirishlar yo'q</strong>
+                <span>Belgilangan darslar shu yerda jamlanadi.</span>
+              </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="sub-table-wrap">
+                <table className="sub-table">
                   <thead><tr>
-                    <th style={th}>O'qituvchi (o'rinbosar)</th>
-                    <th style={th}>Jami soat</th>
-                    <th style={th}>Tasdiqlangan</th>
-                    <th style={th}>Kutilmoqda</th>
+                    <th>O'qituvchi (o'rinbosar)</th>
+                    <th>Jami soat</th>
+                    <th>Tasdiqlangan</th>
+                    <th>Kutilmoqda</th>
                   </tr></thead>
                   <tbody>
                     {report.summary.map((s) => (
                       <tr key={s.teacherId}>
-                        <td style={td}>{s.teacherName}</td>
-                        <td style={{ ...td, fontWeight: 700 }}>{s.totalHours} soat</td>
-                        <td style={{ ...td, color: '#166534' }}>{s.confirmedHours}</td>
-                        <td style={{ ...td, color: '#92400e' }}>{s.pendingHours}</td>
+                        <td className="sub-strong">{s.teacherName}</td>
+                        <td className="sub-strong">{s.totalHours} soat</td>
+                        <td className="sub-positive">{s.confirmedHours}</td>
+                        <td className="sub-pending">{s.pendingHours}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
-          </div>
+          </section>
 
-          {/* To'liq ro'yxat */}
-          <div style={card} className="sub-card">
-            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a' }}>Barcha almashtirishlar</h2>
+          <section className="sub-card">
+            <div className="sub-card-head">
+              <div>
+                <h2>Barcha almashtirishlar</h2>
+                <p>{MONTHS[month - 1]} {year} · {report.substitutions.length} ta yozuv</p>
+              </div>
+            </div>
             {report.substitutions.length === 0 ? (
-              <p style={{ color: '#94a3b8', margin: 0 }}>Yozuvlar yo'q</p>
+              <div className="sub-empty">
+                <span className="sub-empty-icon"><TeacherUiIcon name="swap" size={20} /></span>
+                <strong>Yozuvlar yo'q</strong>
+                <span>Yangi almashtirish belgilanganda ro'yxat shakllanadi.</span>
+              </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="sub-table-wrap">
+                <table className="sub-table">
                   <thead><tr>
-                    <th style={th}>Sana</th>
-                    <th style={th}>Sinf / Dars</th>
-                    <th style={th}>Asl o'qituvchi</th>
-                    <th style={th}>O'rniga o'tgan</th>
-                    <th style={th}>Holat</th>
-                    <th style={th}>Amal</th>
+                    <th>Sana</th>
+                    <th>Sinf / Dars</th>
+                    <th>Asl o'qituvchi</th>
+                    <th>O'rniga o'tgan</th>
+                    <th>Holat</th>
+                    <th>Amal</th>
                   </tr></thead>
                   <tbody>
                     {report.substitutions.map((s) => (
                       <tr key={s._id}>
-                        <td style={td}>{formatDate(s.date)}<br /><span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{s.startTime}-{s.endTime}</span></td>
-                        <td style={td}>{s.classId?.name || '—'}<br /><span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{s.subject?.name || ''}</span></td>
-                        <td style={td}>{teacherName(s.originalTeacher)}</td>
-                        <td style={{ ...td, fontWeight: 600, color: accent }}>{teacherName(s.substituteTeacher)}</td>
-                        <td style={td}><StatusBadge status={s.status} /></td>
-                        <td style={td}>
-                          {s.status !== 'confirmed' && <button style={btn('#16a34a')} onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}><TeacherUiIcon name="check" size={14} /> Tasdiq</button>}
-                          {s.status !== 'rejected' && <button style={btn('#f59e0b')} onClick={() => act(apiService.rejectSubstitution, s._id, 'Rad etildi')}>✕ Rad</button>}
-                          <button style={btn('#ef4444')} onClick={() => { if (window.confirm("O'chirilsinmi?")) act(apiService.deleteSubstitution, s._id, "O'chirildi"); }}><TeacherUiIcon name="trash" size={15} /></button>
+                        <td>
+                          <span className="sub-cell-main">{formatDate(s.date)}</span>
+                          <span className="sub-cell-sub">{s.startTime}-{s.endTime}</span>
+                        </td>
+                        <td>
+                          <span className="sub-cell-main">{s.classId?.name || '—'}</span>
+                          <span className="sub-cell-sub">{s.subject?.name || ''}</span>
+                        </td>
+                        <td>{teacherName(s.originalTeacher)}</td>
+                        <td className="sub-accent-text">{teacherName(s.substituteTeacher)}</td>
+                        <td><StatusBadge status={s.status} /></td>
+                        <td>
+                          <div className="sub-actions">
+                            {s.status !== 'confirmed' && (
+                              <button type="button" className="sub-btn sub-btn--success" onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}>
+                                <TeacherUiIcon name="check" size={14} /> Tasdiq
+                              </button>
+                            )}
+                            {s.status !== 'rejected' && (
+                              <button type="button" className="sub-btn sub-btn--warn" onClick={() => act(apiService.rejectSubstitution, s._id, 'Rad etildi')}>
+                                <TeacherUiIcon name="close" size={14} /> Rad
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="sub-btn sub-btn--icon"
+                              title="O'chirish"
+                              aria-label="O'chirish"
+                              onClick={() => { if (window.confirm("O'chirilsinmi?")) act(apiService.deleteSubstitution, s._id, "O'chirildi"); }}
+                            >
+                              <TeacherUiIcon name="trash" size={15} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -284,150 +324,208 @@ const Substitutions = ({ accent = '#3b82f6' }) => {
                 </table>
               </div>
             )}
-          </div>
+          </section>
         </>
       ) : (
-        /* ========== O'QITUVCHI KO'RINISHI ========== */
         <>
-          {/* Tasdiqlash kutilayotganlar (mening o'rnimga o'tilgan) */}
-          {mine.asOriginal.filter((s) => s.status === 'pending').length > 0 && (
-            <div style={{ ...card, borderLeft: '4px solid #f59e0b' }}>
-              <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#92400e' }}>⏳ Sizning o'rningizga o'tildi — tasdiqlang</h2>
-              {mine.asOriginal.filter((s) => s.status === 'pending').map((s) => (
-                <div key={s._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', padding: '0.6rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{teacherName(s.substituteTeacher)} o'tdi</div>
-                    <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{s.classId?.name} • {periodLabel({ date: s.date, startTime: s.startTime, endTime: s.endTime, subjectName: s.subject?.name })}</div>
-                  </div>
-                  <div>
-                    <button style={btn('#16a34a')} onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}><TeacherUiIcon name="check" size={14} /> Tasdiqlash</button>
-                    <button style={btn('#ef4444')} onClick={() => act(apiService.rejectSubstitution, s._id, 'Rad etildi')}>✕ Rad etish</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Men boshqa o'qituvchi o'rniga o'tgan darslar */}
-          <div style={card}>
-            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: 7 }}><TeacherUiIcon name="star" /> Men o'rniga o'tgan darslar</h2>
-            {mine.asSubstitute.length === 0 ? (
-              <p style={{ color: '#94a3b8', margin: 0 }}>Bu oyda yozuvlar yo'q</p>
-            ) : mine.asSubstitute.map((s) => (
-              <div key={s._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', padding: '0.6rem 0', borderBottom: '1px solid #f1f5f9' }}>
+          {pendingOriginal.length > 0 && (
+            <section className="sub-card sub-card--attention">
+              <div className="sub-card-head">
                 <div>
-                  <div style={{ fontWeight: 600 }}>{s.classId?.name} • {teacherName(s.originalTeacher)} o'rniga</div>
-                  <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{periodLabel({ date: s.date, startTime: s.startTime, endTime: s.endTime, subjectName: s.subject?.name })}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <StatusBadge status={s.status} />
-                  {s.status === 'pending' && <button style={btn('#ef4444')} onClick={() => act(apiService.deleteSubstitution, s._id, "O'chirildi")}><TeacherUiIcon name="trash" size={15} /></button>}
+                  <h2><TeacherUiIcon name="clock2" size={17} /> Sizning o'rningizga o'tildi — tasdiqlang</h2>
+                  <p>{pendingOriginal.length} ta yozuv tasdiq kutmoqda</p>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="sub-list">
+                {pendingOriginal.map((s) => (
+                  <div className="sub-list-row" key={s._id}>
+                    <span className="sub-list-icon"><TeacherUiIcon name="swap" size={16} /></span>
+                    <div className="sub-list-info">
+                      <strong>{teacherName(s.substituteTeacher)} o'tdi</strong>
+                      <span>{s.classId?.name} · {periodLabel({ date: s.date, startTime: s.startTime, endTime: s.endTime, subjectName: s.subject?.name })}</span>
+                    </div>
+                    <div className="sub-actions">
+                      <button type="button" className="sub-btn sub-btn--success" onClick={() => act(apiService.confirmSubstitution, s._id, 'Tasdiqlandi')}>
+                        <TeacherUiIcon name="check" size={14} /> Tasdiqlash
+                      </button>
+                      <button type="button" className="sub-btn sub-btn--warn" onClick={() => act(apiService.rejectSubstitution, s._id, 'Rad etildi')}>
+                        <TeacherUiIcon name="close" size={14} /> Rad etish
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="sub-card">
+            <div className="sub-card-head">
+              <div>
+                <h2><TeacherUiIcon name="star" size={17} /> Men o'rniga o'tgan darslar</h2>
+                <p>{MONTHS[month - 1]} {year} · {mine.asSubstitute.length} ta yozuv</p>
+              </div>
+            </div>
+            {mine.asSubstitute.length === 0 ? (
+              <div className="sub-empty">
+                <span className="sub-empty-icon"><TeacherUiIcon name="star" size={20} /></span>
+                <strong>Bu oyda yozuvlar yo'q</strong>
+                <span>Boshqa o'qituvchi o'rniga dars o'tsangiz, shu yerda ko'rinadi.</span>
+              </div>
+            ) : (
+              <div className="sub-list">
+                {mine.asSubstitute.map((s) => (
+                  <div className="sub-list-row" key={s._id}>
+                    <span className="sub-list-icon sub-list-icon--gold"><TeacherUiIcon name="book" size={16} /></span>
+                    <div className="sub-list-info">
+                      <strong>{s.classId?.name} · {teacherName(s.originalTeacher)} o'rniga</strong>
+                      <span>{periodLabel({ date: s.date, startTime: s.startTime, endTime: s.endTime, subjectName: s.subject?.name })}</span>
+                    </div>
+                    <div className="sub-actions">
+                      <StatusBadge status={s.status} />
+                      {s.status === 'pending' && (
+                        <button
+                          type="button"
+                          className="sub-btn sub-btn--icon"
+                          title="O'chirish"
+                          aria-label="O'chirish"
+                          onClick={() => act(apiService.deleteSubstitution, s._id, "O'chirildi")}
+                        >
+                          <TeacherUiIcon name="trash" size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
 
-      {/* ====== Belgilash modali ====== */}
       {showModal && (
         <div className="sub-modal-backdrop" onClick={() => !submitting && setShowModal(false)}>
-          <div className="sub-modal" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Yangi almashtirish belgilash</h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
+          <div className="sub-modal" role="dialog" aria-modal="true" aria-labelledby="sub-modal-title" onClick={(e) => e.stopPropagation()}>
+            <div className="sub-modal-head">
+              <div>
+                <h2 id="sub-modal-title">Yangi almashtirish belgilash</h2>
+                <p>Sinf va sanani tanlang — jadval bo'yicha darslar avtomatik aniqlanadi.</p>
+              </div>
+              <button type="button" className="sub-modal-close" onClick={() => setShowModal(false)} aria-label="Yopish">
+                <TeacherUiIcon name="close" size={17} />
+              </button>
             </div>
-            <form onSubmit={submit} style={{ padding: '1.25rem' }}>
-              <p style={{ margin: '0 0 1rem', color: '#64748b', fontSize: '0.85rem' }}>
-                Sinfni va kunni tanlang — o'sha vaqtda jadval bo'yicha kim o'tishi kerakligi avtomatik aniqlanadi.
-              </p>
+            <form onSubmit={submit} className="sub-form">
+              <label className="sub-label">
+                Sinf <span>*</span>
+                <select
+                  required
+                  value={form.classId}
+                  onChange={(e) => setForm((f) => ({ ...f, classId: e.target.value, periodIndex: '' }))}
+                >
+                  <option value="">— Sinfni tanlang —</option>
+                  {classes.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
+              </label>
 
-              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>Sinf *</label>
-              <select required value={form.classId} onChange={(e) => setForm((f) => ({ ...f, classId: e.target.value, periodIndex: '' }))}
-                style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1', marginBottom: '0.9rem' }}>
-                <option value="">— Sinfni tanlang —</option>
-                {classes.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
+              <label className="sub-label">
+                Sana <span>*</span>
+                <input
+                  type="date"
+                  required
+                  value={form.date}
+                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value, periodIndex: '' }))}
+                />
+              </label>
 
-              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>Sana *</label>
-              <input type="date" required value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value, periodIndex: '' }))}
-                style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1', marginBottom: '0.9rem' }} />
-
-              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>Dars (qaysi soatga o'tdingiz) *</label>
-              {loadingPeriods ? (
-                <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.9rem' }}>Yuklanmoqda...</div>
-              ) : dayPeriods.length === 0 ? (
-                <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.9rem' }}>
-                  {form.classId && form.date ? 'Bu kun uchun dars topilmadi' : 'Avval sinf va sanani tanlang'}
-                </div>
-              ) : (
-                <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: '0.9rem', maxHeight: 220, overflowY: 'auto' }}>
-                  {dayPeriods.map((p) => {
-                    const disabled = !p.teacher || (p.substitution && p.substitution.status !== 'rejected');
-                    return (
-                      <label key={p.periodIndex} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.55rem 0.7rem', borderBottom: '1px solid #f1f5f9', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.55 : 1 }}>
-                        <input type="radio" name="period" disabled={disabled} checked={String(form.periodIndex) === String(p.periodIndex)}
-                          onChange={() => setForm((f) => ({ ...f, periodIndex: p.periodIndex }))} />
-                        <span style={{ flex: 1 }}>
-                          <strong>{p.startTime}-{p.endTime}</strong> {p.subject?.name ? `• ${p.subject.name}` : ''}<br />
-                          <span style={{ color: '#64748b', fontSize: '0.78rem' }}>
-                            Jadval bo'yicha: {p.teacher ? p.teacher.name : 'o\'qituvchi yo\'q'}
-                            {p.substitution && p.substitution.status !== 'rejected' && ` (allaqachon: ${p.substitution.substituteTeacher || 'belgilangan'})`}
+              <div className="sub-label">
+                Dars (qaysi soatga o'tdingiz) <span>*</span>
+                {loadingPeriods ? (
+                  <div className="sub-hint">Yuklanmoqda...</div>
+                ) : dayPeriods.length === 0 ? (
+                  <div className="sub-hint">{form.classId && form.date ? 'Bu kun uchun dars topilmadi' : 'Avval sinf va sanani tanlang'}</div>
+                ) : (
+                  <div className="sub-periods">
+                    {dayPeriods.map((p) => {
+                      const disabled = !p.teacher || (p.substitution && p.substitution.status !== 'rejected');
+                      return (
+                        <label key={p.periodIndex} className={`sub-period ${disabled ? 'is-disabled' : ''}`}>
+                          <input
+                            type="radio"
+                            name="period"
+                            disabled={disabled}
+                            checked={String(form.periodIndex) === String(p.periodIndex)}
+                            onChange={() => setForm((f) => ({ ...f, periodIndex: p.periodIndex }))}
+                          />
+                          <span>
+                            <strong>{p.startTime}-{p.endTime}</strong> {p.subject?.name ? `· ${p.subject.name}` : ''}
+                            <small>
+                              Jadval bo'yicha: {p.teacher ? p.teacher.name : "o'qituvchi yo'q"}
+                              {p.substitution && p.substitution.status !== 'rejected' && ` (allaqachon: ${p.substitution.substituteTeacher || 'belgilangan'})`}
+                            </small>
                           </span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
               {isManager && (() => {
-                // Tanlangan period dagi asl o'qituvchi ID — uni o'rinbosar sifatida tanlab bo'lmaydi
                 const selectedPeriod = form.periodIndex !== '' ? dayPeriods.find(p => String(p.periodIndex) === String(form.periodIndex)) : null;
                 const originalTeacherIdOfPeriod = selectedPeriod?.teacher?._id ? String(selectedPeriod.teacher._id) : null;
                 return (
                   <>
-                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>O'rniga o'tgan o'qituvchi *</label>
-                    <select required value={form.substituteTeacherId}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val && originalTeacherIdOfPeriod && val === originalTeacherIdOfPeriod) return;
-                        setForm((f) => ({ ...f, substituteTeacherId: val }));
-                      }}
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1', marginBottom: '0.9rem' }}>
-                      <option value="">— Kim o'tdi —</option>
-                      {teachers.map((t) => {
-                        const isOriginal = originalTeacherIdOfPeriod && String(t._id) === originalTeacherIdOfPeriod;
-                        return (
-                          <option key={t._id} value={t._id} disabled={isOriginal}>
-                            {t.firstName} {t.lastName}{isOriginal ? ' (asl o\'qituvchi — tanlab bo\'lmaydi)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
+                    <label className="sub-label">
+                      O'rniga o'tgan o'qituvchi <span>*</span>
+                      <select
+                        required
+                        value={form.substituteTeacherId}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && originalTeacherIdOfPeriod && val === originalTeacherIdOfPeriod) return;
+                          setForm((f) => ({ ...f, substituteTeacherId: val }));
+                        }}
+                      >
+                        <option value="">— Kim o'tdi —</option>
+                        {teachers.map((t) => {
+                          const isOriginal = originalTeacherIdOfPeriod && String(t._id) === originalTeacherIdOfPeriod;
+                          return (
+                            <option key={t._id} value={t._id} disabled={isOriginal}>
+                              {t.firstName} {t.lastName}{isOriginal ? " (asl o'qituvchi — tanlab bo'lmaydi)" : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
                     {originalTeacherIdOfPeriod && form.substituteTeacherId === originalTeacherIdOfPeriod && (
-                      <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: -8, marginBottom: '0.9rem' }}>
-                        ⚠️ O'qituvchini o'zi bilan almashtirib bo'lmaydi!
-                      </p>
+                      <p className="sub-error">O'qituvchini o'zi bilan almashtirib bo'lmaydi!</p>
                     )}
                   </>
                 );
               })()}
 
-              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>Sabab (ixtiyoriy)</label>
-              <input type="text" value={form.reason} maxLength={300} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-                placeholder="masalan: kasal bo'lib qoldi" style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1', marginBottom: '1.1rem' }} />
+              <label className="sub-label">
+                Sabab (ixtiyoriy)
+                <input
+                  type="text"
+                  value={form.reason}
+                  maxLength={300}
+                  onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+                  placeholder="masalan: kasal bo'lib qoldi"
+                />
+              </label>
 
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button type="submit" disabled={submitting} style={{ ...btn(accent), flex: 1, padding: '0.65rem', marginRight: 0, opacity: submitting ? 0.7 : 1 }}>
-                  {submitting ? 'Saqlanmoqda...' : 'Belgilash'}
-                </button>
-                <button type="button" onClick={() => setShowModal(false)} disabled={submitting} style={{ ...btn('#64748b'), flex: 1, padding: '0.65rem', marginRight: 0 }}>
+              <div className="sub-form-actions">
+                <button type="button" className="sub-btn sub-btn--ghost" onClick={() => setShowModal(false)} disabled={submitting}>
                   Bekor qilish
                 </button>
+                <button type="submit" className="sub-btn sub-btn--primary" disabled={submitting}>
+                  {submitting ? 'Saqlanmoqda...' : 'Belgilash'}
+                </button>
               </div>
+
               {!isManager && (
-                <p style={{ margin: '0.9rem 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
+                <p className="sub-note">
                   Eslatma: belgilagandan so'ng asl o'qituvchi yoki admin/direktor tasdiqlaydi. Tasdiqdan oldin ham o'sha sinf jurnali sizga ochiq bo'ladi.
                 </p>
               )}

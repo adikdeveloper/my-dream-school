@@ -10,6 +10,7 @@ import StudentLists from '../../components/teacher/StudentLists';
 import Tests from '../../components/teacher/Tests';
 import Assignments from '../../components/teacher/Assignments';
 import TeacherReports from '../../components/teacher/TeacherReports';
+import QuarterGrades from '../../components/admin/QuarterGrades';
 import TeacherCoins from '../../components/teacher/TeacherCoins';
 import TeacherSalary from '../../components/teacher/TeacherSalary';
 import Profile from '../../components/admin/Profile';
@@ -57,6 +58,7 @@ const menuIconName = (item = {}) => {
     '/teacher/substitutions': 'substitution',
     '/teacher/students': 'students',
     '/teacher/tests': 'tests',
+    '/teacher/quarters': 'reports',
     '/teacher/ai': 'ai',
     '/teacher/assignments': 'assignments',
     '/teacher/chat': 'chat',
@@ -115,6 +117,7 @@ const TeacherDashboard = () => {
     { path: '/teacher/substitutions', label: 'Almashtirish',  iconKey: 'substitution', badge: null, section: null },
     { path: '/teacher/students',    label: "O'quvchilar",     iconKey: 'students', badge: null, section: null },
     { path: '/teacher/tests',       label: 'Testlar',         iconKey: 'tests', badge: null, section: null },
+    { path: '/teacher/quarters',    label: 'Chorak baholari', iconKey: 'reports', badge: null, section: null },
     { path: '/teacher/ai',          label: 'AI Yordamchi',    iconKey: 'ai', badge: null, section: null },
     { path: '/teacher/assignments', label: 'Vazifalar',       iconKey: 'assignments', badge: notificationCounts.pendingGrading, section: 'assignments' },
     { path: '/teacher/chat',        label: 'Chat',            iconKey: 'chat', badge: null, section: null },
@@ -258,6 +261,7 @@ const TeacherDashboard = () => {
             <Route path="/substitutions" element={<Substitutions accent={TEACHER_BLUE} />} />
             <Route path="/students" element={<StudentLists />} />
             <Route path="/tests" element={<Tests />} />
+            <Route path="/quarters" element={<QuarterGrades />} />
             <Route path="/ai" element={<TeacherAI />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/chat" element={<ChatPage />} />

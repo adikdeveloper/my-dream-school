@@ -189,6 +189,32 @@ const apiService = {
     return response.data;
   },
 
+  // ===== CHORAKLAR (avtomatik chorak baholari) =====
+  getAcademicCalendar: async (academicYear) => {
+    const response = await api.get('/quarters/calendar', { params: { academicYear } });
+    return response.data;
+  },
+
+  updateAcademicCalendar: async (calendarData) => {
+    const response = await api.put('/quarters/calendar', calendarData);
+    return response.data;
+  },
+
+  getClassQuarterGrades: async (classId, params = {}) => {
+    const response = await api.get(`/quarters/class/${classId}`, { params });
+    return response.data;
+  },
+
+  getStudentQuarterGrades: async (studentId, params = {}) => {
+    const response = await api.get(`/quarters/student/${studentId}`, { params });
+    return response.data;
+  },
+
+  getTeacherMyClasses: async () => {
+    const response = await api.get('/classes/teacher/my-classes');
+    return response.data;
+  },
+
   updateGrade: async (id, gradeData) => {
     const response = await api.put(`/grades/${id}`, gradeData);
     return response.data;

@@ -7,6 +7,8 @@ import NotificationInbox from '../../components/common/NotificationInbox';
 import DirectorNotifications from '../../components/admin/DirectorNotifications';
 import Substitutions from '../../components/common/Substitutions';
 import CoinLeaderboard from '../../components/admin/CoinLeaderboard';
+import QuarterGrades from '../../components/admin/QuarterGrades';
+import QuarterSettings from '../../components/admin/QuarterSettings';
 
 const Home = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 85px)', flexDirection: 'column', gap: '1rem', background: '#f8fafc', padding: '2rem' }}>
@@ -25,6 +27,8 @@ const AdminDashboard = () => {
   const menuItems = [
     { path: '/admin', label: 'Bosh sahifa', icon: '🏠', end: true },
     { path: '/admin/communication/notifications', label: 'Bildirishnoma yuborish', icon: '📣' },
+    { path: '/admin/quarters/grades', label: 'Chorak baholari', icon: '📊' },
+    { path: '/admin/quarters/settings', label: 'Chorak sozlamalari', icon: '📅' },
     { path: '/admin/substitutions', label: 'Dars almashtirish', icon: '🔄' },
     { path: '/admin/coins', label: 'Coin reytingi', icon: '🪙' },
     { path: '/admin/notifications', label: 'Bildirishnomalar', icon: '📥' },
@@ -91,6 +95,8 @@ const AdminDashboard = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/communication/notifications" element={<DirectorNotifications />} />
+            <Route path="/quarters/grades" element={<QuarterGrades />} />
+            <Route path="/quarters/settings" element={<QuarterSettings />} />
             <Route path="/substitutions" element={<Substitutions accent="#3b82f6" />} />
             <Route path="/coins" element={<CoinLeaderboard />} />
             <Route path="/notifications" element={<NotificationInbox />} />

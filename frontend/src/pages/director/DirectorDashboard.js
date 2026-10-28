@@ -9,6 +9,8 @@ import TeacherManagement from '../../components/admin/TeacherManagement';
 import ClassManagement from '../../components/admin/ClassManagement';
 import SubjectManagement from '../../components/admin/SubjectManagement';
 import AdminClassJournal from '../../components/admin/AdminClassJournal';
+import QuarterGrades from '../../components/admin/QuarterGrades';
+import QuarterSettings from '../../components/admin/QuarterSettings';
 import AttendanceManagement from '../../components/admin/AttendanceManagement';
 import ScheduleManagement from '../../components/admin/ScheduleManagement';
 import Reports from '../../components/admin/Reports';
@@ -147,6 +149,8 @@ const menuIconName = (item = {}) => {
     '/director/subjects': 'subjects',
     '/director/education/grading': 'grading',
     '/director/education/exams': 'exams',
+    '/director/education/quarters': 'grading',
+    '/director/education/quarter-settings': 'calendar',
     '/director/attendance': 'attendance',
     '/director/schedule': 'schedule',
     '/director/journal': 'journal',
@@ -340,12 +344,18 @@ const DirectorDashboard = () => {
       currentPath === '/director/chat' ||
       currentPath === '/director/inbox' ||
       currentPath.startsWith('/director/communication/');
+    const isEducationRoute =
+      currentPath.startsWith('/director/education/') ||
+      currentPath === '/director/journal' ||
+      currentPath === '/director/attendance' ||
+      currentPath === '/director/schedule';
 
-    if (isManagementRoute || isCommunicationRoute) {
+    if (isManagementRoute || isCommunicationRoute || isEducationRoute) {
       setOpenSubMenus(prev => ({
         ...prev,
         management: isManagementRoute ? true : prev.management,
         communication: isCommunicationRoute ? true : prev.communication,
+        education: isEducationRoute ? true : prev.education,
         hr: currentPath.startsWith('/director/staff/') ? true : prev.hr
       }));
     }
@@ -405,6 +415,16 @@ const DirectorDashboard = () => {
           path: '/director/education/exams',
           label: 'Imtihonlar',
           icon: '✍️'
+        },
+        {
+          path: '/director/education/quarters',
+          label: 'Chorak baholari',
+          icon: '📊'
+        },
+        {
+          path: '/director/education/quarter-settings',
+          label: 'Chorak sozlamalari',
+          icon: '📅'
         },
         {
           path: '/director/attendance',
@@ -810,6 +830,8 @@ const DirectorDashboard = () => {
             <Route path="/staff/accountant" element={<AccountantManagement />} />
             <Route path="/staff/reception" element={<ReceptionManagement />} />
             <Route path="/staff/:type" element={<StaffRoute />} />
+            <Route path="/education/quarters" element={<QuarterGrades />} />
+            <Route path="/education/quarter-settings" element={<QuarterSettings />} />
             <Route path="/education/:type" element={<StaffPlaceholder />} />
             <Route path="/finance/:type" element={<StaffPlaceholder />} />
             <Route path="/management/permissions" element={<DirectorPermissions />} />

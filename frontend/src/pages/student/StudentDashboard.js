@@ -44,6 +44,7 @@ const menuIconName = (item = {}) => {
     '/student/chat': 'message',
     '/student/notifications': 'bell',
     '/student/statistics': 'report',
+    '/student/quarters': 'exams',
     '/student/payments': 'payments',
     '/student/profile': 'profile'
   };
@@ -58,6 +59,7 @@ const Homework = lazy(() => import('../../components/student/Homework'));
 const MyClass = lazy(() => import('../../components/student/MyClass'));
 const Exams = lazy(() => import('../../components/student/Exams'));
 const StudentStatistics = lazy(() => import('../../components/student/StudentStatistics'));
+const StudentQuarterGrades = lazy(() => import('../../components/student/StudentQuarterGrades'));
 const StudentPayments = lazy(() => import('../../components/student/StudentPayments'));
 const StudentProfile = lazy(() => import('../../components/student/StudentProfile'));
 const ChatPage = lazy(() => import('../../components/chat/ChatPage'));
@@ -172,6 +174,13 @@ const StudentDashboard = () => {
       path: '/student/statistics',
       label: 'Mening natijalarim',
       iconKey: 'report',
+      badge: null,
+      section: null
+    },
+    {
+      path: '/student/quarters',
+      label: 'Chorak baholari',
+      iconKey: 'exams',
       badge: null,
       section: null
     },
@@ -317,6 +326,7 @@ const StudentDashboard = () => {
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/notifications" element={<NotificationInbox />} />
                 <Route path="/statistics" element={<StudentStatistics />} />
+                <Route path="/quarters" element={<StudentQuarterGrades />} />
                 <Route path="/payments" element={<StudentPayments />} />
                 <Route path="/profile" element={<StudentProfile />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />

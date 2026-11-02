@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiService from '../../services/apiService';
+import { getQuarterErrorMessage } from '../../utils/quarterUi';
 
 const QUARTER_META = [
   { quarter: 1, label: '1-chorak', hint: 'Sentabr — Oktabr' },
@@ -152,7 +153,7 @@ const QuarterSettings = () => {
       setUpdatedAt(data.updatedAt || null);
       setCurrentQuarter(data.currentQuarter || null);
     } catch (err) {
-      setError(err.response?.data?.message || "Chorak sanalarini yuklashda xatolik yuz berdi");
+      setError(getQuarterErrorMessage(err, "Chorak sanalarini yuklashda xatolik yuz berdi"));
     } finally {
       setLoading(false);
     }
@@ -212,7 +213,7 @@ const QuarterSettings = () => {
       setCurrentQuarter(data.currentQuarter || null);
       setSuccess('Chorak sanalari saqlandi. Chorak baholari avtomatik qayta hisoblanadi.');
     } catch (err) {
-      setError(err.response?.data?.message || "Chorak sanalarini saqlashda xatolik yuz berdi");
+      setError(getQuarterErrorMessage(err, "Chorak sanalarini saqlashda xatolik yuz berdi"));
     } finally {
       setSaving(false);
     }

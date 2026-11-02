@@ -150,7 +150,21 @@ app.get('/', (req, res) => {
     res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
+    res.json({
+        status: 'Server is running',
+        timestamp: new Date().toISOString(),
+        commit: process.env.RENDER_GIT_COMMIT || null,
+        branch: process.env.RENDER_GIT_BRANCH || null
+    });
+});
+
+// Noma'lum API yo'llari uchun HTML o'rniga JSON javob qaytaramiz.
+// Bu deploy eskirganini (404) darhol aniqlashga yordam beradi.
+app.use('/api', (req, res) => {
+    res.status(404).json({
+        message: 'API endpoint topilmadi',
+        path: req.originalUrl
+    });
 });
 
 module.exports = { app, connectDB };

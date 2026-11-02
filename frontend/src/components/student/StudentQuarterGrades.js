@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import { getDefaultQuarterNumber, getQuarterErrorMessage } from '../../utils/quarterUi';
 
 function getCurrentAcademicYear() {
   const now = new Date();
@@ -73,13 +74,16 @@ const StudentQuarterGrades = () => {
       setData(response);
 
       const quarters = response?.quarters || [];
-      const currentQuarter = response?.calendar?.currentQuarter?.quarter;
+      const currentQuarter = response?.calendar?.currentQuarter;
       const withGrades = quarters.find(quarter => quarter.subjects?.length > 0);
+      const defaultQuarter = currentQuarter
+        ? getDefaultQuarterNumber(currentQuarter)
+        : (withGrades?.quarter || quarters[0]?.quarter || 1);
 
-      setActiveQuarter(String(currentQuarter || withGrades?.quarter || quarters[0]?.quarter || 1));
+      setActiveQuarter(String(defaultQuarter));
     } catch (err) {
       setData(null);
-      setError(err.response?.data?.message || 'Chorak baholarini yuklashda xatolik yuz berdi');
+      setError(getQuarterErrorMessage(err, 'Chorak baholarini yuklashda xatolik yuz berdi'));
     } finally {
       setLoading(false);
     }

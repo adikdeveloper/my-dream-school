@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
+import { getDefaultQuarterNumber, getQuarterErrorMessage } from '../../utils/quarterUi';
 import TeacherUiIcon from '../teacher/TeacherUiIcon';
 
 function getCurrentAcademicYear() {
@@ -89,13 +90,18 @@ const QuarterGrades = () => {
     setError('');
 
     try {
-      const [classResponse, calendar] = await Promise.all([
+      const [classResult, calendarResult] = await Promise.allSettled([
         isTeacher
           ? apiService.getTeacherMyClasses()
           : apiService.getClasses().then(response => response.classes || []),
         apiService.getAcademicCalendar(academicYear)
       ]);
 
+      if (classResult.status === 'rejected') {
+        throw classResult.reason;
+      }
+
+      const classResponse = classResult.value;
       const list = Array.isArray(classResponse)
         ? classResponse
         : (classResponse?.classes || []);
@@ -107,10 +113,17 @@ const QuarterGrades = () => {
           : (list[0]?._id || '')
       ));
 
-      const currentQuarter = calendar?.currentQuarter?.quarter || 1;
-      setQuarter(previous => previous || String(currentQuarter));
+      if (calendarResult.status === 'fulfilled') {
+        const defaultQuarter = getDefaultQuarterNumber(calendarResult.value?.currentQuarter);
+        setQuarter(previous => previous || String(defaultQuarter));
+      } else {
+        setError(getQuarterErrorMessage(
+          calendarResult.reason,
+          "Chorak sanalarini yuklashda xatolik yuz berdi"
+        ));
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Ma'lumotlarni yuklashda xatolik yuz berdi");
+      setError(getQuarterErrorMessage(err, "Ma'lumotlarni yuklashda xatolik yuz berdi"));
     } finally {
       setLoading(false);
     }
@@ -137,7 +150,7 @@ const QuarterGrades = () => {
       setData(response);
     } catch (err) {
       setData(null);
-      setError(err.response?.data?.message || 'Chorak baholarini hisoblashda xatolik yuz berdi');
+      setError(getQuarterErrorMessage(err, 'Chorak baholarini hisoblashda xatolik yuz berdi'));
     } finally {
       setLoadingGrades(false);
     }

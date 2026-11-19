@@ -32,21 +32,84 @@ router.get('/', auth, async (req, res) => {
       .populate('students', 'firstName lastName studentId phone registrationDate')
       .populate('subjects.subject', 'name code')
       .populate('subjects.teacher', 'firstName lastName')
-      .sort({ grade: 1, section: 1 })
+      .sort({ order: 1, grade: 1, section: 1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    // Umumiy statistika: jami o'quvchilar va sinfga biriktirilmaganlar
-    const [assignedStudentIds, totalStudents] = await Promise.all([
-      Class.distinct('students', { isActive: true }),
+    // Class.students va User.classId ba'zi eski yozuvlarda mos kelmasligi mumkin.
+    // Shuning uchun o'quvchilar ro'yxatini ikkala manbadan birlashtiramiz
+    // (teacher/students endpointidagi bilan bir xil mantiq).
+    if (classes.length > 0) {
+      const visibleClassIds = classes.map(cls => cls._id);
+      const classIdStudents = await User.find({
+        role: 'student',
+        isActive: { $ne: false },
+        classId: { $in: visibleClassIds }
+      })
+        .select('firstName lastName studentId phone registrationDate classId')
+        .lean();
+
+      const studentsByClassId = new Map();
+      classIdStudents.forEach(student => {
+        const key = student.classId ? student.classId.toString() : '';
+        if (!key) return;
+        if (!studentsByClassId.has(key)) studentsByClassId.set(key, []);
+        studentsByClassId.get(key).push(student);
+      });
+
+      classes.forEach(cls => {
+        const existingIds = new Set();
+
+        // Bo'sh (o'chirilgan foydalanuvchiga ishora qiluvchi) va takroriy
+        // yozuvlarni olib tashlaymiz.
+        cls.students = (cls.students || []).filter(student => {
+          if (!student || !student._id) return false;
+          const studentId = student._id.toString();
+          if (existingIds.has(studentId)) return false;
+          existingIds.add(studentId);
+          return true;
+        });
+
+        const extraStudents = studentsByClassId.get(cls._id.toString()) || [];
+        extraStudents.forEach(student => {
+          const studentId = student._id.toString();
+          if (existingIds.has(studentId)) return;
+          cls.students.push(student);
+          existingIds.add(studentId);
+        });
+      });
+    }
+
+    // Umumiy statistika: jami o'quvchilar va sinfga biriktirilmaganlar.
+    // Bu yerda ham Class.students va User.classId birlashtiriladi.
+    const [activeClasses, totalStudents] = await Promise.all([
+      Class.find({ isActive: true }).select('_id students').lean(),
       User.countDocuments({ role: 'student', isActive: { $ne: false } })
     ]);
+
+    const activeClassIds = activeClasses.map(cls => cls._id);
+    const assignedIds = new Set(
+      activeClasses.flatMap(cls => (
+        (cls.students || [])
+          .map(id => (id ? id.toString() : ''))
+          .filter(Boolean)
+      ))
+    );
+
+    if (activeClassIds.length > 0) {
+      const linkedStudents = await User.distinct('_id', {
+        role: 'student',
+        isActive: { $ne: false },
+        classId: { $in: activeClassIds }
+      });
+      linkedStudents.forEach(id => assignedIds.add(id.toString()));
+    }
 
     const unassignedStudents = await User.countDocuments({
       role: 'student',
       isActive: { $ne: false },
-      _id: { $nin: assignedStudentIds }
+      _id: { $nin: Array.from(assignedIds) }
     });
 
     // Always return consistent format with classes array
@@ -84,15 +147,20 @@ router.get('/available-students', auth, authorize('admin', 'accountant'), async 
       .select('students')
       .lean();
 
+    const activeClassIds = classes.map(c => c._id);
+
     // Extract all student IDs that are already in classes
     const assignedStudentIds = classes.flatMap(c =>
       (c.students || []).map(s => s.toString())
     );
 
-    // Get all students that are not in any class
+    // Get all students that are not in any class.
+    // User.classId ham tekshiriladi: eski yozuvlarda o'quvchi Class.students da
+    // bo'lmasdan, faqat classId bilan biriktirilgan bo'lishi mumkin.
     const availableStudents = await User.find({
       role: 'student',
-      _id: { $nin: assignedStudentIds }
+      _id: { $nin: assignedStudentIds },
+      classId: { $nin: activeClassIds }
     })
       .select('firstName lastName studentId email phone profileImage')
       .sort({ firstName: 1, lastName: 1 })
@@ -406,6 +474,81 @@ router.post('/', auth, authorize('admin', 'accountant', 'supervisor'), requirePe
   }
 });
 
+// @route   PUT /api/classes/reorder
+// @desc    Save manual (drag & drop) class order
+// @access  Private/Admin
+router.put('/reorder', auth, authorize('admin', 'accountant', 'supervisor'), requirePermission('class.edit'), async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const { orderedIds } = req.body;
+
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      return res.status(400).json({ message: 'orderedIds array bo\'lishi kerak' });
+    }
+
+    const validIds = orderedIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({ message: 'Noto\'g\'ri sinf ID lari' });
+    }
+
+    const allClasses = await Class.find({})
+      .select('_id')
+      .sort({ order: 1, grade: 1, section: 1 })
+      .lean();
+
+    const existingIds = new Set(allClasses.map(cls => cls._id.toString()));
+    const seen = new Set();
+    const finalOrder = [];
+
+    validIds.forEach(id => {
+      const key = id.toString();
+      if (existingIds.has(key) && !seen.has(key)) {
+        seen.add(key);
+        finalOrder.push(key);
+      }
+    });
+
+    // Ro'yxatda qolmagan sinflar (masalan, yangi qo'shilgan) oxiriga qo'shiladi.
+    allClasses.forEach(cls => {
+      const key = cls._id.toString();
+      if (!seen.has(key)) {
+        seen.add(key);
+        finalOrder.push(key);
+      }
+    });
+
+    if (finalOrder.length === 0) {
+      return res.status(400).json({ message: 'Tartiblash uchun sinflar topilmadi' });
+    }
+
+    await Class.bulkWrite(
+      finalOrder.map((id, index) => ({
+        updateOne: {
+          filter: { _id: id },
+          update: { $set: { order: index } }
+        }
+      }))
+    );
+
+    logger.info('Classes reordered', {
+      userId: req.user?.id,
+      count: finalOrder.length
+    });
+
+    res.json({
+      message: 'Sinflar tartibi saqlandi',
+      order: finalOrder
+    });
+  } catch (error) {
+    logger.error('Error reordering classes', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
+    res.status(500).json({ message: 'Sinflar tartibini saqlashda xatolik yuz berdi' });
+  }
+});
+
 // @route   PUT /api/classes/:id
 // @desc    Update class
 // @access  Private/Admin
@@ -569,7 +712,14 @@ router.delete('/:classId/students/:studentId', auth, authorize('admin', 'account
       id => id.toString() === studentId
     );
 
-    if (!isStudentInClass) {
+    // Eski yozuvlarda o'quvchi Class.students da bo'lmasdan, faqat
+    // User.classId orqali sinfga biriktirilgan bo'lishi mumkin.
+    const isLinkedByClassId = await User.exists({
+      _id: studentId,
+      classId
+    });
+
+    if (!isStudentInClass && !isLinkedByClassId) {
       return res.status(404).json({ message: 'O\'quvchi bu sinfda topilmadi' });
     }
 

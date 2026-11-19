@@ -52,6 +52,11 @@ const classSchema = new mongoose.Schema({
     type: Number,
     default: 30
   },
+  // Qo'lda (drag & drop) tartiblash uchun. Kichik qiymat — yuqoriroqda turadi.
+  order: {
+    type: Number,
+    default: 1000
+  },
   isActive: {
     type: Boolean,
     default: true

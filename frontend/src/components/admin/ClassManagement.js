@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
-import { Can } from '../../context/PermissionsContext';
+import { Can, usePermissions } from '../../context/PermissionsContext';
 import apiService from '../../services/apiService';
 import ClassProfile from './ClassProfile';
 import ClassStatistics from './ClassStatistics';
@@ -37,6 +37,7 @@ ChartJS.register(
 const ClassManagement = () => {
   const navigate = useNavigate();
   const { setLoading, setError } = useData();
+  const { can } = usePermissions();
   const [classes, setClasses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -67,6 +68,9 @@ const ClassManagement = () => {
     unassignedStudents: 0,
     assignedStudents: 0
   });
+  const [draggedClassId, setDraggedClassId] = useState(null);
+  const [dragOverClassId, setDragOverClassId] = useState(null);
+  const canReorderClasses = can('class.edit');
 
   const loadClasses = useCallback(async () => {
     try {
@@ -122,6 +126,71 @@ const ClassManagement = () => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const handleClassDragStart = useCallback((event, cls) => {
+    if (!canReorderClasses) return;
+    // Tugmalardan tasodifan sudrab tashlashning oldini olamiz.
+    if (event.target.closest('button, a, input, select, textarea')) {
+      event.preventDefault();
+      return;
+    }
+    setDraggedClassId(cls._id);
+    setDragOverClassId(null);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      try {
+        event.dataTransfer.setData('text/plain', cls._id);
+      } catch (err) {
+        // Ba'zi brauzerlar text/plain yozishga ruxsat bermaydi — e'tiborsiz qoldiramiz.
+      }
+    }
+  }, [canReorderClasses]);
+
+  const handleClassDragOver = useCallback((event, cls) => {
+    if (!canReorderClasses || !draggedClassId || draggedClassId === cls._id) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    if (dragOverClassId !== cls._id) setDragOverClassId(cls._id);
+  }, [canReorderClasses, draggedClassId, dragOverClassId]);
+
+  const handleClassDragLeave = useCallback((event, cls) => {
+    if (!canReorderClasses) return;
+    const nextTarget = event.relatedTarget;
+    if (nextTarget && event.currentTarget.contains(nextTarget)) return;
+    setDragOverClassId(prev => (prev === cls._id ? null : prev));
+  }, [canReorderClasses]);
+
+  const handleClassDragEnd = useCallback(() => {
+    setDraggedClassId(null);
+    setDragOverClassId(null);
+  }, []);
+
+  const handleClassDrop = useCallback(async (event, targetCls) => {
+    if (!canReorderClasses) return;
+    event.preventDefault();
+
+    const sourceId = draggedClassId || event.dataTransfer?.getData('text/plain');
+    setDraggedClassId(null);
+    setDragOverClassId(null);
+
+    if (!sourceId || sourceId === targetCls._id) return;
+
+    const sourceIndex = classes.findIndex(cls => cls._id === sourceId);
+    const targetIndex = classes.findIndex(cls => cls._id === targetCls._id);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const nextClasses = [...classes];
+    const [movedClass] = nextClasses.splice(sourceIndex, 1);
+    nextClasses.splice(targetIndex, 0, movedClass);
+    setClasses(nextClasses);
+
+    try {
+      await apiService.reorderClasses(nextClasses.map(cls => cls._id));
+    } catch (error) {
+      setError(error.response?.data?.message || 'Sinflar tartibini saqlashda xatolik');
+      loadClasses();
+    }
+  }, [canReorderClasses, classes, draggedClassId, loadClasses, setError]);
 
   // Smart pagination with clickable ellipsis
   const renderPaginationPages = useCallback(() => {
@@ -636,7 +705,18 @@ const ClassManagement = () => {
         {filteredClasses.length > 0 ? (
           <div className="classes-grid">
             {paginatedClasses.map((cls) => (
-              <div key={cls._id} className={`class-card ${!cls.isActive ? 'class-inactive' : ''}`}>
+              <div
+                key={cls._id}
+                className={`class-card ${!cls.isActive ? 'class-inactive' : ''} ${draggedClassId === cls._id ? 'is-dragging' : ''} ${dragOverClassId === cls._id ? 'is-drag-over' : ''}`}
+                draggable={canReorderClasses}
+                onDragStart={(event) => handleClassDragStart(event, cls)}
+                onDragOver={(event) => handleClassDragOver(event, cls)}
+                onDragEnter={(event) => handleClassDragOver(event, cls)}
+                onDragLeave={(event) => handleClassDragLeave(event, cls)}
+                onDrop={(event) => handleClassDrop(event, cls)}
+                onDragEnd={handleClassDragEnd}
+                title={canReorderClasses ? 'Sudrab tartiblash uchun ushlab suring' : undefined}
+              >
                 <div className="class-header">
                   <div className="class-badge">
                     {(cls.grade !== null && cls.grade !== undefined && cls.grade !== '') && <span className="grade-badge">{cls.grade}</span>}
@@ -651,9 +731,23 @@ const ClassManagement = () => {
                 <div className="class-body">
                   <div className="class-title-row">
                     <h3 className="class-name">{cls.name}</h3>
-                    <span className={`class-status-badge ${cls.isActive ? 'active' : 'inactive'}`}>
-                      {cls.isActive ? 'Faol' : 'Nofaol'}
-                    </span>
+                    <div className="class-title-meta">
+                      {canReorderClasses && (
+                        <span className="class-drag-handle" aria-hidden="true">
+                          <svg viewBox="0 0 16 16" fill="currentColor" focusable="false">
+                            <circle cx="5" cy="3" r="1.3" />
+                            <circle cx="11" cy="3" r="1.3" />
+                            <circle cx="5" cy="8" r="1.3" />
+                            <circle cx="11" cy="8" r="1.3" />
+                            <circle cx="5" cy="13" r="1.3" />
+                            <circle cx="11" cy="13" r="1.3" />
+                          </svg>
+                        </span>
+                      )}
+                      <span className={`class-status-badge ${cls.isActive ? 'active' : 'inactive'}`}>
+                        {cls.isActive ? 'Faol' : 'Nofaol'}
+                      </span>
+                    </div>
                   </div>
                   <p className="class-year">{cls.academicYear}</p>
 
@@ -803,8 +897,17 @@ const ClassManagement = () => {
                   {classForDetails.section && <span className="section-text">{classForDetails.section}</span>}
                 </div>
                 <div className="class-title-info">
-                  <h2 className="class-title-main">{classForDetails.name}</h2>
-                  <p className="class-subtitle">{classForDetails.academicYear}</p>
+                  <div className="details-title-row">
+                    <h2 className="class-title-main">{classForDetails.name}</h2>
+                    <span className={`details-status-pill ${classForDetails.isActive !== false ? 'active' : 'inactive'}`}>
+                      {classForDetails.isActive !== false ? 'Faol' : 'Nofaol'}
+                    </span>
+                  </div>
+                  <p className="class-subtitle">
+                    <span>{classForDetails.academicYear || '—'}</span>
+                    <span className="details-subtitle-dot" aria-hidden="true">•</span>
+                    <span>{classForDetails.students?.length || 0} o'quvchi</span>
+                  </p>
                 </div>
               </div>
               <button
@@ -1852,6 +1955,83 @@ const ClassManagement = () => {
           background: #fafafa;
         }
 
+        .class-card[draggable="true"] {
+          cursor: grab;
+        }
+
+        .class-card[draggable="true"]:active {
+          cursor: grabbing;
+        }
+
+        .class-card.is-dragging {
+          opacity: 0.45;
+          border-style: dashed;
+        }
+
+        .class-card.is-drag-over {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16), 0 6px 16px rgba(59, 130, 246, 0.12);
+        }
+
+        .class-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 4px;
+        }
+
+        .class-title-meta {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex: 0 0 auto;
+        }
+
+        .class-drag-handle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          color: #94a3b8;
+          border-radius: 6px;
+          cursor: grab;
+          transition: color 0.2s ease, background 0.2s ease;
+        }
+
+        .class-drag-handle:hover {
+          color: #2563eb;
+          background: #eff6ff;
+        }
+
+        .class-drag-handle svg {
+          width: 14px;
+          height: 14px;
+        }
+
+        .class-status-badge {
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        .class-status-badge.active {
+          color: #047857;
+          background: #d1fae5;
+        }
+
+        .class-status-badge.inactive {
+          color: #475569;
+          background: #f1f5f9;
+        }
+
         .class-header {
           padding: 0.625rem 0.75rem;
           background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
@@ -1912,10 +2092,14 @@ const ClassManagement = () => {
         }
 
         .class-name {
+          min-width: 0;
+          margin-bottom: 0.125rem;
+          overflow: hidden;
+          color: #1e293b;
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #1e293b;
-          margin-bottom: 0.125rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .class-year {
@@ -1996,13 +2180,15 @@ const ClassManagement = () => {
         }
 
         .details-modal-header {
-          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
-          padding: 1.25rem 1.5rem;
+          background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+          padding: 1.125rem 1.5rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 1rem;
           position: relative;
           overflow: hidden;
+          border-bottom: 1px solid #e2e8f0;
         }
 
         .details-modal-header::before {
@@ -2012,7 +2198,7 @@ const ClassManagement = () => {
           right: -15%;
           width: 250px;
           height: 250px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
           border-radius: 50%;
           animation: pulse 3s ease-in-out infinite;
         }
@@ -2024,7 +2210,7 @@ const ClassManagement = () => {
           left: -10%;
           width: 180px;
           height: 180px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 60%);
           border-radius: 50%;
         }
 
@@ -2044,34 +2230,42 @@ const ClassManagement = () => {
         }
 
         .class-badge-large {
-          background: rgba(255, 255, 255, 0.25);
-          backdrop-filter: blur(12px);
-          padding: 0.625rem 0.875rem;
-          border-radius: 12px;
+          box-sizing: border-box;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.125rem;
-          border: 2px solid rgba(255, 255, 255, 0.4);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          justify-content: center;
+          gap: 1px;
+          min-width: 56px;
+          min-height: 56px;
+          padding: 0.375rem 0.75rem;
+          overflow: hidden;
+          background: #ffffff;
+          border: 1px solid #bfdbfe;
+          border-radius: 14px;
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.12);
           flex-shrink: 0;
-          min-width: 50px;
         }
 
         .grade-text {
-          font-size: 1.5rem;
-          font-weight: 900;
-          color: white;
+          font-size: 1.375rem;
+          font-weight: 800;
+          color: #1e40af;
           line-height: 1;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+          text-shadow: none;
         }
 
         .section-text {
-          font-size: 0.8125rem;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.95);
+          max-width: 100%;
+          overflow: hidden;
+          color: #2563eb;
+          font-size: 0.6875rem;
+          font-weight: 800;
+          line-height: 1.2;
+          letter-spacing: 0.8px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          text-overflow: ellipsis;
+          text-shadow: none;
         }
 
         .details-modal-header .class-title-info {
@@ -2080,47 +2274,92 @@ const ClassManagement = () => {
           overflow: hidden;
         }
 
+        .details-title-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+          margin-bottom: 3px;
+        }
+
         .details-modal-header .class-title-main {
-          font-size: 1.125rem;
-          font-weight: 800;
-          color: white;
-          margin: 0 0 0.25rem 0;
+          flex: 0 1 auto;
+          min-width: 0;
+          margin: 0;
           overflow: hidden;
+          color: #0f172a;
+          font-size: 1.25rem;
+          font-weight: 800;
+          line-height: 1.25;
           text-overflow: ellipsis;
+          text-shadow: none;
           white-space: nowrap;
-          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        .details-status-pill {
+          display: inline-flex;
+          align-items: center;
+          flex: 0 0 auto;
+          min-height: 20px;
+          padding: 3px 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1;
+          letter-spacing: 0.2px;
+        }
+
+        .details-status-pill.active {
+          color: #047857;
+          background: #d1fae5;
+        }
+
+        .details-status-pill.inactive {
+          color: #475569;
+          background: #e2e8f0;
         }
 
         .details-modal-header .class-subtitle {
-          font-size: 0.8125rem;
-          color: rgba(255, 255, 255, 0.9);
+          display: flex;
+          align-items: center;
+          gap: 6px;
           margin: 0;
-          font-weight: 600;
           overflow: hidden;
+          color: #64748b;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          line-height: 1.3;
           text-overflow: ellipsis;
+          text-shadow: none;
           white-space: nowrap;
+        }
+
+        .details-subtitle-dot {
+          color: #cbd5e1;
+          font-size: 0.75rem;
         }
 
         .modal-close-btn {
           position: relative;
           z-index: 1;
-          width: 32px;
-          height: 32px;
-          background: rgba(255, 255, 255, 0.2);
-          border: 2px solid rgba(255, 255, 255, 0.35);
-          border-radius: 50%;
-          color: white;
-          font-size: 1.125rem;
-          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.25s ease;
-          font-weight: 700;
           flex-shrink: 0;
+          width: 36px;
+          height: 36px;
+          color: #64748b;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
 
         .modal-close-btn:hover {
+          color: #ffffff;
           background: #ef4444;
           border-color: #ef4444;
           transform: rotate(90deg) scale(1.1);

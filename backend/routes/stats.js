@@ -927,6 +927,32 @@ router.get('/class/:classId', auth, authorize('admin', 'accountant'), async (req
       return res.status(404).json({ message: 'Sinf topilmadi' });
     }
 
+    // Class.students va User.classId ba'zi yozuvlarda mos kelmasligi mumkin.
+    // Statistikada ham ikkala manbadagi o'quvchilarni birlashtiramiz.
+    const linkedStudents = await User.find({
+      role: 'student',
+      isActive: { $ne: false },
+      classId: classData._id
+    })
+      .select('firstName lastName studentId')
+      .lean();
+
+    const existingStudentIds = new Set();
+    classData.students = (classData.students || []).filter(student => {
+      if (!student || !student._id) return false;
+      const studentId = student._id.toString();
+      if (existingStudentIds.has(studentId)) return false;
+      existingStudentIds.add(studentId);
+      return true;
+    });
+
+    linkedStudents.forEach(student => {
+      const studentId = student._id.toString();
+      if (existingStudentIds.has(studentId)) return;
+      classData.students.push(student);
+      existingStudentIds.add(studentId);
+    });
+
     const studentIds = classData.students.map(s => s._id);
     const subjectIds = classData.subjects.map(s => s.subject._id);
 

@@ -88,6 +88,11 @@ const apiService = {
     return response.data;
   },
 
+  reorderClasses: async (orderedIds) => {
+    const response = await api.put('/classes/reorder', { orderedIds });
+    return response.data;
+  },
+
   deleteClass: async (id) => {
     const response = await api.delete(`/classes/${id}`);
     return response.data;

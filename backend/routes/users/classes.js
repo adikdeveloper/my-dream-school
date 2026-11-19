@@ -37,6 +37,18 @@ router.get('/', auth, async (req, res) => {
       .limit(limit)
       .lean();
 
+    // Umumiy statistika: jami o'quvchilar va sinfga biriktirilmaganlar
+    const [assignedStudentIds, totalStudents] = await Promise.all([
+      Class.distinct('students', { isActive: true }),
+      User.countDocuments({ role: 'student', isActive: { $ne: false } })
+    ]);
+
+    const unassignedStudents = await User.countDocuments({
+      role: 'student',
+      isActive: { $ne: false },
+      _id: { $nin: assignedStudentIds }
+    });
+
     // Always return consistent format with classes array
     res.json({
       classes,
@@ -45,6 +57,11 @@ router.get('/', auth, async (req, res) => {
         totalPages: Math.ceil(total / limit),
         totalClasses: total,
         limit
+      },
+      stats: {
+        totalStudents,
+        unassignedStudents,
+        assignedStudents: Math.max(totalStudents - unassignedStudents, 0)
       }
     });
   } catch (error) {
@@ -528,6 +545,77 @@ router.get('/:classId/students', auth, authorize('teacher', 'admin'), async (req
       classId: req.params.classId
     });
     res.status(500).json({ message: 'O\'quvchilarni yuklashda xatolik yuz berdi' });
+  }
+});
+
+// @route   DELETE /api/classes/:classId/students/:studentId
+// @desc    Remove (unassign) a student from a class without deleting the user
+// @access  Private/Admin
+router.delete('/:classId/students/:studentId', auth, authorize('admin', 'accountant', 'supervisor'), requirePermission('class.edit'), async (req, res) => {
+  try {
+    const { classId, studentId } = req.params;
+    const mongoose = require('mongoose');
+
+    if (!mongoose.Types.ObjectId.isValid(classId) || !mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: 'Noto\'g\'ri ID formati' });
+    }
+
+    const classData = await Class.findById(classId);
+    if (!classData) {
+      return res.status(404).json({ message: 'Sinf topilmadi' });
+    }
+
+    const isStudentInClass = (classData.students || []).some(
+      id => id.toString() === studentId
+    );
+
+    if (!isStudentInClass) {
+      return res.status(404).json({ message: 'O\'quvchi bu sinfda topilmadi' });
+    }
+
+    await Class.findByIdAndUpdate(
+      classId,
+      { $pull: { students: studentId } },
+      { new: true }
+    );
+
+    // O'quvchining classId maydoni shu sinfga ishora qilsa - bo'shatamiz.
+    // O'quvchi (User) o'chirilmaydi, faqat sinfdan chiqariladi.
+    await User.updateOne(
+      { _id: studentId, classId },
+      { $set: { classId: null } }
+    );
+
+    // Sinf chat guruhini yangilash (a'zolar ro'yxati)
+    try {
+      await ensureClassRoom(classId);
+    } catch (chatErr) {
+      logger.warn('Class chat room sync failed after student removal', {
+        error: chatErr.message,
+        classId
+      });
+    }
+
+    logger.info('Student removed from class', {
+      classId,
+      studentId,
+      userId: req.user?.id
+    });
+
+    res.json({
+      message: 'O\'quvchi sinfdan chiqarildi',
+      classId,
+      studentId
+    });
+  } catch (error) {
+    logger.error('Error removing student from class', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      classId: req.params.classId,
+      studentId: req.params.studentId
+    });
+    res.status(500).json({ message: 'O\'quvchini sinfdan chiqarishda xatolik yuz berdi' });
   }
 });
 

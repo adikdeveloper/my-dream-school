@@ -93,6 +93,11 @@ const apiService = {
     return response.data;
   },
 
+  removeStudentFromClass: async (classId, studentId) => {
+    const response = await api.delete(`/classes/${classId}/students/${studentId}`);
+    return response.data;
+  },
+
   getAvailableStudents: async () => {
     const response = await api.get('/classes/available-students');
     return response.data;

@@ -59,6 +59,14 @@ const ClassManagement = () => {
   const [classForStatistics, setClassForStatistics] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9);
+  const [transferSearchTerm, setTransferSearchTerm] = useState('');
+  const [studentToRemove, setStudentToRemove] = useState(null);
+  const [removingStudent, setRemovingStudent] = useState(false);
+  const [classStats, setClassStats] = useState({
+    totalStudents: 0,
+    unassignedStudents: 0,
+    assignedStudents: 0
+  });
 
   const loadClasses = useCallback(async () => {
     try {
@@ -66,6 +74,13 @@ const ClassManagement = () => {
       const response = await apiService.getClasses();
       // Backend always returns {classes: [...], pagination: {...}} format
       setClasses(response.classes || []);
+      if (response.stats) {
+        setClassStats({
+          totalStudents: response.stats.totalStudents || 0,
+          unassignedStudents: response.stats.unassignedStudents || 0,
+          assignedStudents: response.stats.assignedStudents || 0
+        });
+      }
     } catch (error) {
       setError(error.response?.data?.message || 'Sinflarni yuklashda xatolik');
     } finally {
@@ -337,8 +352,57 @@ const ClassManagement = () => {
 
   const handleTransferClass = (cls) => {
     setSelectedClass(cls);
+    setTransferSearchTerm('');
+    setStudentToTransfer(null);
+    setTargetClassId('');
     setShowTransferModal(true);
   };
+
+  const closeTransferModal = useCallback(() => {
+    setShowTransferModal(false);
+    setStudentToTransfer(null);
+    setTargetClassId('');
+    setTransferSearchTerm('');
+  }, []);
+
+  const handleRemoveStudent = (student) => {
+    setStudentToRemove(student);
+  };
+
+  const confirmRemoveStudent = async () => {
+    if (!studentToRemove || !classForDetails) return;
+
+    try {
+      setRemovingStudent(true);
+      await apiService.removeStudentFromClass(classForDetails._id, studentToRemove._id);
+
+      setClassForDetails(prev => prev ? {
+        ...prev,
+        students: (prev.students || []).filter(s => s._id !== studentToRemove._id)
+      } : prev);
+
+      setStudentToRemove(null);
+      loadClasses();
+    } catch (error) {
+      setError(error.response?.data?.message || 'O\'quvchini sinfdan chiqarishda xatolik');
+    } finally {
+      setRemovingStudent(false);
+    }
+  };
+
+  const filteredTransferStudents = useMemo(() => {
+    const students = selectedClass?.students || [];
+    const query = transferSearchTerm.trim().toLowerCase();
+
+    if (!query) return students;
+
+    return students.filter(student => {
+      const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
+      return fullName.includes(query) ||
+        (student.phone || '').includes(query) ||
+        (student.studentId || '').toLowerCase().includes(query);
+    });
+  }, [selectedClass, transferSearchTerm]);
 
   const confirmAddStudents = async () => {
     if (selectedStudents.length === 0) {
@@ -475,9 +539,23 @@ const ClassManagement = () => {
           <div className="stat-icon">👨‍🎓</div>
           <div className="stat-content">
             <div className="stat-value">
-              {classes.reduce((sum, c) => sum + (c.students?.length || 0), 0)}
+              {classStats.totalStudents || classes.reduce((sum, c) => sum + (c.students?.length || 0), 0)}
             </div>
             <div className="stat-label">Jami o'quvchilar</div>
+          </div>
+          <div className="stat-decoration"></div>
+        </div>
+
+        <div className={`stat-card stat-unassigned ${classStats.unassignedStudents > 0 ? 'has-alert' : 'is-clear'}`}>
+          <div className="stat-icon">👤</div>
+          <div className="stat-content">
+            <div className="stat-value">{classStats.unassignedStudents}</div>
+            <div className="stat-label">Biriktirilmagan</div>
+            <div className="stat-note">
+              {classStats.unassignedStudents > 0
+                ? 'sinfga biriktirilmagan'
+                : 'barchasi biriktirilgan'}
+            </div>
           </div>
           <div className="stat-decoration"></div>
         </div>
@@ -825,6 +903,17 @@ const ClassManagement = () => {
                             <div className="student-card-id">ID: {student.studentId}</div>
                           )}
                         </div>
+                        <Can perm="class.edit">
+                          <button
+                            type="button"
+                            className="student-card-remove"
+                            title="O'quvchini sinfdan chiqarish"
+                            aria-label={`${student.firstName} ${student.lastName}ni sinfdan chiqarish`}
+                            onClick={() => handleRemoveStudent(student)}
+                          >
+                            <span aria-hidden="true">🗑️</span>
+                          </button>
+                        </Can>
                       </div>
                     ))}
                   </div>
@@ -1085,184 +1174,170 @@ const ClassManagement = () => {
         </div>
       )}
 
-      {/* Transfer Student Modal - Enhanced Design */}
-      {showTransferModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowTransferModal(false);
-          setStudentToTransfer(null);
-          setTargetClassId('');
-        }}>
-          <div className="transfer-modal-enhanced" onClick={(e) => e.stopPropagation()}>
-            {/* Enhanced Transfer Header */}
-            <div className="transfer-modal-header">
-              <div className="transfer-header-content">
-                <div className="transfer-icon-wrapper">
-                  <span className="transfer-main-icon">🔄</span>
-                  <div className="icon-circle-bg"></div>
-                </div>
-                <div className="transfer-text-content">
-                  <h2 className="transfer-title">O'quvchini ko'chirish</h2>
-                  <p className="transfer-subtitle">
-                    <span className="class-badge-small">{selectedClass?.name}</span>
-                    <span className="arrow-separator">→</span>
-                    <span>Yangi sinf</span>
+      {/* Transfer Student Modal - compact responsive redesign */}
+      {showTransferModal && selectedClass && (
+        <div className="modal-overlay" onClick={closeTransferModal}>
+          <div className="transfer-modal-enhanced transfer-redesign" onClick={(e) => e.stopPropagation()}>
+            <div className="transfer-sheet-header">
+              <div className="transfer-sheet-heading">
+                <span className="transfer-sheet-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7h15l-3-3" />
+                    <path d="M21 17H6l3 3" />
+                  </svg>
+                </span>
+                <div className="transfer-sheet-title">
+                  <h2>O'quvchini ko'chirish</h2>
+                  <p>
+                    <span className="transfer-class-chip">{selectedClass.name}</span>
+                    <span className="transfer-route-arrow">→</span>
+                    <span>
+                      {studentToTransfer
+                        ? (classes.find(c => c._id === targetClassId)?.name || 'Yangi sinf')
+                        : 'Yangi sinf'}
+                    </span>
                   </p>
                 </div>
               </div>
-
-              {/* Step Indicator */}
-              <div className="step-indicator">
-                <div className={`step ${!studentToTransfer ? 'active' : 'completed'}`}>
-                  <div className="step-number">1</div>
-                  <div className="step-label">O'quvchi</div>
-                </div>
-                <div className="step-line"></div>
-                <div className={`step ${studentToTransfer ? 'active' : ''}`}>
-                  <div className="step-number">2</div>
-                  <div className="step-label">Sinf</div>
-                </div>
-              </div>
-
               <button
-                className="transfer-close-btn"
-                onClick={() => {
-                  setShowTransferModal(false);
-                  setStudentToTransfer(null);
-                  setTargetClassId('');
-                }}
+                type="button"
+                className="transfer-sheet-close"
+                onClick={closeTransferModal}
+                aria-label="Yopish"
               >
-                ✕
+                ×
               </button>
             </div>
 
-            <div className="transfer-modal-body">
+            <div className="transfer-progress-bar" aria-hidden="true">
+              <div className={`transfer-progress-step ${!studentToTransfer ? 'is-active' : 'is-done'}`}>
+                <span className="transfer-progress-number">{studentToTransfer ? '✓' : '1'}</span>
+                <span className="transfer-progress-label">O'quvchi</span>
+              </div>
+              <span className={`transfer-progress-track ${studentToTransfer ? 'is-done' : ''}`}></span>
+              <div className={`transfer-progress-step ${studentToTransfer ? 'is-active' : ''}`}>
+                <span className="transfer-progress-number">2</span>
+                <span className="transfer-progress-label">Yangi sinf</span>
+              </div>
+            </div>
+
+            <div className="transfer-sheet-body">
               {!studentToTransfer ? (
-                // Step 1: Select student
                 <>
-                  {selectedClass?.students && selectedClass.students.length > 0 ? (
+                  <div className="transfer-section-head">
+                    <div>
+                      <h3>1-qadam: O'quvchini tanlang</h3>
+                      <p>Ko'chirmoqchi bo'lgan o'quvchini ro'yxatdan tanlang</p>
+                    </div>
+                    <span className="transfer-count-badge">
+                      {selectedClass.students?.length || 0} ta
+                    </span>
+                  </div>
+
+                  {(selectedClass.students?.length || 0) > 0 ? (
                     <>
-                      <div className="transfer-step-header">
-                        <div className="step-header-icon">👥</div>
-                        <div className="step-header-text">
-                          <h3 className="step-title">1-qadam: O'quvchini tanlang</h3>
-                          <p className="step-description">
-                            Ko'chirmoqchi bo'lgan o'quvchini ro'yxatdan tanlang
-                          </p>
-                        </div>
+                      <div className="transfer-search">
+                        <span className="transfer-search-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-4-4" />
+                          </svg>
+                        </span>
+                        <input
+                          type="text"
+                          value={transferSearchTerm}
+                          onChange={(e) => setTransferSearchTerm(e.target.value)}
+                          placeholder="Ism, telefon yoki ID bo'yicha qidirish..."
+                        />
+                        {transferSearchTerm && (
+                          <button
+                            type="button"
+                            className="transfer-search-clear"
+                            onClick={() => setTransferSearchTerm('')}
+                            aria-label="Qidiruvni tozalash"
+                          >
+                            ×
+                          </button>
+                        )}
                       </div>
 
-                      <div className="transfer-students-grid">
-                        {selectedClass.students.map((student, index) => (
-                          <div
-                            key={student._id}
-                            className="transfer-student-card"
-                            onClick={() => {
-                              setStudentToTransfer(student);
-                              setTargetClassId('');
-                            }}
-                            style={{ animationDelay: `${index * 0.05}s` }}
-                          >
-                            <div className="transfer-card-content">
-                              <div className="transfer-student-avatar">
-                                <span className="avatar-initials">
-                                  {student.firstName.charAt(0)}{student.lastName.charAt(0)}
-                                </span>
-                                <div className="avatar-glow"></div>
-                              </div>
-                              <div className="transfer-student-info">
-                                <h4 className="transfer-student-name">
+                      {filteredTransferStudents.length > 0 ? (
+                        <div className="transfer-person-grid">
+                          {filteredTransferStudents.map(student => (
+                            <button
+                              type="button"
+                              key={student._id}
+                              className="transfer-person"
+                              onClick={() => {
+                                setStudentToTransfer(student);
+                                setTargetClassId('');
+                              }}
+                            >
+                              <span className="transfer-person-avatar">
+                                {(student.firstName || '?').charAt(0)}{(student.lastName || '').charAt(0)}
+                              </span>
+                              <span className="transfer-person-info">
+                                <span className="transfer-person-name">
                                   {student.firstName} {student.lastName}
-                                </h4>
-                                <div className="transfer-student-details">
-                                  <span className="detail-item">
-                                    <span className="detail-icon-small">📞</span>
-                                    {student.phone || 'Telefon yo\'q'}
-                                  </span>
-                                  {student.studentId && (
-                                    <span className="detail-item">
-                                      <span className="detail-icon-small">🆔</span>
-                                      {student.studentId}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="transfer-card-action">
-                              <span className="action-text">Tanlash</span>
-                              <span className="action-arrow">→</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                                </span>
+                                <span className="transfer-person-meta">
+                                  {student.phone || 'Telefon yo\'q'}
+                                  {student.studentId ? ` · ${student.studentId}` : ''}
+                                </span>
+                              </span>
+                              <span className="transfer-person-chevron" aria-hidden="true">→</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="transfer-no-results">
+                          <span className="transfer-no-results-icon">🔍</span>
+                          <p>&quot;{transferSearchTerm}&quot; bo&apos;yicha o&apos;quvchi topilmadi</p>
+                          <button type="button" onClick={() => setTransferSearchTerm('')}>
+                            Qidiruvni tozalash
+                          </button>
+                        </div>
+                      )}
                     </>
                   ) : (
-                    <div className="transfer-empty-state">
-                      <div className="empty-animation">
-                        <span className="empty-icon-animated">📭</span>
-                        <div className="pulse-ring"></div>
-                      </div>
-                      <h3 className="empty-state-title">O'quvchilar yo'q</h3>
-                      <p className="empty-state-text">
-                        Bu sinfda hozircha o'quvchilar mavjud emas
-                      </p>
+                    <div className="transfer-empty-state transfer-empty-compact">
+                      <span className="transfer-empty-icon">📭</span>
+                      <h3>O'quvchilar yo'q</h3>
+                      <p>Bu sinfda hozircha o'quvchilar mavjud emas</p>
                     </div>
                   )}
                 </>
               ) : (
-                // Step 2: Select target class
                 <>
-                  <div className="transfer-step-header">
-                    <div className="step-header-icon">🎯</div>
-                    <div className="step-header-text">
-                      <h3 className="step-title">2-qadam: Yangi sinfni tanlang</h3>
-                      <p className="step-description">
-                        O'quvchi qaysi sinfga o'tkazilishini belgilang
-                      </p>
+                  <div className="transfer-section-head">
+                    <div>
+                      <h3>2-qadam: Yangi sinfni tanlang</h3>
+                      <p>O'quvchi qaysi sinfga o'tkazilishini belgilang</p>
                     </div>
                   </div>
 
-                  {/* Selected Student Card */}
-                  <div className="selected-student-card">
-                    <div className="selected-badge">Tanlangan o'quvchi</div>
-                    <div className="selected-student-content">
-                      <div className="selected-student-avatar">
-                        <span className="selected-avatar-text">
-                          {studentToTransfer.firstName.charAt(0)}{studentToTransfer.lastName.charAt(0)}
-                        </span>
-                        <div className="selected-avatar-ring"></div>
-                      </div>
-                      <div className="selected-student-info">
-                        <h4 className="selected-student-name">
-                          {studentToTransfer.firstName} {studentToTransfer.lastName}
-                        </h4>
-                        <div className="selected-student-meta">
-                          <span className="meta-item">
-                            <span className="meta-icon">📚</span>
-                            Hozirgi sinf: <strong>{selectedClass?.name}</strong>
-                          </span>
-                          {studentToTransfer.phone && (
-                            <span className="meta-item">
-                              <span className="meta-icon">📞</span>
-                              {studentToTransfer.phone}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                  <div className="transfer-selected-person">
+                    <span className="transfer-selected-avatar">
+                      {studentToTransfer.firstName.charAt(0)}{studentToTransfer.lastName.charAt(0)}
+                    </span>
+                    <div className="transfer-selected-info">
+                      <span className="transfer-selected-label">Tanlangan o'quvchi</span>
+                      <strong>{studentToTransfer.firstName} {studentToTransfer.lastName}</strong>
+                      <span className="transfer-selected-meta">
+                        {selectedClass.name}
+                        {studentToTransfer.phone ? ` · ${studentToTransfer.phone}` : ''}
+                        {studentToTransfer.studentId ? ` · ${studentToTransfer.studentId}` : ''}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Class Selection */}
-                  <div className="class-selection-wrapper">
-                    <label className="class-selection-label">
-                      <span className="label-icon-large">🏫</span>
-                      <span className="label-text">Yangi sinf</span>
-                    </label>
-
-                    <div className="custom-select-wrapper">
+                  <div className="transfer-field">
+                    <label htmlFor="transfer-target-class">Yangi sinf</label>
+                    <div className="transfer-select-wrap">
                       <select
+                        id="transfer-target-class"
                         value={targetClassId}
                         onChange={(e) => setTargetClassId(e.target.value)}
-                        className="class-select-enhanced"
                         autoFocus
                       >
                         <option value="">Sinfni tanlang...</option>
@@ -1270,52 +1345,24 @@ const ClassManagement = () => {
                           .filter(c => c._id !== selectedClass?._id && c.isActive)
                           .map(cls => (
                             <option key={cls._id} value={cls._id}>
-                              {cls.name}
-                              {(cls.grade !== null && cls.grade !== undefined && cls.grade !== '') && ` • ${cls.grade}-sinf`}
-                              {cls.section && `, ${cls.section} bo'lim`}
-                              {cls.group && ` • ${cls.group}`}
-                              {' '} ({cls.students?.length || 0} o'quvchi)
+                              {cls.name} ({cls.students?.length || 0} o'quvchi)
                             </option>
                           ))}
                       </select>
-                      <div className="select-arrow-icon">▼</div>
+                      <span className="transfer-select-caret" aria-hidden="true">▾</span>
                     </div>
-
-                    {targetClassId && (
-                      <div className="selection-confirmation">
-                        <span className="confirmation-icon">✓</span>
-                        <span className="confirmation-text">Sinf tanlandi</span>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Transfer Preview */}
                   {targetClassId && (
-                    <div className="transfer-preview">
-                      <div className="preview-header">
-                        <span className="preview-icon">👁️</span>
-                        <span className="preview-title">Ko'chirish umumiy ko'rinishi</span>
+                    <div className="transfer-preview-box">
+                      <div className="transfer-preview-item">
+                        <span>Dan</span>
+                        <strong>{selectedClass.name}</strong>
                       </div>
-                      <div className="preview-flow">
-                        <div className="preview-box from">
-                          <div className="preview-label">Dan</div>
-                          <div className="preview-value">{selectedClass?.name}</div>
-                        </div>
-                        <div className="preview-arrow-container">
-                          <div className="preview-arrow">→</div>
-                          <div className="preview-student">
-                            <span className="preview-student-icon">👤</span>
-                            <span className="preview-student-name">
-                              {studentToTransfer.firstName.charAt(0)}.{studentToTransfer.lastName.charAt(0)}.
-                            </span>
-                          </div>
-                        </div>
-                        <div className="preview-box to">
-                          <div className="preview-label">Ga</div>
-                          <div className="preview-value">
-                            {classes.find(c => c._id === targetClassId)?.name}
-                          </div>
-                        </div>
+                      <span className="transfer-preview-arrow" aria-hidden="true">→</span>
+                      <div className="transfer-preview-item">
+                        <span>Ga</span>
+                        <strong>{classes.find(c => c._id === targetClassId)?.name}</strong>
                       </div>
                     </div>
                   )}
@@ -1323,41 +1370,34 @@ const ClassManagement = () => {
               )}
             </div>
 
-            <div className="transfer-modal-footer">
+            <div className="transfer-sheet-footer">
               {!studentToTransfer ? (
                 <button
-                  className="transfer-btn transfer-cancel-btn"
-                  onClick={() => {
-                    setShowTransferModal(false);
-                    setStudentToTransfer(null);
-                    setTargetClassId('');
-                  }}
+                  type="button"
+                  className="transfer-sheet-btn is-secondary"
+                  onClick={closeTransferModal}
                 >
-                  <span className="btn-icon">✕</span>
-                  <span className="btn-text">Bekor qilish</span>
+                  Bekor qilish
                 </button>
               ) : (
                 <>
                   <button
-                    className="transfer-btn transfer-back-btn"
+                    type="button"
+                    className="transfer-sheet-btn is-secondary"
                     onClick={() => {
                       setStudentToTransfer(null);
                       setTargetClassId('');
                     }}
                   >
-                    <span className="btn-icon">←</span>
-                    <span className="btn-text">Orqaga qaytish</span>
+                    ← Orqaga
                   </button>
                   <button
-                    className={`transfer-btn transfer-confirm-btn ${!targetClassId ? 'btn-disabled' : ''}`}
+                    type="button"
+                    className="transfer-sheet-btn is-primary"
                     onClick={confirmTransferStudent}
                     disabled={!targetClassId}
                   >
-                    <span className="btn-icon">🔄</span>
-                    <span className="btn-text">
-                      {targetClassId ? 'Ko\'chirishni tasdiqlash' : 'Sinf tanlanmagan'}
-                    </span>
-                    {targetClassId && <span className="btn-arrow">→</span>}
+                    {targetClassId ? 'Ko\'chirishni tasdiqlash' : 'Sinf tanlanmagan'}
                   </button>
                 </>
               )}
@@ -1369,20 +1409,21 @@ const ClassManagement = () => {
       {/* Statistics Modal */}
       {showStatisticsModal && classForStatistics && (
         <div className="modal-overlay" onClick={handleCloseStatistics}>
-          <div className="statistics-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="statistics-modal statistics-redesign" onClick={(e) => e.stopPropagation()}>
             <div className="statistics-modal-header">
               <div className="statistics-header-content">
                 <div className="statistics-title-wrapper">
                   <span className="statistics-icon">📊</span>
                   <div>
-                    <h2 className="statistics-title">Sinf Statistikasi</h2>
+                    <h2 className="statistics-title">Sinf statistikasi</h2>
                     <p className="statistics-subtitle">
                       {classForStatistics.name}
-                      {(classForStatistics.grade !== null && classForStatistics.grade !== undefined && classForStatistics.grade !== '') && ` • ${classForStatistics.grade}-sinf`}
+                      {classForStatistics.academicYear ? ` · ${classForStatistics.academicYear}` : ''}
+                      {(classForStatistics.grade !== null && classForStatistics.grade !== undefined && classForStatistics.grade !== '') && ` · ${classForStatistics.grade}-sinf`}
                     </p>
                   </div>
                 </div>
-                <button className="close-btn" onClick={handleCloseStatistics}>✕</button>
+                <button className="close-btn" onClick={handleCloseStatistics} aria-label="Yopish">✕</button>
               </div>
             </div>
 
@@ -1443,6 +1484,63 @@ const ClassManagement = () => {
               <button className="modal-btn confirm-btn" onClick={confirmDelete}>
                 <span>🗑️</span>
                 <span>Ha, o'chirish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Student From Class Confirmation */}
+      {studentToRemove && classForDetails && (
+        <div
+          className="modal-overlay"
+          onClick={() => { if (!removingStudent) setStudentToRemove(null); }}
+        >
+          <div className="delete-modal remove-student-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-modal-header">
+              <div className="delete-icon-wrapper remove-student-icon">
+                <span className="delete-icon">👤</span>
+              </div>
+              <h2 className="delete-title">O'quvchini sinfdan chiqarish</h2>
+              <p className="delete-subtitle">O'quvchi sinf ro'yxatidan olib tashlanadi</p>
+            </div>
+
+            <div className="delete-modal-body">
+              <div className="remove-student-summary">
+                <div className="remove-student-avatar">
+                  {studentToRemove.firstName?.charAt(0)}{studentToRemove.lastName?.charAt(0)}
+                </div>
+                <div className="remove-student-summary-text">
+                  <h3>{studentToRemove.firstName} {studentToRemove.lastName}</h3>
+                  <p>
+                    {classForDetails.name}
+                    {studentToRemove.phone ? ` · ${studentToRemove.phone}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <p className="delete-warning">
+                Bu amal o'quvchining shaxsiy ma'lumotlari, baholari va tarixini o'chirmaydi.
+                Faqat <strong>{classForDetails.name}</strong> sinfidan chiqariladi.
+              </p>
+            </div>
+
+            <div className="delete-modal-footer">
+              <button
+                className="modal-btn cancel-btn"
+                onClick={() => setStudentToRemove(null)}
+                disabled={removingStudent}
+              >
+                <span>✕</span>
+                <span>Bekor qilish</span>
+              </button>
+              <button
+                className="modal-btn confirm-btn"
+                onClick={confirmRemoveStudent}
+                disabled={removingStudent}
+              >
+                <span>🗑️</span>
+                <span>{removingStudent ? 'Chiqarilmoqda...' : 'Ha, chiqarish'}</span>
               </button>
             </div>
           </div>
@@ -6998,6 +7096,949 @@ const ClassManagement = () => {
 
           .modal-btn-footer span:first-child {
             font-size: 1.375rem;
+          }
+        }
+
+        /* ==================================================================
+           FINAL UX PASS — classes page
+           (kept at the end so it overrides the legacy rules above)
+           ================================================================== */
+
+        /* --- Stats: 5 cards, clearer hierarchy --- */
+        .class-management .stats-grid {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .class-management .stat-card {
+          min-height: 108px;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 16px;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+        }
+
+        .class-management .stat-card:hover {
+          box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+          transform: none;
+        }
+
+        .class-management .stat-icon {
+          width: 38px;
+          height: 38px;
+          flex: 0 0 38px;
+          border-radius: 11px;
+          font-size: 17px;
+        }
+
+        .class-management .stat-value {
+          margin-bottom: 3px;
+          font-size: 26px;
+          line-height: 1.05;
+        }
+
+        .class-management .stat-label {
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .class-management .stat-note {
+          margin-top: 3px;
+          color: #92400e;
+          font-size: 10px;
+          font-weight: 600;
+          line-height: 1.3;
+        }
+
+        .class-management .stat-unassigned.has-alert {
+          background: linear-gradient(180deg, #fffdf5 0%, #ffffff 70%);
+          border-color: #fde68a;
+        }
+
+        .class-management .stat-unassigned.has-alert .stat-icon {
+          color: #b45309;
+          background: #fef3c7;
+        }
+
+        .class-management .stat-unassigned.is-clear .stat-icon {
+          color: #15803d;
+          background: #dcfce7;
+        }
+
+        .class-management .stat-unassigned.is-clear .stat-note {
+          color: #15803d;
+        }
+
+        @media (max-width: 1279px) {
+          .class-management .stats-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 900px) {
+          .class-management .stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 540px) {
+          .class-management .stats-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* --- Student remove button in class details --- */
+        .class-management .student-card-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .class-management .student-card-remove {
+          display: grid;
+          width: 30px;
+          height: 30px;
+          min-width: 30px;
+          margin-left: auto;
+          place-items: center;
+          color: #b91c1c;
+          background: #fff;
+          border: 1px solid #fecaca;
+          border-radius: 8px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: background .16s ease, border-color .16s ease, color .16s ease;
+        }
+
+        .class-management .student-card-remove:hover {
+          color: #991b1b;
+          background: #fee2e2;
+          border-color: #fca5a5;
+        }
+
+        .class-management .remove-student-modal .delete-icon-wrapper {
+          color: #1d4ed8;
+          background: #eff6ff;
+        }
+
+        .class-management .remove-student-summary {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+          padding: 12px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+        }
+
+        .class-management .remove-student-avatar {
+          display: grid;
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          place-items: center;
+          color: #1d4ed8;
+          background: #dbeafe;
+          border-radius: 50%;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .class-management .remove-student-summary-text {
+          min-width: 0;
+        }
+
+        .class-management .remove-student-summary-text h3 {
+          margin: 0;
+          color: #0f172a;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .class-management .remove-student-summary-text p {
+          margin: 2px 0 0;
+          color: #64748b;
+          font-size: 11.5px;
+        }
+
+        /* --- Transfer modal (new compact layout) --- */
+        .class-management .transfer-modal-enhanced.transfer-redesign {
+          display: flex;
+          flex-direction: column;
+          width: min(720px, calc(100vw - 32px));
+          max-width: 720px;
+          max-height: min(88vh, 760px);
+          padding: 0;
+          overflow: hidden;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          box-shadow: 0 24px 64px rgba(15, 23, 42, .18);
+          animation: none;
+        }
+
+        .class-management .transfer-sheet-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 16px 20px;
+          background: #fff;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .class-management .transfer-sheet-heading {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .class-management .transfer-sheet-icon {
+          display: grid;
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          place-items: center;
+          color: #1d4ed8;
+          background: #eff6ff;
+          border-radius: 12px;
+        }
+
+        .class-management .transfer-sheet-icon svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .class-management .transfer-sheet-title {
+          min-width: 0;
+        }
+
+        .class-management .transfer-sheet-title h2 {
+          margin: 0;
+          color: #0f172a;
+          font-size: 18px;
+          font-weight: 750;
+          line-height: 1.25;
+        }
+
+        .class-management .transfer-sheet-title p {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin: 3px 0 0;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 500;
+          flex-wrap: wrap;
+        }
+
+        .class-management .transfer-class-chip {
+          padding: 3px 7px;
+          color: #1e40af;
+          background: #eff6ff;
+          border-radius: 6px;
+          font-weight: 700;
+        }
+
+        .class-management .transfer-route-arrow {
+          color: #94a3b8;
+        }
+
+        .class-management .transfer-sheet-close {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          min-width: 36px;
+          place-items: center;
+          color: #64748b;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 20px;
+          line-height: 1;
+          cursor: pointer;
+          transition: background .16s ease, color .16s ease, border-color .16s ease;
+        }
+
+        .class-management .transfer-sheet-close:hover {
+          color: #b91c1c;
+          background: #fef2f2;
+          border-color: #fecaca;
+        }
+
+        .class-management .transfer-progress-bar {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 20px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .class-management .transfer-progress-step {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-progress-number {
+          display: grid;
+          width: 22px;
+          height: 22px;
+          place-items: center;
+          color: #64748b;
+          background: #e2e8f0;
+          border-radius: 50%;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .class-management .transfer-progress-step.is-active {
+          color: #1d4ed8;
+        }
+
+        .class-management .transfer-progress-step.is-active .transfer-progress-number {
+          color: #fff;
+          background: #2563eb;
+        }
+
+        .class-management .transfer-progress-step.is-done {
+          color: #166534;
+        }
+
+        .class-management .transfer-progress-step.is-done .transfer-progress-number {
+          color: #166534;
+          background: #dcfce7;
+        }
+
+        .class-management .transfer-progress-track {
+          flex: 1;
+          height: 4px;
+          overflow: hidden;
+          background: #e2e8f0;
+          border-radius: 999px;
+        }
+
+        .class-management .transfer-progress-track.is-done {
+          background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .class-management .transfer-sheet-body {
+          flex: 1;
+          min-height: 0;
+          padding: 18px 20px;
+          overflow-y: auto;
+          background: #f8fafc;
+        }
+
+        .class-management .transfer-section-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .class-management .transfer-section-head h3 {
+          margin: 0;
+          color: #0f172a;
+          font-size: 14px;
+          font-weight: 750;
+          line-height: 1.3;
+        }
+
+        .class-management .transfer-section-head p {
+          margin: 2px 0 0;
+          color: #64748b;
+          font-size: 11.5px;
+          line-height: 1.4;
+        }
+
+        .class-management .transfer-count-badge {
+          flex: 0 0 auto;
+          padding: 4px 8px;
+          color: #1e40af;
+          background: #dbeafe;
+          border-radius: 999px;
+          font-size: 10.5px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-search {
+          position: relative;
+          display: flex;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+
+        .class-management .transfer-search-icon {
+          position: absolute;
+          left: 12px;
+          display: grid;
+          width: 17px;
+          height: 17px;
+          place-items: center;
+          color: #94a3b8;
+          pointer-events: none;
+        }
+
+        .class-management .transfer-search-icon svg {
+          width: 17px;
+          height: 17px;
+        }
+
+        .class-management .transfer-search input {
+          width: 100%;
+          min-height: 42px;
+          padding: 10px 40px 10px 38px;
+          color: #0f172a;
+          background: #fff;
+          border: 1px solid #cbd5e1;
+          border-radius: 9px;
+          font-size: 13px;
+        }
+
+        .class-management .transfer-search input:focus {
+          border-color: #60a5fa;
+          outline: 3px solid rgba(59, 130, 246, .14);
+        }
+
+        .class-management .transfer-search-clear {
+          position: absolute;
+          right: 6px;
+          display: grid;
+          width: 30px;
+          height: 30px;
+          place-items: center;
+          color: #64748b;
+          background: transparent;
+          border: 0;
+          border-radius: 6px;
+          font-size: 17px;
+          cursor: pointer;
+        }
+
+        .class-management .transfer-search-clear:hover {
+          background: #f1f5f9;
+        }
+
+        .class-management .transfer-person-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .class-management .transfer-person {
+          display: flex;
+          width: 100%;
+          min-width: 0;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          text-align: left;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 11px;
+          cursor: pointer;
+          transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+        }
+
+        .class-management .transfer-person:hover {
+          background: #f8fbff;
+          border-color: #93c5fd;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, .08);
+        }
+
+        .class-management .transfer-person-avatar {
+          display: grid;
+          width: 38px;
+          height: 38px;
+          flex: 0 0 38px;
+          place-items: center;
+          color: #1d4ed8;
+          background: #eff6ff;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .class-management .transfer-person-info {
+          display: flex;
+          flex: 1;
+          min-width: 0;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .class-management .transfer-person-name {
+          overflow: hidden;
+          color: #0f172a;
+          font-size: 12.5px;
+          font-weight: 700;
+          line-height: 1.3;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-person-meta {
+          overflow: hidden;
+          color: #64748b;
+          font-size: 10.5px;
+          line-height: 1.3;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-person-chevron {
+          color: #2563eb;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .class-management .transfer-no-results {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 28px 16px;
+          color: #64748b;
+          text-align: center;
+          background: #fff;
+          border: 1px dashed #cbd5e1;
+          border-radius: 11px;
+        }
+
+        .class-management .transfer-no-results-icon {
+          font-size: 22px;
+        }
+
+        .class-management .transfer-no-results p {
+          margin: 0;
+          font-size: 12px;
+        }
+
+        .class-management .transfer-no-results button {
+          margin-top: 4px;
+          padding: 7px 12px;
+          color: #1d4ed8;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          border-radius: 7px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .class-management .transfer-empty-compact {
+          padding: 34px 16px;
+          text-align: center;
+          background: #fff;
+          border: 1px dashed #cbd5e1;
+          border-radius: 11px;
+        }
+
+        .class-management .transfer-empty-icon {
+          font-size: 34px;
+        }
+
+        .class-management .transfer-empty-compact h3 {
+          margin: 8px 0 2px;
+          color: #0f172a;
+          font-size: 14px;
+        }
+
+        .class-management .transfer-empty-compact p {
+          margin: 0;
+          color: #64748b;
+          font-size: 11.5px;
+        }
+
+        .class-management .transfer-selected-person {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 14px;
+          padding: 12px 14px;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          border-radius: 12px;
+        }
+
+        .class-management .transfer-selected-avatar {
+          display: grid;
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          place-items: center;
+          color: #fff;
+          background: #2563eb;
+          border-radius: 50%;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .class-management .transfer-selected-info {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .class-management .transfer-selected-label {
+          color: #1e40af;
+          font-size: 9.5px;
+          font-weight: 800;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+        }
+
+        .class-management .transfer-selected-info strong {
+          overflow: hidden;
+          color: #0f172a;
+          font-size: 13.5px;
+          font-weight: 750;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-selected-meta {
+          overflow: hidden;
+          color: #475569;
+          font-size: 11px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-field label {
+          display: block;
+          margin-bottom: 6px;
+          color: #334155;
+          font-size: 11.5px;
+          font-weight: 700;
+        }
+
+        .class-management .transfer-select-wrap {
+          position: relative;
+        }
+
+        .class-management .transfer-select-wrap select {
+          width: 100%;
+          min-height: 42px;
+          padding: 10px 38px 10px 12px;
+          color: #0f172a;
+          background: #fff;
+          border: 1px solid #cbd5e1;
+          border-radius: 9px;
+          font-size: 13px;
+          appearance: none;
+          cursor: pointer;
+        }
+
+        .class-management .transfer-select-wrap select:focus {
+          border-color: #60a5fa;
+          outline: 3px solid rgba(59, 130, 246, .14);
+        }
+
+        .class-management .transfer-select-caret {
+          position: absolute;
+          top: 50%;
+          right: 12px;
+          color: #64748b;
+          font-size: 12px;
+          pointer-events: none;
+          transform: translateY(-50%);
+        }
+
+        .class-management .transfer-preview-box {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 12px;
+          padding: 12px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+        }
+
+        .class-management .transfer-preview-item {
+          display: flex;
+          flex: 1;
+          min-width: 0;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .class-management .transfer-preview-item span {
+          color: #94a3b8;
+          font-size: 9.5px;
+          font-weight: 800;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+        }
+
+        .class-management .transfer-preview-item strong {
+          overflow: hidden;
+          color: #0f172a;
+          font-size: 12px;
+          font-weight: 700;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .class-management .transfer-preview-arrow {
+          color: #2563eb;
+          font-size: 16px;
+          font-weight: 800;
+        }
+
+        .class-management .transfer-sheet-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+          padding: 12px 20px;
+          background: #fff;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        .class-management .transfer-sheet-btn {
+          min-height: 40px;
+          padding: 0 16px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 650;
+          cursor: pointer;
+          transition: background .16s ease, border-color .16s ease;
+        }
+
+        .class-management .transfer-sheet-btn.is-secondary {
+          color: #334155;
+          background: #fff;
+          border: 1px solid #cbd5e1;
+        }
+
+        .class-management .transfer-sheet-btn.is-secondary:hover {
+          background: #f8fafc;
+          border-color: #94a3b8;
+        }
+
+        .class-management .transfer-sheet-btn.is-primary {
+          color: #fff;
+          background: #2563eb;
+          border: 1px solid #2563eb;
+        }
+
+        .class-management .transfer-sheet-btn.is-primary:hover:not(:disabled) {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
+        }
+
+        .class-management .transfer-sheet-btn:disabled {
+          color: #94a3b8;
+          background: #f1f5f9;
+          border-color: #e2e8f0;
+          cursor: not-allowed;
+        }
+
+        /* --- Statistics modal --- */
+        .class-management .statistics-modal.statistics-redesign {
+          display: flex;
+          flex-direction: column;
+          width: min(1100px, calc(100vw - 32px));
+          max-width: 1100px;
+          max-height: min(90vh, 900px);
+          padding: 0;
+          overflow: hidden;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          box-shadow: 0 24px 64px rgba(15, 23, 42, .18);
+        }
+
+        .class-management .statistics-redesign .statistics-modal-header {
+          padding: 16px 20px;
+          background: #fff;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .class-management .statistics-redesign .statistics-header-content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .class-management .statistics-redesign .statistics-title-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .class-management .statistics-redesign .statistics-icon {
+          display: grid;
+          width: 44px;
+          height: 44px;
+          flex: 0 0 44px;
+          place-items: center;
+          color: #1d4ed8;
+          background: #eff6ff;
+          border-radius: 12px;
+          font-size: 0;
+        }
+
+        .class-management .statistics-redesign .statistics-icon::after {
+          content: "";
+          width: 22px;
+          height: 22px;
+          background: currentColor;
+          -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M4 20V10M10 20V4M16 20v-7M22 20H2'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M4 20V10M10 20V4M16 20v-7M22 20H2'/%3E%3C/svg%3E") center / contain no-repeat;
+        }
+
+        .class-management .statistics-redesign .statistics-title {
+          margin: 0;
+          color: #0f172a;
+          font-size: 18px;
+          font-weight: 750;
+          line-height: 1.25;
+        }
+
+        .class-management .statistics-redesign .statistics-subtitle {
+          margin: 3px 0 0;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .class-management .statistics-redesign .close-btn {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          min-width: 36px;
+          place-items: center;
+          color: #64748b;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 0;
+          cursor: pointer;
+        }
+
+        .class-management .statistics-redesign .close-btn::after {
+          content: "";
+          width: 15px;
+          height: 15px;
+          background: currentColor;
+          -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+        }
+
+        .class-management .statistics-redesign .close-btn:hover {
+          color: #b91c1c;
+          background: #fef2f2;
+          border-color: #fecaca;
+        }
+
+        .class-management .statistics-redesign .statistics-modal-body {
+          flex: 1;
+          min-height: 0;
+          padding: 16px;
+          overflow-y: auto;
+        }
+
+        .class-management .statistics-redesign .statistics-modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          padding: 10px 16px;
+          background: #fff;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        .class-management .statistics-redesign .statistics-modal-footer .modal-btn {
+          width: auto;
+          min-width: 104px;
+          min-height: 38px;
+          justify-content: center;
+          color: #334155;
+          background: #fff;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          font-size: 12.5px;
+          font-weight: 650;
+        }
+
+        @media (max-width: 640px) {
+          .class-management .transfer-modal-enhanced.transfer-redesign {
+            width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
+            border-radius: 14px;
+          }
+
+          .class-management .transfer-sheet-header {
+            padding: 13px 14px;
+          }
+
+          .class-management .transfer-sheet-title h2 {
+            font-size: 16px;
+          }
+
+          .class-management .transfer-progress-bar {
+            padding: 9px 14px;
+          }
+
+          .class-management .transfer-sheet-body {
+            padding: 14px;
+          }
+
+          .class-management .transfer-person-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .class-management .transfer-sheet-footer {
+            padding: 10px 14px;
+          }
+
+          .class-management .transfer-sheet-btn {
+            flex: 1;
+            min-width: 0;
+            padding: 0 10px;
+          }
+
+          .class-management .statistics-redesign {
+            width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
+            border-radius: 14px;
+          }
+
+          .class-management .statistics-redesign .statistics-modal-header {
+            padding: 12px 14px;
+          }
+
+          .class-management .statistics-redesign .statistics-title {
+            font-size: 16px;
+          }
+
+          .class-management .statistics-redesign .statistics-modal-body {
+            padding: 10px;
+          }
+
+          .class-management .statistics-redesign .statistics-modal-footer {
+            padding: 8px 10px;
+          }
+
+          .class-management .student-card-remove {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
           }
         }
       `}</style>

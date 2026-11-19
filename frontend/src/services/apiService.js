@@ -2,12 +2,16 @@ import { api } from './authService';
 
 const apiService = {
   // Users
-  getUsers: async (role, page = 1, limit = 200, search = '') => {
+  getUsers: async (role, page = 1, limit = 200, search = '', filters = {}) => {
     const params = new URLSearchParams();
     if (role) params.append('role', role);
     params.append('page', page);
     params.append('limit', limit);
     if (search && search.trim()) params.append('search', search.trim());
+    if (filters.classId && filters.classId !== 'all') params.append('classId', filters.classId);
+    if (filters.isActive !== undefined && filters.isActive !== null && filters.isActive !== 'all') {
+      params.append('isActive', String(filters.isActive));
+    }
 
     const response = await api.get(`/users?${params}`);
     return response.data;

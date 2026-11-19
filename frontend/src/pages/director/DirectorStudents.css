@@ -140,6 +140,7 @@
 
 .admin-dashboard-layout .student-management .filter-left {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px;
   width: 100%;

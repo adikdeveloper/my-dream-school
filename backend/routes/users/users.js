@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
@@ -89,6 +90,40 @@ router.get('/', auth, authorize('admin', 'director', 'supervisor', 'accountant',
 
     const query = role ? { role } : {};
 
+    // Sinf bo'yicha filtr: aniq sinf yoki "unassigned" (biriktirilmagan).
+    // O'quvchi Class.students ro'yxatida ham, User.classId orqali ham
+    // biriktirilgan bo'lishi mumkin — ikkala manba hisobga olinadi.
+    const classFilter = typeof req.query.classId === 'string' ? req.query.classId.trim() : '';
+    if (role === 'student' && classFilter && classFilter !== 'all') {
+      if (classFilter === 'unassigned') {
+        const assignedIds = await Class.distinct('students');
+        query.$and = [
+          ...(query.$and || []),
+          { classId: null },
+          { _id: { $nin: assignedIds } }
+        ];
+      } else if (mongoose.Types.ObjectId.isValid(classFilter)) {
+        const classDoc = await Class.findById(classFilter).select('students').lean();
+        const memberIds = classDoc ? (classDoc.students || []) : [];
+        query.$and = [
+          ...(query.$and || []),
+          {
+            $or: [
+              { classId: classFilter },
+              { _id: { $in: memberIds } }
+            ]
+          }
+        ];
+      } else {
+        return res.status(400).json({ message: 'Noto\'g\'ri sinf ID formati' });
+      }
+    }
+
+    // Holat filtri (faol/nofaol) — faqat o'quvchilar ro'yxati uchun.
+    if (role === 'student' && (req.query.isActive === 'true' || req.query.isActive === 'false')) {
+      query.isActive = req.query.isActive === 'true' ? true : { $ne: true };
+    }
+
     // Add search functionality (regex xatosi hech qachon 500 bermasligi uchun fallback bilan)
     if (search && search.trim()) {
       const searchTerm = sanitizeString(search.trim());
@@ -116,7 +151,42 @@ router.get('/', auth, authorize('admin', 'director', 'supervisor', 'accountant',
       .populate('classes', 'name grade section')
       .limit(limit)
       .skip((page - 1) * limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Eski yozuvlarda o'quvchi Class.students ro'yxatida bo'lib, User.classId
+    // bo'sh bo'lishi mumkin. Jadvalda sinf nomi to'g'ri ko'rinishi uchun
+    // shunday o'quvchilarga sinf ma'lumotini qo'shib beramiz.
+    if (role === 'student' && users.length > 0) {
+      const studentsWithoutClass = users.filter(user => !user.classId);
+      if (studentsWithoutClass.length > 0) {
+        const classesWithStudents = await Class.find({
+          students: { $in: studentsWithoutClass.map(user => user._id) }
+        })
+          .select('name grade section students')
+          .lean();
+
+        const classByStudentId = new Map();
+        classesWithStudents.forEach(cls => {
+          (cls.students || []).forEach(studentId => {
+            const key = studentId.toString();
+            if (!classByStudentId.has(key)) classByStudentId.set(key, cls);
+          });
+        });
+
+        users.forEach(user => {
+          if (user.classId) return;
+          const cls = classByStudentId.get(user._id.toString());
+          if (!cls) return;
+          user.classId = {
+            _id: cls._id,
+            name: cls.name,
+            grade: cls.grade,
+            section: cls.section
+          };
+        });
+      }
+    }
 
     const total = await User.countDocuments(query);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Can } from '../../context/PermissionsContext';
@@ -44,6 +44,7 @@ const StudentManagement = () => {
   const hidePaymentsDelete = isReception || isCallCenter;
   const [students, setStudents] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [classFilter, setClassFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -62,7 +63,7 @@ const StudentManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [, setTotalStudents] = useState(0);
+  const [totalStudents, setTotalStudents] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState('');
   const [studentStats, setStudentStats] = useState({
@@ -99,7 +100,14 @@ const StudentManagement = () => {
       setLocalLoading(true);
       setLocalError('');
       setLoading(true);
-      const response = await apiService.getUsers('student', currentPage, itemsPerPage, debouncedSearchTerm);
+      const isActiveFilter = filter === 'active' ? true : (filter === 'inactive' ? false : undefined);
+      const response = await apiService.getUsers(
+        'student',
+        currentPage,
+        itemsPerPage,
+        debouncedSearchTerm,
+        { classId: classFilter, isActive: isActiveFilter }
+      );
       // Qidiruv/sahifa o'zgargan bo'lsa, bu eskirgan javob — holatni yangilamaymiz
       if (studentsRequestId.current !== myRequest) return;
       setStudents(response.users || []);
@@ -116,7 +124,7 @@ const StudentManagement = () => {
         setLocalLoading(false);
       }
     }
-  }, [currentPage, itemsPerPage, debouncedSearchTerm, setLoading, setError]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, classFilter, filter, setLoading, setError]);
 
   // Birinchi yuklashda: statistika + badge tozalash (qidiruvda qayta chaqirilmaydi)
   useEffect(() => {
@@ -131,7 +139,7 @@ const StudentManagement = () => {
   useEffect(() => {
     loadStudents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, debouncedSearchTerm]);
+  }, [currentPage, debouncedSearchTerm, classFilter, filter]);
 
   // Ko'chirish modali uchun sinflar ro'yxatini yuklaymiz
   useEffect(() => {
@@ -140,20 +148,13 @@ const StudentManagement = () => {
       .catch(() => setClassesList([]));
   }, []);
 
-  // Client-side filtering only for active/inactive status
-  const filteredStudents = useMemo(() => {
-    return students.filter(student => {
-      if (filter === 'all') return true;
-      if (filter === 'active') return student.isActive;
-      if (filter === 'inactive') return !student.isActive;
-      return true;
-    });
-  }, [students, filter]);
+  // Filtrlar (sinf, holat, qidiruv) serverda qo'llaniladi.
+  const filteredStudents = students;
 
-  // Reset to page 1 when filter or search changes
+  // Reset to page 1 when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, debouncedSearchTerm]);
+  }, [filter, classFilter, debouncedSearchTerm]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -371,6 +372,26 @@ const StudentManagement = () => {
 
             <div className="filter-item">
               <label className="filter-label">
+                <span className="label-icon"><StudentIcon name="student" size={13} /></span>
+                Sinf
+              </label>
+              <select
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">Barcha sinflar</option>
+                <option value="unassigned">Biriktirilmagan</option>
+                {classesList.map((cls) => (
+                  <option key={cls._id} value={cls._id}>
+                    {cls.name}{cls.isActive === false ? ' (nofaol)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-item">
+              <label className="filter-label">
                 <span className="label-icon"><StudentIcon name="filter" size={13} /></span>
                 Holat
               </label>
@@ -386,7 +407,7 @@ const StudentManagement = () => {
             </div>
 
             <div className="filter-results">
-              <span className="results-count">{filteredStudents.length}</span>
+              <span className="results-count">{totalStudents}</span>
               <span className="results-label">ta natija</span>
             </div>
           </div>

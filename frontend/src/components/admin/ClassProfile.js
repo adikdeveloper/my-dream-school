@@ -161,6 +161,7 @@ const ClassProfile = ({ classData, isOpen, onClose, onUpdate, mode = 'view' }) =
 
         {error && (
           <div className="error-message">
+            <span className="error-icon">⚠️</span>
             {error}
           </div>
         )}
@@ -512,21 +513,31 @@ const ClassProfile = ({ classData, isOpen, onClose, onUpdate, mode = 'view' }) =
           }
 
           .error-message {
-            margin: 0.75rem 1.25rem 0;
-            padding: 0.5rem 0.75rem;
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            border-radius: 6px;
-            color: #991b1b;
             display: flex;
+            flex-direction: row;
             align-items: center;
             gap: 0.5rem;
+            margin: 0.75rem 1.25rem 0;
+            padding: 0.625rem 0.875rem;
+            color: #991b1b;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
             font-weight: 500;
-            font-size: 0.75rem;
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            text-align: left;
+          }
+
+          .error-message::before {
+            content: none;
+            display: none;
           }
 
           .error-icon {
-            font-size: 1.25rem;
+            flex: 0 0 auto;
+            font-size: 0.9375rem;
+            line-height: 1;
           }
 
           .modal-body {

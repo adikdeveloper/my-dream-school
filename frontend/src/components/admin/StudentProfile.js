@@ -1143,20 +1143,31 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
           }
 
           .error-message {
-            margin: 0.75rem 1rem 0;
-            padding: 0.5rem 0.75rem;
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            border-radius: 6px;
-            color: #991b1b;
             display: flex;
+            flex-direction: row;
             align-items: center;
             gap: 0.5rem;
-            font-size: 0.75rem;
+            margin: 0.75rem 1rem 0;
+            padding: 0.625rem 0.875rem;
+            color: #991b1b;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            line-height: 1.4;
+            text-align: left;
+          }
+
+          .error-message::before {
+            content: none;
+            display: none;
           }
 
           .error-icon {
-            font-size: 0.875rem;
+            flex: 0 0 auto;
+            font-size: 0.9375rem;
+            line-height: 1;
           }
 
           .modal-body {

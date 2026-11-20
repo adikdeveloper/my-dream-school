@@ -12,6 +12,9 @@ const { hasPermission } = require('../../middleware/permissions');
 
 const router = express.Router();
 
+// Telefon raqam bandligi uchun yagona xabar (o'quvchi va o'qituvchi uchun bir xil).
+const PHONE_EXISTS_MESSAGE = 'Bu telefon raqam allaqachon ro\'yxatdan o\'tgan';
+
 const parseNonNegativeAmount = (value, fieldLabel) => {
   if (value === undefined || value === null || value === '') return null;
 
@@ -57,12 +60,12 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
     if (cleaned.length === 9 || (cleaned.length === 12 && cleaned.startsWith('998'))) {
       return true;
     }
-    throw new Error('Valid Uzbek phone number is required (9 or 12 digits)');
+    throw new Error('To\'g\'ri telefon raqam kiriting (9 yoki 12 raqam)');
   }),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('firstName').notEmpty().trim().withMessage('First name is required'),
-  body('lastName').notEmpty().trim().withMessage('Last name is required'),
-  body('role').isIn(['admin', 'director', 'teacher', 'student', 'supervisor', 'accountant', 'hr', 'reception', 'callcenter']).withMessage('Invalid role')
+  body('password').isLength({ min: 6 }).withMessage('Parol kamida 6 ta belgidan iborat bo\'lishi kerak'),
+  body('firstName').notEmpty().trim().withMessage('Ism kiritilishi shart'),
+  body('lastName').notEmpty().trim().withMessage('Familiya kiritilishi shart'),
+  body('role').isIn(['admin', 'director', 'teacher', 'student', 'supervisor', 'accountant', 'hr', 'reception', 'callcenter']).withMessage('Noto\'g\'ri rol')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -122,10 +125,10 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
       parentPhone = '+' + parentPhone;
     }
 
-    // Check if user already exists with this phone number
-    const existingUser = await User.findOne({ phone });
+    // Telefon raqam butun tizimda yagona bo'lishi kerak (o'quvchi va o'qituvchi uchun ham).
+    const existingUser = await User.findOne({ phone }).select('_id');
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this phone number' });
+      return res.status(400).json({ message: PHONE_EXISTS_MESSAGE });
     }
 
     // Create new user
@@ -241,6 +244,23 @@ router.post('/register', optionalAuth, upload.single('profileImage'), [
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ message: error.message });
+    }
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === 'phone') {
+        return res.status(400).json({ message: PHONE_EXISTS_MESSAGE });
+      }
+      if (field === 'studentId') {
+        return res.status(400).json({ message: 'Bu o\'quvchi ID allaqachon mavjud' });
+      }
+      if (field === 'teacherId') {
+        return res.status(400).json({ message: 'Bu o\'qituvchi ID allaqachon mavjud' });
+      }
+      return res.status(400).json({ message: 'Bu ma\'lumot allaqachon mavjud' });
+    }
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: messages[0] || 'Ma\'lumotlar formati noto\'g\'ri' });
     }
     // Error is logged by error handling middleware
     res.status(500).json({ message: 'Server error' });

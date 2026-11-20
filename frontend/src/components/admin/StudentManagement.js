@@ -33,6 +33,63 @@ const StudentIcon = ({ name = 'grid', size = 16 }) => {
   );
 };
 
+// O'quvchi profilining to'ldirilganlik darajasi (foizda).
+const PROFILE_COMPLETENESS_FIELDS = [
+  'firstName',
+  'lastName',
+  'phone',
+  'studentId',
+  'dateOfBirth',
+  'address',
+  'passportNumber',
+  'classId',
+  'parentName',
+  'parentPhone',
+  'parentJshshir',
+  'profileImage'
+];
+
+const getProfileCompleteness = (student) => {
+  if (!student) return 0;
+
+  const filledCount = PROFILE_COMPLETENESS_FIELDS.reduce((count, field) => {
+    const value = student[field];
+    if (value === null || value === undefined) return count;
+    if (typeof value === 'string' && !value.trim()) return count;
+    return count + 1;
+  }, 0);
+
+  return Math.round((filledCount / PROFILE_COMPLETENESS_FIELDS.length) * 100);
+};
+
+const ProfileCompleteness = ({ student }) => {
+  const percent = getProfileCompleteness(student);
+  const radius = 15.5;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference - (percent / 100) * circumference;
+
+  return (
+    <div
+      className="profile-completeness"
+      title={`Profil to'ldirilgani: ${percent}%`}
+      aria-label={`Profil to'ldirilgani: ${percent}%`}
+    >
+      <svg className="completeness-ring" viewBox="0 0 36 36" aria-hidden="true">
+        <circle className="completeness-track" cx="18" cy="18" r={radius} />
+        <circle
+          className="completeness-progress"
+          cx="18"
+          cy="18"
+          r={radius}
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={dashOffset}
+        />
+      </svg>
+      <span className="completeness-value">{percent}%</span>
+    </div>
+  );
+};
+
 const StudentManagement = () => {
   const { setLoading, setError } = useData();
   const { user } = useAuth();
@@ -518,6 +575,7 @@ const StudentManagement = () => {
                               <span><StudentIcon name="edit" size={15} /></span>
                             </button>
                           )}
+                          <ProfileCompleteness student={student} />
                           {!hideEdit && (
                             <button
                               className="action-btn transfer-btn"
@@ -581,6 +639,7 @@ const StudentManagement = () => {
                         </span>
                       </div>
                     </div>
+                    <ProfileCompleteness student={student} />
                     <div className={`card-status ${student.isActive ? 'status-active' : 'status-inactive'}`}>
                       {student.isActive ? '✓' : '✗'}
                     </div>
@@ -1399,6 +1458,7 @@ const StudentManagement = () => {
 
         .action-buttons {
           display: flex;
+          align-items: center;
           gap: 0.25rem;
         }
 
@@ -1413,6 +1473,53 @@ const StudentManagement = () => {
           justify-content: center;
           transition: all 0.2s ease;
           font-size: 0.75rem;
+        }
+
+        .profile-completeness {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 32px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: help;
+        }
+
+        .completeness-ring {
+          display: block;
+          width: 32px;
+          height: 32px;
+          transform: rotate(-90deg);
+        }
+
+        .completeness-track {
+          fill: none;
+          stroke: #dbeafe;
+          stroke-width: 3;
+        }
+
+        .completeness-progress {
+          fill: none;
+          stroke: #3b82f6;
+          stroke-width: 3;
+          stroke-linecap: round;
+          transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .completeness-value {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #1d4ed8;
+          font-size: 8px;
+          font-weight: 800;
+          line-height: 1;
+          letter-spacing: -0.2px;
+          pointer-events: none;
         }
 
         .view-btn { background: #dbeafe; color: #1e40af; }
@@ -2431,6 +2538,21 @@ const StudentManagement = () => {
             width: 18px;
             height: 18px;
             font-size: 0.5625rem;
+          }
+
+          .profile-completeness {
+            flex-basis: 28px;
+            width: 28px;
+            height: 28px;
+          }
+
+          .completeness-ring {
+            width: 28px;
+            height: 28px;
+          }
+
+          .completeness-value {
+            font-size: 7px;
           }
 
           .card-body {

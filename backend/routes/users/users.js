@@ -492,6 +492,17 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
       updateData.profileImageData = null;
     }
 
+    // Telefon raqam boshqa foydalanuvchida band bo'lmasligi kerak.
+    if (updateData.phone) {
+      const phoneTaken = await User.exists({
+        _id: { $ne: req.params.id },
+        phone: updateData.phone
+      });
+      if (phoneTaken) {
+        return res.status(400).json({ message: 'Bu telefon raqam allaqachon ro\'yxatdan o\'tgan' });
+      }
+    }
+
     const oldClassIdForChat = user.classId ? user.classId.toString() : null;
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -531,9 +542,12 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
     // Error is logged by error handling middleware
     if (error.code === 11000) {
       // Duplicate key error
-      const field = Object.keys(error.keyPattern)[0];
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === 'phone') {
+        return res.status(400).json({ message: 'Bu telefon raqam allaqachon ro\'yxatdan o\'tgan' });
+      }
       return res.status(400).json({
-        message: `Bu ${field === 'phone' ? 'telefon raqam' : field === 'email' ? 'email' : 'ma\'lumot'} allaqachon mavjud`
+        message: `Bu ${field === 'email' ? 'email' : 'ma\'lumot'} allaqachon mavjud`
       });
     }
     if (error.name === 'ValidationError') {

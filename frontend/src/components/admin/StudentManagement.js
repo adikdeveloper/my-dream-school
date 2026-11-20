@@ -539,7 +539,7 @@ const StudentManagement = () => {
                       </td>
                       <td>
                         <span className="date-text">
-                          {new Date(student.createdAt).toLocaleDateString('uz-UZ', {
+                          {new Date(student.registrationDate || student.createdAt).toLocaleDateString('uz-UZ', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
@@ -655,7 +655,7 @@ const StudentManagement = () => {
                       <span className="row-icon"><StudentIcon name="calendar" size={14} /></span>
                       <span className="row-label">Qo'shilgan:</span>
                       <span className="row-value">
-                        {new Date(student.createdAt).toLocaleDateString('uz-UZ', {
+                        {new Date(student.registrationDate || student.createdAt).toLocaleDateString('uz-UZ', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'

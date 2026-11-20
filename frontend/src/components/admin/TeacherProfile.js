@@ -1,3 +1,4 @@
+import { formatUzShortDate } from '../../utils/uzDate';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import apiService from '../../services/apiService';
@@ -29,6 +30,8 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
     jshshir: '',
     address: '',
     dateOfBirth: '',
+    registrationDate: '',
+    leftDate: '',
     specialty: '',
     experience: '',
     education: '',
@@ -79,11 +82,13 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
         passportSeriesNumber: teacher.passportSeriesNumber || '',
         jshshir: teacher.jshshir || '',
         address: teacher.address || '',
-        dateOfBirth: teacher.dateOfBirth || '',
+        dateOfBirth: (teacher.dateOfBirth || '').slice(0, 10),
+        registrationDate: (teacher.registrationDate || teacher.createdAt || '').slice(0, 10),
+        leftDate: (teacher.leftDate || '').slice(0, 10),
         specialty: teacher.specialty || '',
         experience: teacher.experience || '',
         education: teacher.education || '',
-        salaryPerLesson: teacher.salaryPerLesson || '',
+        salaryPerLesson: teacher.salaryPerLesson ?? '',
         password: '',
         isActive: teacher.isActive !== undefined ? teacher.isActive : true,
         subjects: teacher.subjects?.map(s => s._id || s) || []
@@ -111,6 +116,8 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
         jshshir: '',
         address: '',
         dateOfBirth: '',
+        registrationDate: '',
+        leftDate: '',
         specialty: '',
         experience: '',
         education: '',
@@ -287,9 +294,9 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
       errors.lastName = 'Familiya kiritilishi shart';
     }
 
-    if (!formData.passportSeriesNumber?.trim()) {
+    if (mode === 'add' && !formData.passportSeriesNumber?.trim()) {
       errors.passportSeriesNumber = 'Passport seriyasi va raqami kiritilishi shart';
-    } else if (!/^[A-Z]{2}\d{7}$/.test(formData.passportSeriesNumber.toUpperCase())) {
+    } else if (formData.passportSeriesNumber && !/^[A-Z]{2}\d{7}$/.test(formData.passportSeriesNumber.toUpperCase())) {
       errors.passportSeriesNumber = 'Passport formati noto\'g\'ri (masalan: KA1234567)';
     }
 
@@ -298,7 +305,7 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
     }
 
     // Soatlik maosh validation
-    if (!formData.salaryPerLesson && formData.salaryPerLesson !== 0) {
+    if (mode === 'add' && formData.salaryPerLesson === '') {
       errors.salaryPerLesson = '1 soatlik maosh kiritilishi shart';
     } else if (isNaN(formData.salaryPerLesson) || Number(formData.salaryPerLesson) < 0) {
       errors.salaryPerLesson = 'Maosh musbat son bo\'lishi kerak';
@@ -342,10 +349,12 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
       submitData.append('jshshir', formData.jshshir.trim());
       submitData.append('address', formData.address);
       submitData.append('dateOfBirth', formData.dateOfBirth);
+      if (formData.registrationDate) submitData.append('registrationDate', formData.registrationDate);
+      submitData.append('leftDate', formData.leftDate);
       submitData.append('specialty', formData.specialty);
       submitData.append('experience', formData.experience);
       submitData.append('education', formData.education);
-      submitData.append('salaryPerLesson', Number(formData.salaryPerLesson) || 0);
+      if (formData.salaryPerLesson !== '') submitData.append('salaryPerLesson', formData.salaryPerLesson);
       submitData.append('isActive', formData.isActive);
 
       if (mode === 'add') {
@@ -378,7 +387,7 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
         : teacher?._id;
       const salaryRate = Number(formData.salaryPerLesson);
 
-      if (savedTeacherId && Number.isFinite(salaryRate) && salaryRate >= 0) {
+      if (savedTeacherId && formData.salaryPerLesson !== '' && Number.isFinite(salaryRate) && salaryRate >= 0) {
         await apiService.updateTeacherSalaryRate(savedTeacherId, salaryRate);
       }
 
@@ -790,7 +799,7 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
                       }}
                       className={`form-input ${validationErrors.passportSeriesNumber ? 'input-error' : ''}`}
                       placeholder="KA1234567"
-                      required
+                      required={mode === 'add'}
                       disabled={loading}
                       maxLength={9}
                       style={{ textTransform: 'uppercase' }}
@@ -843,6 +852,20 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
                 )}
               </div>
 
+              {[
+                ['registrationDate', 'Ishga kelgan sana'],
+                ['leftDate', 'Ishdan ketgan sana']
+              ].map(([field, label]) => (
+                <div className="form-group" key={field}>
+                  <label className="form-label" htmlFor={field}>{label}</label>
+                  {isEditing ? (
+                    <input id={field} name={field} type="date" className="form-input"
+                      value={formData[field]} onChange={handleChange} disabled={loading} />
+                  ) : (
+                    <div className="form-value">{formatUzShortDate(formData[field], { year: true }) || '—'}</div>
+                  )}
+                </div>
+              ))}
               <div className="form-group">
                 <label className="form-label" htmlFor="dateOfBirth">
                   Tug'ilgan sana
@@ -1087,7 +1110,7 @@ const TeacherProfile = ({ teacher, isOpen, onClose, onUpdate, mode = 'view' }) =
                       min="0"
                       step="1000"
                       disabled={loading}
-                      required
+                      required={mode === 'add'}
                     />
                     {validationErrors.salaryPerLesson && (
                       <span className="error-text">{validationErrors.salaryPerLesson}</span>

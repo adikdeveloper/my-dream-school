@@ -54,15 +54,15 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
         phone: student.phone || '',
         studentId: student.studentId || '',
         address: student.address || '',
-        dateOfBirth: student.dateOfBirth || '',
+        dateOfBirth: (student.dateOfBirth || '').slice(0, 10),
         parentName: student.parentName || '',
         parentPhone: student.parentPhone || '',
         parentJshshir: student.parentJshshir || '',
         password: '',
         isActive: student.isActive !== undefined ? student.isActive : true,
         classId: student.classId?._id || student.classId || '',
-        registrationDate: student.registrationDate || student.createdAt || '',
-        leftDate: student.leftDate || '',
+        registrationDate: (student.registrationDate || student.createdAt || '').slice(0, 10),
+        leftDate: (student.leftDate || '').slice(0, 10),
         monthlyFee: student.monthlyFee || ''
       });
       // Set image preview with full URL if exists
@@ -249,6 +249,7 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
         if (formData.classId) {
           submitData.append('classId', formData.classId);
         }
+        if (formData.leftDate) submitData.append('leftDate', formData.leftDate);
         if (formData.registrationDate) {
           submitData.append('registrationDate', formData.registrationDate);
         }
@@ -272,18 +273,7 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
             return;
           }
 
-          // For leftDate: if student is active, always send empty string to clear it
-          // If inactive and has a value, send the value
-          if (key === 'leftDate') {
-            if (formData.isActive) {
-              updateData.append(key, ''); // Send empty string to clear when active
-            } else if (formData[key] !== '') {
-              updateData.append(key, formData[key]);
-            }
-            return;
-          }
-
-          if (formData[key] !== '') {
+          if (key === 'leftDate' || formData[key] !== '') {
             updateData.append(key, formData[key]);
           }
         });
@@ -947,7 +937,7 @@ const StudentProfile = ({ student, isOpen, onClose, onUpdate, mode = 'view' }) =
                 )}
               </div>
 
-              {!formData.isActive && (
+              {(isEditing || formData.leftDate || !formData.isActive) && (
                 <div className="form-group">
                   <label className="form-label">Maktabdan ketgan sana</label>
                   {isEditing ? (

@@ -1,8 +1,23 @@
+import { formatUzShortDate } from '../../utils/uzDate';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
 import TeacherProfile from './TeacherProfile';
+
+const teacherProfileFields = [
+  'firstName', 'lastName', 'phone', 'passportSeriesNumber', 'jshshir',
+  'dateOfBirth', 'address', 'specialty', 'education', 'profileImage'
+];
+
+function TeacherCompleteness({ teacher }) {
+  const filled = teacherProfileFields.filter((field) => {
+    const value = String(teacher[field] ?? '').trim();
+    return value && value !== '(aniqlanmagan)' && !value.startsWith('pending-teacher-');
+  }).length;
+  const percent = Math.round(100 * filled / teacherProfileFields.length);
+  return <small aria-label={`Profil to'ldirilgani: ${percent}%`}>{percent}%</small>;
+}
 
 const TeacherManagement = () => {
   const { setLoading, setError } = useData();
@@ -548,6 +563,7 @@ const TeacherManagement = () => {
                     <th>JSHSHIR</th>
                     <th>Holat</th>
                     <th>Qabul</th>
+                    <th>Ketgan</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -567,7 +583,7 @@ const TeacherManagement = () => {
                             )}
                           </div>
                           <div className="teacher-details">
-                            <div className="teacher-name">{teacher.firstName} {teacher.lastName}</div>
+                            <div className="teacher-name">{teacher.firstName} {teacher.lastName} <TeacherCompleteness teacher={teacher} /></div>
                           </div>
                         </div>
                       </td>
@@ -593,13 +609,10 @@ const TeacherManagement = () => {
                       </td>
                       <td>
                         <span className="date-text">
-                          {new Date(teacher.createdAt).toLocaleDateString('uz-UZ', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+                          {formatUzShortDate(teacher.registrationDate || teacher.createdAt, { year: true }) || '—'}
                         </span>
                       </td>
+                      <td>{formatUzShortDate(teacher.leftDate, { year: true }) || '—'}</td>
                       <td>
                         <div className="action-buttons">
                           <button
@@ -660,7 +673,7 @@ const TeacherManagement = () => {
                       )}
                     </div>
                     <div className="card-info">
-                      <h3 className="card-name">{teacher.firstName} {teacher.lastName}</h3>
+                      <h3 className="card-name">{teacher.firstName} {teacher.lastName} <TeacherCompleteness teacher={teacher} /></h3>
                     </div>
                     <div className={`card-status ${teacher.isActive ? 'status-active' : 'status-inactive'}`}>
                       {teacher.isActive ? '✓' : '✗'}
@@ -687,12 +700,12 @@ const TeacherManagement = () => {
                       <span className="row-icon">📅</span>
                       <span className="row-label">Qo'shilgan:</span>
                       <span className="row-value">
-                        {new Date(teacher.createdAt).toLocaleDateString('uz-UZ', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
+                        {formatUzShortDate(teacher.registrationDate || teacher.createdAt, { year: true }) || '—'}
                       </span>
+                    </div>
+                    <div className="card-row">
+                      <span className="row-label">Ketgan</span>
+                      <span className="row-value">{formatUzShortDate(teacher.leftDate, { year: true }) || '—'}</span>
                     </div>
                   </div>
 

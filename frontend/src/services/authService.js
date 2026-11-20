@@ -36,11 +36,19 @@ api.interceptors.request.use(
 // haydab yubormaymiz — aks holda xatolik matni ko'rinmay qoladi.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
+    const config = error.config;
+    const transient = [502, 503, 504].includes(status) ||
+      (!status && ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code));
+    if (config?.method === 'get' && !config.retriedAfterUnavailable && !config.signal?.aborted && transient) {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      return api.request({ ...config, retriedAfterUnavailable: true });
+    }
     const url = error.config?.url || '';
     const isAuthCall = url.includes('/auth/login') || url.includes('/auth/me');
-    if (status === 401 && !isAuthCall) {
+    if (status === 401 && !isAuthCall &&
+        config?.headers?.Authorization === `Bearer ${localStorage.getItem('token')}`) {
       localStorage.removeItem('token');
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login';

@@ -9,7 +9,13 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_super_secret_jwt_key_here');
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_super_secret_jwt_key_here');
+    } catch {
+      return res.status(401).json({ message: 'Invalid token.' });
+    }
+    if (!decoded.userId) return res.status(401).json({ message: 'Invalid token.' });
     const user = await User.findById(decoded.userId).select('-password');
 
     if (!user || !user.isActive) {
@@ -19,7 +25,9 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token.' });
+    if (error.name === 'CastError') return res.status(401).json({ message: 'Invalid token.' });
+    console.error('Authentication user lookup failed:', error.name);
+    return res.status(503).json({ message: "Server vaqtincha band. Qayta urinib ko'ring." });
   }
 };
 

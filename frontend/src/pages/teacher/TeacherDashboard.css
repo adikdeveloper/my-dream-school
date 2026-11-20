@@ -1586,3 +1586,186 @@
     font-size: 19px;
   }
 }
+
+/* ============================================================
+   DIRECTOR-LIKE SHELL
+   O'qituvchi paneli header/sidebar'i direktor paneli bilan
+   bir xil ko'rinishda ishlashi uchun tayanch qoidalar.
+   ============================================================ */
+
+.teacher-shell {
+  background: #f8fafc;
+}
+
+.teacher-shell .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teacher-shell .header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-shell .header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.teacher-shell .page-info {
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (min-width: 1024px) {
+  .teacher-shell .page-info {
+    display: flex;
+  }
+}
+
+.teacher-shell .dashboard-container {
+  display: flex;
+  position: relative;
+}
+
+.teacher-shell .sidebar {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+}
+
+.teacher-shell .sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.teacher-shell .sidebar-brand .brand-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #fff;
+  background: #1e3a8a;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.teacher-shell .sidebar-brand .brand-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teacher-shell .sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.teacher-shell .nav-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+}
+
+.teacher-shell .nav-link {
+  display: flex;
+  align-items: center;
+  position: relative;
+  text-decoration: none;
+}
+
+.teacher-shell .submenu-toggle {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.teacher-shell .submenu-arrow {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 9px;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.teacher-shell .submenu-toggle.open .submenu-arrow {
+  transform: rotate(180deg);
+}
+
+.teacher-shell .submenu-list {
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.teacher-shell .submenu-list.expanded {
+  max-height: 640px;
+}
+
+.teacher-shell .submenu-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.teacher-shell .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacher-shell .notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.teacher-shell .main-content {
+  flex: 1;
+}
+
+.teacher-shell .td-content.is-flush {
+  height: calc(100vh - var(--director-topbar-height));
+  height: calc(100dvh - var(--director-topbar-height));
+}
+
+@media (max-width: 1023px) {
+  .teacher-shell .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: var(--director-topbar-height) 0 0;
+    z-index: 40;
+    border: 0;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .teacher-shell .td-content {
+    padding-bottom: 28px;
+  }
+}
+
+@media (max-width: 767px) {
+  .teacher-shell .td-content {
+    padding-bottom: 24px;
+  }
+}

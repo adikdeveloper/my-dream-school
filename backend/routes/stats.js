@@ -1298,7 +1298,7 @@ router.get('/teacher/grading-monitor', auth, authorize('teacher'), async (req, r
         !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date || date > schoolNow().today) {
       return res.status(400).json({ message: "Sana noto'g'ri" });
     }
-    const lessons = await teacherGradingStatus(req.user, date);
+    const lessons = await teacherGradingStatus(req.user, date, { assignedOnly: true });
     return res.json({ date, lessons });
   } catch (error) {
     console.error('Teacher grading monitoring failed:', error);

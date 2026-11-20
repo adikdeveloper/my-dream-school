@@ -7,7 +7,7 @@ const logger = require('../../utils/logger');
 const { syncClassToSchedule } = require('../../utils/scheduleSynchronizer');
 const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
 const { requirePermission, hasPermission } = require('../../middleware/permissions');
-const { getTeacherJournalScope, getTeacherSchedules, getTeacherSubstitutions, getTeacherLessons } = require('../../services/teacherAccessResolver');
+const { getTeacherJournalScope, getTeacherAssignedClasses, getTeacherSchedules, getTeacherSubstitutions, getTeacherLessons } = require('../../services/teacherAccessResolver');
 
 const { rosterForClass } = require('../../services/dailyGrading');
 
@@ -182,20 +182,46 @@ router.get('/available-students', auth, authorize('admin', 'accountant'), async 
   }
 });
 
+// @route   GET /api/classes/teacher/assigned-classes
+// @desc    O'qituvchiga sinf rahbari sifatida biriktirilgan sinflar
+// @access  Private/Teacher
+router.get('/teacher/assigned-classes', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const classes = await getTeacherAssignedClasses(req.user.id);
+    res.json(classes.map(classData => ({
+      _id: classData._id,
+      name: classData.name,
+      grade: classData.grade,
+      section: classData.section,
+      group: classData.group,
+      studentsCount: Array.isArray(classData.students) ? classData.students.length : 0
+    })));
+  } catch (error) {
+    logger.error('Error fetching teacher assigned classes', {
+      error: error.message,
+      stack: error.stack,
+      teacherId: req.user?.id
+    });
+    res.status(500).json({ message: 'Biriktirilgan sinflarni yuklashda xatolik yuz berdi' });
+  }
+});
+
 // @route   GET /api/classes/teacher/students
-// @desc    Get all students for classes where teacher is curator/class teacher, teaches, or is directly assigned
+// @desc    Get students of classes assigned to the teacher as a class teacher
 // @access  Private/Teacher
 router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => {
   try {
-    const scope = await getTeacherJournalScope(req.user.id);
-    const classIds = scope.map(item => item._id);
+    const assignedClasses = await getTeacherAssignedClasses(req.user.id);
+    const classIds = assignedClasses.map(item => item._id);
     const canEdit = await hasPermission(req.user, 'teacher.edit_student_info');
     const fields = 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId registrationDate' +
       (canEdit ? ' passportNumber jshshir parentJshshir leftDate' : '');
-    const classes = await Class.find({ _id: { $in: classIds }, isActive: true })
-      .select('name grade section students')
-      .populate('students', fields)
-      .lean();
+    const classes = classIds.length
+      ? await Class.find({ _id: { $in: classIds }, isActive: true })
+        .select('name grade section students')
+        .populate('students', fields)
+        .lean()
+      : [];
 
     const classMap = new Map(classes.map(classData => [classData._id.toString(), classData]));
     const studentsByClassId = classIds.length > 0

@@ -28,6 +28,15 @@ const scheduleOverlapFilter = (startDate, endDate) => {
   return { startDate: { $lte: end }, endDate: { $gte: start } };
 };
 
+// Faqat o'qituvchiga sinf rahbari sifatida biriktirilgan sinflar.
+// User.classes maydonidan farqli ravishda bu yerda dars beradigan barcha
+// sinflar emas, aynan biriktirilgan (classTeacher) sinflar qaytadi.
+async function getTeacherAssignedClasses(teacherId) {
+  return Class.find({ classTeacher: teacherId, isActive: true })
+    .select('name grade section group students isActive classTeacher')
+    .lean();
+}
+
 async function getTeacherSchedules(teacherId, options = {}) {
   const query = { 'schedule.periods.teacher': teacherId };
   if (options.classId) query.classId = options.classId;
@@ -280,6 +289,7 @@ module.exports = {
   getTeacherSchedules,
   getTeacherSubstitutions,
   getTeacherLessons,
+  getTeacherAssignedClasses,
   getTeacherJournalScope,
   resolveTeacherLessonAccess
 };

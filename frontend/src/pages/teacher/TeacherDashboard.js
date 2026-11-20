@@ -33,7 +33,7 @@ const NAV_SECTIONS = [
     icon: 'home',
     items: [
       { path: '/teacher', label: 'Bosh sahifa', icon: 'home', end: true },
-      { path: '/teacher/grading-monitor', label: 'Baholash nazorati', icon: 'report' },
+      { path: '/teacher/grading-monitor', label: 'Baholash nazorati', icon: 'report', requiresAssignedClass: true },
       { path: '/teacher/journal', label: 'Sinf jurnali', icon: 'book' },
       { path: '/teacher/schedule', label: 'Dars jadvali', icon: 'calendar' }
     ]
@@ -45,7 +45,7 @@ const NAV_SECTIONS = [
     items: [
       { path: '/teacher/lesson-list', label: "Dars ro'yxati", icon: 'grid' },
       { path: '/teacher/substitutions', label: 'Almashtirish', icon: 'swap' },
-      { path: '/teacher/students', label: "O'quvchilar", icon: 'users' },
+      { path: '/teacher/students', label: "O'quvchilar", icon: 'users', requiresAssignedClass: true },
       { path: '/teacher/tests', label: 'Testlar', icon: 'test' },
       { path: '/teacher/quarters', label: 'Chorak baholari', icon: 'report' },
       { path: '/teacher/assignments', label: 'Vazifalar', icon: 'assignment', badge: 'pendingGrading' }
@@ -87,6 +87,8 @@ const TeacherDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openSubMenus, setOpenSubMenus] = useState({ daily: true });
   const [notificationCounts, setNotificationCounts] = useState({ pendingGrading: 0 });
+  const [assignedClasses, setAssignedClasses] = useState([]);
+  const [assignedClassesLoading, setAssignedClassesLoading] = useState(true);
 
   const isFlushPage = location.pathname === '/teacher/chat';
 
@@ -104,6 +106,23 @@ const TeacherDashboard = () => {
     const interval = setInterval(fetchNotificationCounts, 60000);
     return () => clearInterval(interval);
   }, [fetchNotificationCounts]);
+
+  // Faqat sinf rahbari biriktirilgan sinflar borligini aniqlaymiz.
+  // Baholash nazorati va o'quvchilar bo'limlari shu sinflarga bog'liq.
+  useEffect(() => {
+    let cancelled = false;
+    apiService.getTeacherAssignedClasses()
+      .then((data) => {
+        if (!cancelled) setAssignedClasses(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setAssignedClasses([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAssignedClassesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   // Sahifa o'zgarganda mobil menyuni yopamiz va tegishli bo'limni ochamiz
   useEffect(() => {
@@ -170,6 +189,25 @@ const TeacherDashboard = () => {
   const avatarStyle = profileImageUrl
     ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : undefined;
+
+  const hasAssignedClass = assignedClasses.length > 0;
+
+  // Sinflar yuklanmaguncha va biriktirilgan sinf bo'lmasa, tegishli
+  // bo'limlar navigatsiyada ko'rinmaydi.
+  const visibleNavSections = useMemo(() => (
+    NAV_SECTIONS
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => !item.requiresAssignedClass || hasAssignedClass)
+      }))
+      .filter((section) => section.items.length > 0)
+  ), [hasAssignedClass]);
+
+  // To'g'ridan-to'g'ri URL orqali kirish ham cheklanadi.
+  const assignedClassRoute = (element) => {
+    if (assignedClassesLoading) return null;
+    return hasAssignedClass ? element : <Navigate to="/teacher" replace />;
+  };
 
   return (
     <div className="td-app admin-dashboard-layout teacher-shell">
@@ -244,7 +282,7 @@ const TeacherDashboard = () => {
 
           <nav className="sidebar-nav" role="navigation" aria-label="Asosiy navigatsiya">
             <ul className="nav-list">
-              {NAV_SECTIONS.map((section) => (
+              {visibleNavSections.map((section) => (
                 <li key={section.key} className="nav-item has-submenu">
                   <button
                     type="button"
@@ -292,13 +330,13 @@ const TeacherDashboard = () => {
         <main className="main-content" role="main">
           <div className={`td-content ${isFlushPage ? 'is-flush' : ''}`}>
             <Routes>
-              <Route path="/" element={<TeacherHome greeting={getGreeting()} />} />
-              <Route path="/grading-monitor" element={<GradingMonitor />} />
+              <Route path="/" element={<TeacherHome greeting={getGreeting()} canViewGrading={!assignedClassesLoading && hasAssignedClass} />} />
+              <Route path="/grading-monitor" element={assignedClassRoute(<GradingMonitor />)} />
               <Route path="/journal" element={<ClassJournal />} />
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/lesson-list" element={<TeacherLessonList />} />
               <Route path="/substitutions" element={<Substitutions accent="#d9a441" />} />
-              <Route path="/students" element={<StudentLists />} />
+              <Route path="/students" element={assignedClassRoute(<StudentLists />)} />
               <Route path="/tests" element={<Tests />} />
               <Route path="/quarters" element={<QuarterGrades />} />
               <Route path="/ai" element={<TeacherAI />} />

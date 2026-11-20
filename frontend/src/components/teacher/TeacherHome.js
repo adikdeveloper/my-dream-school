@@ -41,7 +41,7 @@ const formatDate = (value) => formatUzShortDate(value);
 
 const formatLongDate = (date = new Date()) => formatUzWeekdayDate(date);
 
-const TeacherHome = ({ greeting }) => {
+const TeacherHome = ({ greeting, canViewGrading = true }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [now, setNow] = useState(new Date());
@@ -307,7 +307,7 @@ const TeacherHome = ({ greeting }) => {
         </div>
       </header>
 
-      <GradingMonitor compact />
+      {canViewGrading && <GradingMonitor compact />}
 
       {error && <div className="td-alert td-alert--error"><TeacherUiIcon name="warning" size={15} /> {error}</div>}
 

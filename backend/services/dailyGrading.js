@@ -84,20 +84,32 @@ function rotationExceeded(eligible, selected, streak, required) {
   return repeated > Math.max(0, required - available);
 }
 
-async function teacherGradingStatus(teacher, date) {
+async function teacherGradingStatus(teacher, date, options = {}) {
   const { today, time } = schoolNow();
   if (date > today || await Holiday.isHoliday(dayStart(date))) return [];
   const { getTeacherJournalScope } = require('./teacherAccessResolver');
   const Class = require('../models/academic/Class');
   const range = dateRange(date);
-  const scope = await getTeacherJournalScope(teacher._id, { startDate: date, endDate: date });
-  const classes = await Class.find({
-    isActive: true,
-    $or: [
-      { _id: { $in: [...scope.map((item) => item._id), ...(teacher.classes || [])] } },
-      { classTeacher: teacher._id }
-    ]
-  }).select('name students').lean();
+  let classes;
+
+  if (options.assignedOnly) {
+    // Baholash nazorati faqat sinf rahbari biriktirilgan sinflar bo'yicha.
+    // Boshqa sinflarda dars berish yoki baho qo'yish bu bo'limni ochmaydi.
+    classes = await Class.find({
+      isActive: true,
+      classTeacher: teacher._id
+    }).select('name students').lean();
+  } else {
+    const scope = await getTeacherJournalScope(teacher._id, { startDate: date, endDate: date });
+    classes = await Class.find({
+      isActive: true,
+      $or: [
+        { _id: { $in: [...scope.map((item) => item._id), ...(teacher.classes || [])] } },
+        { classTeacher: teacher._id }
+      ]
+    }).select('name students').lean();
+  }
+
   if (!classes.length) return [];
   const classIds = classes.map((cls) => cls._id);
   const [schedules, substitutions] = await Promise.all([

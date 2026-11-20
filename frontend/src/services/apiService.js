@@ -229,6 +229,11 @@ const apiService = {
     return response.data;
   },
 
+  getTeacherAssignedClasses: async () => {
+    const response = await api.get('/classes/teacher/assigned-classes');
+    return response.data;
+  },
+
   updateGrade: async (id, gradeData) => {
     const response = await api.put(`/grades/${id}`, gradeData);
     return response.data;

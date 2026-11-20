@@ -55,7 +55,7 @@ const StudentLists = () => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get('/classes/teacher/my-classes');
+        const res = await api.get('/classes/teacher/assigned-classes');
         if (!cancelled) setMyClasses(Array.isArray(res.data) ? res.data : []);
       } catch (_) { /* sinflar yuklanmadi — qo'shish formasi bo'sh bo'ladi */ }
     })();

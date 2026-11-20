@@ -188,12 +188,13 @@ const menuIconName = (item = {}) => {
     payments: 'payments',
     communication: 'communication'
   };
-  if (iconByPath[item.path]) return iconByPath[item.path];
+  const icon = iconByPath[item.path?.replace(/^\/admin(?=\/|$)/, '/director')];
+  if (icon) return icon;
   if (iconBySection[item.section]) return iconBySection[item.section];
   return 'grid';
 };
 
-const DirectorDashboard = () => {
+const DirectorDashboard = ({ basePath = '/director' }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -331,24 +332,24 @@ const DirectorDashboard = () => {
     return `${firstInitial}${lastInitial}`.toUpperCase();
   }, [user?.firstName, user?.lastName, user?.username]);
 
-  const isAdminHome = location.pathname === '/director' || location.pathname === '/director/';
+  const isAdminHome = location.pathname === basePath || location.pathname === basePath + '/';
 
   useEffect(() => {
     const currentPath = location.pathname;
     const isManagementRoute =
-      currentPath === '/director/substitutions' ||
-      currentPath === '/director/inventory' ||
-      currentPath.startsWith('/director/management/') ||
-      currentPath.startsWith('/director/staff/');
+      currentPath === basePath + '/substitutions' ||
+      currentPath === basePath + '/inventory' ||
+      currentPath.startsWith(basePath + '/management/') ||
+      currentPath.startsWith(basePath + '/staff/');
     const isCommunicationRoute =
-      currentPath === '/director/chat' ||
-      currentPath === '/director/inbox' ||
-      currentPath.startsWith('/director/communication/');
+      currentPath === basePath + '/chat' ||
+      currentPath === basePath + '/inbox' ||
+      currentPath.startsWith(basePath + '/communication/');
     const isEducationRoute =
-      currentPath.startsWith('/director/education/') ||
-      currentPath === '/director/journal' ||
-      currentPath === '/director/attendance' ||
-      currentPath === '/director/schedule';
+      currentPath.startsWith(basePath + '/education/') ||
+      currentPath === basePath + '/journal' ||
+      currentPath === basePath + '/attendance' ||
+      currentPath === basePath + '/schedule';
 
     if (isManagementRoute || isCommunicationRoute || isEducationRoute) {
       setOpenSubMenus(prev => ({
@@ -356,14 +357,14 @@ const DirectorDashboard = () => {
         management: isManagementRoute ? true : prev.management,
         communication: isCommunicationRoute ? true : prev.communication,
         education: isEducationRoute ? true : prev.education,
-        hr: currentPath.startsWith('/director/staff/') ? true : prev.hr
+        hr: currentPath.startsWith(basePath + '/staff/') ? true : prev.hr
       }));
     }
-  }, [location.pathname]);
+  }, [location.pathname, basePath]);
 
   const menuItems = [
     {
-      path: '/director',
+      path: basePath,
       label: 'Bosh sahifa',
       iconKey: 'grid',
       icon: '📊',
@@ -372,7 +373,7 @@ const DirectorDashboard = () => {
       section: null
     },
     {
-      path: '/director/ai',
+      path: basePath + '/ai',
       label: 'AI Yordamchi',
       icon: <AiMenuIcon />,
       badge: null,
@@ -385,64 +386,64 @@ const DirectorDashboard = () => {
       isParent: true,
       children: [
         {
-          path: '/director/teachers',
+          path: basePath + '/teachers',
           label: 'O‘qituvchi',
           icon: '👨‍🏫'
         },
         {
-          path: '/director/users',
+          path: basePath + '/users',
           label: 'O\'quvchilar',
           icon: '👨‍🎓',
           section: 'users',
           badge: notificationCounts.pendingUsers
         },
         {
-          path: '/director/classes',
+          path: basePath + '/classes',
           label: 'Sinflar',
           icon: '🏫'
         },
         {
-          path: '/director/subjects',
+          path: basePath + '/subjects',
           label: 'Fanlar',
           icon: '📚'
         },
         {
-          path: '/director/education/grading',
+          path: basePath + '/education/grading',
           label: 'Baholash',
           icon: '📝'
         },
         {
-          path: '/director/education/exams',
+          path: basePath + '/education/exams',
           label: 'Imtihonlar',
           icon: '✍️'
         },
         {
-          path: '/director/education/quarters',
+          path: basePath + '/education/quarters',
           label: 'Chorak baholari',
           icon: '📊'
         },
         {
-          path: '/director/education/quarter-settings',
+          path: basePath + '/education/quarter-settings',
           label: 'Chorak sozlamalari',
           icon: '📅'
         },
         {
-          path: '/director/attendance',
+          path: basePath + '/attendance',
           label: 'Davomat',
           icon: '📋'
         },
         {
-          path: '/director/schedule',
+          path: basePath + '/schedule',
           label: 'Dars jadvali',
           icon: '📅'
         },
         {
-          path: '/director/journal',
+          path: basePath + '/journal',
           label: 'Sinf jurnali',
           icon: '📖'
         },
         {
-          path: '/director/coins',
+          path: basePath + '/coins',
           label: 'Coin reytingi',
           icon: '🪙'
         }
@@ -455,7 +456,7 @@ const DirectorDashboard = () => {
       isParent: true,
       children: [
         {
-          path: '/director/substitutions',
+          path: basePath + '/substitutions',
           label: 'Dars almashtirish',
           iconKey: 'substitution'
         },
@@ -466,60 +467,60 @@ const DirectorDashboard = () => {
           isParent: true,
           children: [
             {
-              path: '/director/staff/admin',
+              path: basePath + '/staff/admin',
               label: 'Admin',
               icon: '🛡️'
             },
             {
-              path: '/director/staff/supervisor',
+              path: basePath + '/staff/supervisor',
               label: 'Ta\'lim nazoratchisi',
               icon: '👨‍💼'
             },
             {
-              path: '/director/staff/accountant',
+              path: basePath + '/staff/accountant',
               label: 'Hisobchi',
               icon: '💰'
             },
             {
-              path: '/director/staff/hr',
+              path: basePath + '/staff/hr',
               label: 'HR',
               icon: '📋'
             },
             {
-              path: '/director/staff/reception',
+              path: basePath + '/staff/reception',
               label: 'Reception',
               icon: '🛎️'
             },
             {
-              path: '/director/staff/call-center',
+              path: basePath + '/staff/call-center',
               label: 'Call markaz',
               icon: '📞'
             }
           ]
         },
         {
-          path: '/director/management/chats',
+          path: basePath + '/management/chats',
           label: 'Chatlar boshqaruvi',
           iconKey: 'chatAdmin',
           icon: '💬'
         },
         {
-          path: '/director/management/permissions',
+          path: basePath + '/management/permissions',
           label: 'Ruxsatnomalar',
           icon: '🔑'
         },
         {
-          path: '/director/inventory',
+          path: basePath + '/inventory',
           label: 'Jihozlar',
           icon: '🪑'
         },
         {
-          path: '/director/management/branches',
+          path: basePath + '/management/branches',
           label: 'Filiallar boshqaruvi',
           icon: '🏢'
         },
         {
-          path: '/director/management/applications',
+          path: basePath + '/management/applications',
           label: 'Arizalar',
           icon: '📥'
         }
@@ -538,34 +539,34 @@ const DirectorDashboard = () => {
           isParent: true,
           children: [
             {
-              path: '/director/payments',
+              path: basePath + '/payments',
               label: 'O\'quvchi to\'lovlari',
               icon: '👨‍🎓'
             },
             {
-              path: '/director/finance/salaries',
+              path: basePath + '/finance/salaries',
               label: 'Maoshlar',
               icon: '💳'
             },
             {
-              path: '/director/finance/other',
+              path: basePath + '/finance/other',
               label: 'Boshqa kirim chiqimlar',
               icon: '🔄'
             }
           ]
         },
         {
-          path: '/director/debtors',
+          path: basePath + '/debtors',
           label: 'Qarzdorlar',
           icon: '📉'
         },
         {
-          path: '/director/financial',
+          path: basePath + '/financial',
           label: 'Moliyaviy holat',
           icon: '📊'
         },
         {
-          path: '/director/reports',
+          path: basePath + '/reports',
           label: 'Hisobotlar',
           icon: '📈'
         }
@@ -578,39 +579,39 @@ const DirectorDashboard = () => {
       isParent: true,
       children: [
         {
-          path: '/director/chat',
+          path: basePath + '/chat',
           label: 'Chat xabarlar',
           iconKey: 'message'
         },
         {
-          path: '/director/inbox',
+          path: basePath + '/inbox',
           label: 'Bildirishnomalarim',
           iconKey: 'bell'
         },
         {
-          path: '/director/communication/leads',
+          path: basePath + '/communication/leads',
           label: 'Lidlar',
           icon: '🎯'
         },
         {
-          path: '/director/communication/parents',
+          path: basePath + '/communication/parents',
           label: 'Ota-onalar bilan aloqa',
           icon: '👨‍👩‍👧‍👦'
         },
         {
-          path: '/director/communication/notifications',
+          path: basePath + '/communication/notifications',
           label: 'Bildirishnomalar',
           icon: '📢'
         },
         {
-          path: '/director/communication/reminders',
+          path: basePath + '/communication/reminders',
           label: 'Eslatmalar',
           icon: '⏰'
         }
       ]
     },
     {
-      path: '/director/profile',
+      path: basePath + '/profile',
       label: 'Profil',
       icon: '👤',
       badge: null,
@@ -667,12 +668,12 @@ const DirectorDashboard = () => {
             </button>
             <Logo />
             <div className="page-info">
-              <div className="header-page-title">Direktor paneli</div>
+              <div className="header-page-title">{basePath === '/admin' ? 'Administrator paneli' : 'Direktor paneli'}</div>
               <p className="page-subtitle">Maktab boshqaruv tizimi</p>
             </div>
           </div>
           <div className="header-right">
-            <NotificationBell accent="#1e3a8a" viewAllLink="/director/inbox" />
+            <NotificationBell accent="#1e3a8a" viewAllLink={basePath + "/inbox"} />
             <div className="user-info">
               <div
                 className={`user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}
@@ -823,7 +824,7 @@ const DirectorDashboard = () => {
         {/* Main Content */}
         <main className="main-content" role="main">
           <Routes>
-            <Route path="/" element={<AdminHome />} />
+            <Route path="/" element={<AdminHome basePath={basePath} />} />
             <Route path="/users" element={<StudentManagement />} />
             <Route path="/coins" element={<CoinLeaderboard />} />
             <Route path="/teachers" element={<TeacherManagement />} />
@@ -855,7 +856,10 @@ const DirectorDashboard = () => {
             <Route path="/inbox" element={<NotificationInbox />} />
             <Route path="/substitutions" element={<Substitutions accent="#1e3a8a" />} />
             <Route path="/profile" element={<Profile designSystemVariant="director" />} />
-            <Route path="*" element={<Navigate to="/director" replace />} />
+            <Route path="/notifications" element={<Navigate to={basePath + '/inbox'} replace />} />
+            <Route path="/quarters/grades" element={<Navigate to={basePath + '/education/quarters'} replace />} />
+            <Route path="/quarters/settings" element={<Navigate to={basePath + '/education/quarter-settings'} replace />} />
+            <Route path="*" element={<Navigate to={basePath} replace />} />
           </Routes>
         </main>
       </div>
@@ -887,7 +891,7 @@ const DirectorDashboard = () => {
               ))}
             </div>
             <div className="warning-modal-footer">
-              <button className="btn-warning-action" onClick={() => { dismissWarningModal(); navigate('/director/schedule'); }}>
+              <button className="btn-warning-action" onClick={() => { dismissWarningModal(); navigate(basePath + '/schedule'); }}>
                 📅 Jadvallarni boshqarish
               </button>
               <button className="btn-warning-dismiss" onClick={dismissWarningModal}>
@@ -907,7 +911,7 @@ const DirectorDashboard = () => {
               <strong>{scheduleWarnings.expired.length} ta jadval muddati o'tgan!</strong>
               <span>Vaqtni uzaytiring yoki yangi jadval qo'shing</span>
             </div>
-            <button className="expired-toast-action" onClick={() => { dismissExpiredToast(); navigate('/director/schedule'); }}>
+            <button className="expired-toast-action" onClick={() => { dismissExpiredToast(); navigate(basePath + '/schedule'); }}>
               Boshqarish
             </button>
             <button className="expired-toast-close" onClick={dismissExpiredToast}>×</button>
@@ -924,7 +928,7 @@ const DirectorDashboard = () => {
               <strong>{frozenAccounts.totalFrozen} ta o'quvchining hisobi muzlatilgan!</strong>
               <span>Iltimos hisoblarni to'ldiring (Jami: {frozenAccounts.totalNegativeBalance.toLocaleString('uz-UZ')} so'm)</span>
             </div>
-            <button className="frozen-toast-action" onClick={() => { dismissFrozenToast(); navigate('/director/users'); }}>
+            <button className="frozen-toast-action" onClick={() => { dismissFrozenToast(); navigate(basePath + '/users'); }}>
               Ko'rish
             </button>
             <button className="frozen-toast-close" onClick={dismissFrozenToast}>×</button>

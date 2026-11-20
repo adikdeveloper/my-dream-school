@@ -5,6 +5,16 @@ import { formatUzLongDate } from '../../utils/uzDate';
 import styles from './StudentLists.module.css';
 import TeacherUiIcon from './TeacherUiIcon';
 
+const extraProfileFields = [
+  ['email', 'Email', 'email'],
+  ['studentId', "O'quvchi ID"],
+  ['passportNumber', 'Pasport'],
+  ['jshshir', 'JSHSHIR'],
+  ['parentJshshir', 'Ota-ona JSHSHIR'],
+  ['registrationDate', 'Qabul sanasi', 'date'],
+  ['leftDate', 'Ketgan sana', 'date']
+];
+
 const StudentLists = () => {
   const { can } = usePermissions();
   const [students, setStudents] = useState([]);
@@ -144,7 +154,10 @@ const StudentLists = () => {
       address: selectedStudent?.address || '',
       dateOfBirth: selectedStudent?.dateOfBirth?.split('T')[0] || '',
       parentName: selectedStudent?.parentName || '',
-      parentPhone: selectedStudent?.parentPhone || ''
+      parentPhone: selectedStudent?.parentPhone || '',
+      ...Object.fromEntries(extraProfileFields.map(([name, , type]) => [
+        name, type === 'date' ? selectedStudent?.[name]?.slice(0, 10) || '' : selectedStudent?.[name] || ''
+      ]))
     });
     setIsEditing(true);
     setEditError('');
@@ -171,21 +184,15 @@ const StudentLists = () => {
 
     try {
       const submitData = new FormData();
-      Object.keys(editForm).forEach(key => {
-        if (editForm[key]) {
-          submitData.append(key, editForm[key]);
-        }
-      });
+      for (const [key, value] of Object.entries(editForm)) {
+        submitData.append(key, value);
+      }
 
-      await api.put(`/users/${selectedStudent._id}`, submitData);
-
-      // Update local state
-      setStudents(prev => prev.map(s =>
-        s._id === selectedStudent._id
-          ? { ...s, ...editForm }
-          : s
+      const { data: updated } = await api.put(`/users/${selectedStudent._id}`, submitData);
+      setStudents((previous) => previous.map((student) =>
+        student._id === selectedStudent._id ? { ...student, ...updated } : student
       ));
-      setSelectedStudent(prev => ({ ...prev, ...editForm }));
+      setSelectedStudent((previous) => ({ ...previous, ...updated }));
 
       setEditSuccess('O\'quvchi ma\'lumotlari saqlandi!');
       setIsEditing(false);
@@ -599,6 +606,24 @@ const StudentLists = () => {
                 {isEditing ? (
                   // Edit Form
                   <>
+                    {extraProfileFields.map(([name, label, type = 'text']) => (
+                      <label className={styles.formGroup} key={name}>
+                        <span className={styles.formLabel}>{label}</span>
+                        <input type={type} name={name} value={editForm[name]} onChange={handleEditChange} className={styles.formInput} />
+                      </label>
+                    ))}
+                    <label className={styles.formGroup}>
+                      <span className={styles.formLabel}>Profil rasmi</span>
+                      <input type="file" accept="image/*" className={styles.formInput} onChange={(event) => {
+                        const image = event.target.files[0];
+                        setEditForm((previous) => {
+                          const next = { ...previous };
+                          if (image) next.profileImage = image;
+                          else delete next.profileImage;
+                          return next;
+                        });
+                      }} />
+                    </label>
                     <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Ism</label>
                       <input

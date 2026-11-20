@@ -6,7 +6,7 @@ const { auth, authorize } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { syncClassToSchedule } = require('../../utils/scheduleSynchronizer');
 const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
-const { requirePermission } = require('../../middleware/permissions');
+const { requirePermission, hasPermission } = require('../../middleware/permissions');
 const { getTeacherJournalScope, getTeacherSchedules, getTeacherSubstitutions, getTeacherLessons } = require('../../services/teacherAccessResolver');
 
 const router = express.Router();
@@ -187,9 +187,12 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
   try {
     const scope = await getTeacherJournalScope(req.user.id);
     const classIds = scope.map(item => item._id);
+    const canEdit = await hasPermission(req.user, 'teacher.edit_student_info');
+    const fields = 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId registrationDate' +
+      (canEdit ? ' passportNumber jshshir parentJshshir leftDate' : '');
     const classes = await Class.find({ _id: { $in: classIds }, isActive: true })
       .select('name grade section students')
-      .populate('students', 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId registrationDate')
+      .populate('students', fields)
       .lean();
 
     const classMap = new Map(classes.map(classData => [classData._id.toString(), classData]));
@@ -198,7 +201,7 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
           role: 'student',
           classId: { $in: classIds }
         })
-          .select('firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId')
+          .select(fields)
           .lean()
       : [];
 
@@ -232,6 +235,10 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
           address: student.address,
           parentName: student.parentName,
           parentPhone: student.parentPhone,
+          ...(canEdit && {
+            passportNumber: student.passportNumber, jshshir: student.jshshir,
+            parentJshshir: student.parentJshshir, registrationDate: student.registrationDate, leftDate: student.leftDate
+          }),
           className,
           classes: className ? [className] : []
         });

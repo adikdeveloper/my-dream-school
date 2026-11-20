@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const User = require('../../models/users/User');
 const Subject = require('../../models/academic/Subject');
 const Class = require('../../models/academic/Class');
+const { getTeacherJournalScope } = require('../../services/teacherAccessResolver');
 const { auth, authorize } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
 const { compressImage, getRoleSubdir, buildProfileImageDataUrl } = require('../../middleware/upload');
@@ -267,6 +268,16 @@ const attachUserRole = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    if (req.user.role === 'teacher' && user.role === 'student') {
+      const allowed = await hasPermission(req.user, 'teacher.edit_student_info');
+      const scope = allowed ? await getTeacherJournalScope(req.user.id) : [];
+      const inScope = await Class.exists({
+        _id: { $in: scope.map((item) => item._id) },
+        isActive: true,
+        $or: [{ _id: user.classId }, { students: user._id }]
+      });
+      if (!inScope) return res.status(403).json({ message: "Bu o'quvchini tahrirlash uchun ruxsat yo'q" });
+    }
     // Attach user info to request for multer to use
     req.targetUser = user;
     req.userRole = user.role; // Set role in a custom property for multer
@@ -323,6 +334,16 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
     }
 
     const user = req.targetUser; // Get from middleware
+    if (isTeacherEditingStudent) {
+      const editableFields = new Set([
+        'firstName', 'lastName', 'phone', 'email', 'address', 'dateOfBirth',
+        'studentId', 'passportNumber', 'jshshir', 'parentName', 'parentPhone',
+        'parentJshshir', 'registrationDate', 'leftDate', 'removeProfileImage'
+      ]);
+      if (Object.keys(req.body).some((field) => !editableFields.has(field))) {
+        return res.status(403).json({ message: "Bu maydonni o'zgartirish uchun ruxsat yo'q" });
+      }
+    }
 
     // Prepare update data
     const updateData = {};
@@ -384,6 +405,11 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
       const fee = parseFloat(req.body.monthlyFee);
       if (!isNaN(fee) && fee >= 0) {
         updateData.monthlyFee = fee;
+      }
+    }
+    if (isTeacherEditingStudent) {
+      for (const field of ['address', 'dateOfBirth', 'passportNumber', 'jshshir', 'parentName', 'parentPhone', 'parentJshshir', 'registrationDate']) {
+        if (req.body[field] === '') updateData[field] = null;
       }
     }
     // Handle leftDate: if 'null' string or empty string is sent, set to null to clear the field
@@ -505,9 +531,19 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
 
     const oldClassIdForChat = user.classId ? user.classId.toString() : null;
 
+    const update = { $set: updateData };
+    if (isTeacherEditingStudent) {
+      const unset = {};
+      if (req.body.studentId === '') unset.studentId = 1;
+      if (req.body.email !== undefined && updateData.email === undefined) {
+        delete updateData.email;
+        unset.email = 1;
+      }
+      if (Object.keys(unset).length) update.$unset = unset;
+    }
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData },
+      update,
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -534,6 +570,14 @@ router.put('/:id', auth, updateLimiter, attachUserRole, (req, res, next) => {
       await syncOpenSalaryRecords(updatedUser._id, updateData.salaryPerLesson);
     }
 
+    if (isTeacherEditingStudent) {
+      const fields = [
+        '_id', 'firstName', 'lastName', 'phone', 'email', 'address', 'dateOfBirth',
+        'studentId', 'passportNumber', 'jshshir', 'parentName', 'parentPhone',
+        'parentJshshir', 'registrationDate', 'leftDate', 'profileImage'
+      ];
+      return res.json(Object.fromEntries(fields.map((field) => [field, updatedUser[field] ?? null])));
+    }
     res.json(updatedUser);
   } catch (error) {
     if (error.statusCode) {

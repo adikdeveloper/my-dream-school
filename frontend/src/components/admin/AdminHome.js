@@ -72,7 +72,7 @@ const hasChartValues = (chartData) =>
     Array.isArray(dataset.data) && dataset.data.some((value) => Number(value) > 0)
   );
 
-const AdminHome = () => {
+const AdminHome = ({ basePath = '/director' }) => {
   const navigate = useNavigate();
   const { setLoading, setError } = useData();
 
@@ -409,11 +409,11 @@ const AdminHome = () => {
 
   // ==================== NAVIGATION HANDLERS ====================
 
-  const handleAddUser = () => navigate('/director/users');
-  const handleCreateClass = () => navigate('/director/classes');
-  const handleAddSubject = () => navigate('/director/subjects');
-  const handleAddPayment = () => navigate('/director/payments');
-  const handleViewAllActivities = () => navigate('/director/reports');
+  const handleAddUser = () => navigate(basePath + '/users');
+  const handleCreateClass = () => navigate(basePath + '/classes');
+  const handleAddSubject = () => navigate(basePath + '/subjects');
+  const handleAddPayment = () => navigate(basePath + '/payments');
+  const handleViewAllActivities = () => navigate(basePath + '/reports');
 
   // ==================== STATIC DATA ====================
 

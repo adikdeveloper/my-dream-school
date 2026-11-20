@@ -1,3 +1,4 @@
+import ProfileCompleteness from './ProfileCompleteness';
 import { formatUzShortDate } from '../../utils/uzDate';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useData } from '../../context/DataContext';
@@ -16,7 +17,7 @@ function TeacherCompleteness({ teacher }) {
     return value && value !== '(aniqlanmagan)' && !value.startsWith('pending-teacher-');
   }).length;
   const percent = Math.round(100 * filled / teacherProfileFields.length);
-  return <small aria-label={`Profil to'ldirilgani: ${percent}%`}>{percent}%</small>;
+  return <ProfileCompleteness percent={percent} />;
 }
 
 const TeacherManagement = () => {
@@ -583,7 +584,7 @@ const TeacherManagement = () => {
                             )}
                           </div>
                           <div className="teacher-details">
-                            <div className="teacher-name">{teacher.firstName} {teacher.lastName} <TeacherCompleteness teacher={teacher} /></div>
+                            <div className="teacher-name">{teacher.firstName} {teacher.lastName}</div>
                           </div>
                         </div>
                       </td>
@@ -641,6 +642,7 @@ const TeacherManagement = () => {
                           >
                             <span>✏️</span>
                           </button>
+                          <TeacherCompleteness teacher={teacher} />
                           <button
                             className="action-btn delete-btn"
                             title="O'chirish"
@@ -673,7 +675,7 @@ const TeacherManagement = () => {
                       )}
                     </div>
                     <div className="card-info">
-                      <h3 className="card-name">{teacher.firstName} {teacher.lastName} <TeacherCompleteness teacher={teacher} /></h3>
+                      <h3 className="card-name">{teacher.firstName} {teacher.lastName}</h3>
                     </div>
                     <div className={`card-status ${teacher.isActive ? 'status-active' : 'status-inactive'}`}>
                       {teacher.isActive ? '✓' : '✗'}
@@ -736,6 +738,7 @@ const TeacherManagement = () => {
                       <span>✏️</span>
                       <span>Tahrirlash</span>
                     </button>
+                    <TeacherCompleteness teacher={teacher} />
                     <button
                       className="card-action-btn delete"
                       onClick={() => handleDeleteTeacher(teacher)}
@@ -1395,6 +1398,53 @@ const TeacherManagement = () => {
         .status-badge.status-inactive {
           background: #fee2e2;
           color: #991b1b;
+        }
+
+        .teacher-management .profile-completeness {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 40px;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          cursor: help;
+        }
+
+        .teacher-management .completeness-ring {
+          display: block;
+          width: 40px;
+          height: 40px;
+          transform: rotate(-90deg);
+        }
+
+        .teacher-management .completeness-track {
+          fill: none;
+          stroke: var(--director-primary-100, #dbeafe);
+          stroke-width: 3;
+        }
+
+        .teacher-management .completeness-progress {
+          fill: none;
+          stroke: var(--director-primary-600, #2563eb);
+          stroke-width: 3;
+          stroke-linecap: round;
+          transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .teacher-management .completeness-value {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--director-primary-700, #1d4ed8);
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1;
+          letter-spacing: -0.2px;
+          pointer-events: none;
         }
 
         .action-buttons {

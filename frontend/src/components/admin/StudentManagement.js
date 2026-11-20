@@ -1,3 +1,4 @@
+import ProfileCompleteness from './ProfileCompleteness';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -60,34 +61,6 @@ const getProfileCompleteness = (student) => {
   }, 0);
 
   return Math.round((filledCount / PROFILE_COMPLETENESS_FIELDS.length) * 100);
-};
-
-const ProfileCompleteness = ({ student }) => {
-  const percent = getProfileCompleteness(student);
-  const radius = 15.5;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference - (percent / 100) * circumference;
-
-  return (
-    <div
-      className="profile-completeness"
-      title={`Profil to'ldirilgani: ${percent}%`}
-      aria-label={`Profil to'ldirilgani: ${percent}%`}
-    >
-      <svg className="completeness-ring" viewBox="0 0 36 36" aria-hidden="true">
-        <circle className="completeness-track" cx="18" cy="18" r={radius} />
-        <circle
-          className="completeness-progress"
-          cx="18"
-          cy="18"
-          r={radius}
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={dashOffset}
-        />
-      </svg>
-      <span className="completeness-value">{percent}%</span>
-    </div>
-  );
 };
 
 const StudentManagement = () => {
@@ -575,7 +548,7 @@ const StudentManagement = () => {
                               <span><StudentIcon name="edit" size={15} /></span>
                             </button>
                           )}
-                          <ProfileCompleteness student={student} />
+                          <ProfileCompleteness percent={getProfileCompleteness(student)} />
                           {!hideEdit && (
                             <button
                               className="action-btn transfer-btn"
@@ -639,7 +612,7 @@ const StudentManagement = () => {
                         </span>
                       </div>
                     </div>
-                    <ProfileCompleteness student={student} />
+                    <ProfileCompleteness percent={getProfileCompleteness(student)} />
                     <div className={`card-status ${student.isActive ? 'status-active' : 'status-inactive'}`}>
                       {student.isActive ? '✓' : '✗'}
                     </div>

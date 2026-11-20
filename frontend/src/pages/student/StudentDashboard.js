@@ -1,5 +1,5 @@
-import React, { useState, useMemo, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/common/Logo';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
@@ -32,25 +32,56 @@ const StudentDashIcon = ({ name = 'grid', size = 20 }) => {
   );
 };
 
-const menuIconName = (item = {}) => {
-  if (item.iconKey) return item.iconKey;
-  const iconByPath = {
-    '/student': 'grid',
-    '/student/ai': 'ai',
-    '/student/schedule': 'calendar',
-    '/student/homework': 'journal',
-    '/student/exams': 'exams',
-    '/student/my-class': 'users',
-    '/student/chat': 'message',
-    '/student/notifications': 'bell',
-    '/student/statistics': 'report',
-    '/student/quarters': 'exams',
-    '/student/payments': 'payments',
-    '/student/profile': 'profile'
-  };
-  if (iconByPath[item.path]) return iconByPath[item.path];
-  return 'grid';
-};
+// Direktor panelidagi kabi ochiladigan bo'limlar (submenu)
+const NAV_SECTIONS = [
+  {
+    key: 'main',
+    label: 'Asosiy',
+    icon: 'grid',
+    items: [
+      { path: '/student', label: 'Bosh sahifa', iconKey: 'grid', end: true },
+      { path: '/student/ai', label: 'AI Yordamchi', iconKey: 'ai' },
+      { path: '/student/schedule', label: 'Dars jadvali', iconKey: 'calendar' }
+    ]
+  },
+  {
+    key: 'education',
+    label: "Ta'lim",
+    icon: 'education',
+    items: [
+      { path: '/student/homework', label: 'Uy vazifalar', iconKey: 'journal' },
+      { path: '/student/exams', label: 'Imtihonlar', iconKey: 'exams' },
+      { path: '/student/my-class', label: 'Mening sinfim', iconKey: 'users' },
+      { path: '/student/quarters', label: 'Chorak baholari', iconKey: 'exams' },
+      { path: '/student/statistics', label: 'Mening natijalarim', iconKey: 'report' }
+    ]
+  },
+  {
+    key: 'communication',
+    label: 'Aloqa',
+    icon: 'message',
+    items: [
+      { path: '/student/chat', label: 'Chat', iconKey: 'message' },
+      { path: '/student/notifications', label: 'Bildirishnomalar', iconKey: 'bell' }
+    ]
+  },
+  {
+    key: 'finance',
+    label: "To'lovlar",
+    icon: 'payments',
+    items: [
+      { path: '/student/payments', label: "To'lovlarim", iconKey: 'payments' }
+    ]
+  },
+  {
+    key: 'personal',
+    label: 'Shaxsiy',
+    icon: 'profile',
+    items: [
+      { path: '/student/profile', label: 'Profil', iconKey: 'profile' }
+    ]
+  }
+];
 
 // Lazy load components for code splitting and better performance
 const StudentHome = lazy(() => import('../../components/student/StudentHome'));
@@ -80,7 +111,7 @@ const LoadingFallback = () => (
       width: '50px',
       height: '50px',
       border: '4px solid #e2e8f0',
-      borderTop: '4px solid #10b981',
+      borderTop: '4px solid #3b82f6',
       borderRadius: '50%',
       animation: 'spin 1s linear infinite'
     }}></div>
@@ -96,7 +127,31 @@ const LoadingFallback = () => (
 
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openSubMenus, setOpenSubMenus] = useState({ main: true });
+
+  // Sahifa o'zgarganda tegishli bo'limni ochamiz
+  useEffect(() => {
+    setSidebarOpen(false);
+    const activeSection = NAV_SECTIONS.find((section) =>
+      section.items.some((item) => (
+        item.end ? location.pathname === item.path : location.pathname.startsWith(item.path)
+      ))
+    );
+    if (activeSection) {
+      setOpenSubMenus((prev) => ({ ...prev, [activeSection.key]: true }));
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleKey = (event) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
 
   // Generate profile image URL with cache busting
   const profileImageUrl = useMemo(() => {
@@ -112,93 +167,11 @@ const StudentDashboard = () => {
     return `${firstInitial}${lastInitial}`.toUpperCase();
   }, [user?.firstName, user?.lastName, user?.username]);
 
-  const menuItems = [
-    {
-      path: '/student',
-      label: 'Bosh sahifa',
-      iconKey: 'grid',
-      end: true,
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/ai',
-      label: 'AI Yordamchi',
-      iconKey: 'ai',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/schedule',
-      label: 'Dars jadvali',
-      iconKey: 'calendar',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/homework',
-      label: 'Uy vazifalar',
-      iconKey: 'journal',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/exams',
-      label: 'Imtihonlar',
-      iconKey: 'exams',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/my-class',
-      label: 'Mening sinfim',
-      iconKey: 'users',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/chat',
-      label: 'Chat',
-      iconKey: 'message',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/notifications',
-      label: 'Bildirishnomalar',
-      iconKey: 'bell',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/statistics',
-      label: 'Mening natijalarim',
-      iconKey: 'report',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/quarters',
-      label: 'Chorak baholari',
-      iconKey: 'exams',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/payments',
-      label: "To'lovlarim",
-      iconKey: 'payments',
-      badge: null,
-      section: null
-    },
-    {
-      path: '/student/profile',
-      label: 'Profil',
-      iconKey: 'profile',
-      badge: null,
-      section: null
-    }
-  ];
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.username || "O'quvchi";
+
+  const toggleSubMenu = (sectionKey) => {
+    setOpenSubMenus((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
+  };
 
   const handleMenuItemClick = () => {
     setSidebarOpen(false);
@@ -206,15 +179,22 @@ const StudentDashboard = () => {
 
   const handleLogout = () => {
     logout();
+    navigate('/login');
   };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const avatarStyle = profileImageUrl ? {
+    backgroundImage: `url(${profileImageUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+  } : undefined;
+
   return (
-    <div className="admin-dashboard-layout">
-      {/* Header — direktor bilan 1:1 */}
+    <div className="admin-dashboard-layout student-shell">
+      {/* Header — direktor paneli bilan bir xil */}
       <header className="header">
         <div className="header-content">
           <div className="header-left">
@@ -232,30 +212,27 @@ const StudentDashboard = () => {
             <Logo />
             <div className="page-info">
               <div className="header-page-title">O'quvchi paneli</div>
-              <p className="page-subtitle">O'quv jarayoningizni kuzatib boring</p>
+              <p className="page-subtitle">Maktab boshqaruv tizimi</p>
             </div>
           </div>
           <div className="header-right">
-            <NotificationBell accent="#2563eb" viewAllLink="/student/notifications" />
+            <NotificationBell accent="#1e3a8a" viewAllLink="/student/notifications" />
             <div className="user-info">
               <div
                 className={`user-avatar ${profileImageUrl ? 'has-image' : 'no-image'}`}
-                style={profileImageUrl ? {
-                  backgroundImage: `url(${profileImageUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : undefined}
+                style={avatarStyle}
               >
                 {!profileImageUrl && (
                   <span className="user-initials">{userInitials}</span>
                 )}
               </div>
               <div className="user-details">
-                <span className="user-name">{user?.firstName} {user?.lastName}</span>
-                <span className="user-role">{user?.role || "o'quvchi"}</span>
+                <span className="user-name">{fullName}</span>
+                <span className="user-role">O'quvchi</span>
               </div>
             </div>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="refresh-btn"
               aria-label="Sahifani yangilash"
@@ -263,7 +240,7 @@ const StudentDashboard = () => {
             >
               <span className="refresh-icon"><StudentDashIcon name="refresh" size={18} /></span>
             </button>
-            <button onClick={handleLogout} className="logout-btn" aria-label="Tizimdan chiqish">
+            <button type="button" onClick={handleLogout} className="logout-btn" aria-label="Tizimdan chiqish">
               <span className="logout-icon"><StudentDashIcon name="logout" size={18} /></span>
               <span className="logout-text">Chiqish</span>
             </button>
@@ -272,37 +249,46 @@ const StudentDashboard = () => {
       </header>
 
       <div className="dashboard-container">
-        {/* Sidebar — direktor bilan 1:1 */}
+        {/* Sidebar — direktor paneli bilan bir xil */}
         <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-brand">
-              <span className="brand-icon"><StudentDashIcon name="education" size={18} /></span>
-              <span className="brand-text">O'quvchi</span>
+              <div className="brand-avatar" style={avatarStyle} aria-hidden="true">
+                {!profileImageUrl && <span>{userInitials}</span>}
+              </div>
+              <span className="brand-text">{fullName}</span>
             </div>
           </div>
           <nav className="sidebar-nav" role="navigation" aria-label="Asosiy navigatsiya">
             <ul className="nav-list">
-              {menuItems.map((item) => (
-                <li key={item.path} className="nav-item">
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `nav-link ${isActive ? 'active' : ''}`
-                    }
-                    end={item.end}
-                    onClick={handleMenuItemClick}
-                    aria-label={item.label}
+              {NAV_SECTIONS.map((section) => (
+                <li key={section.key} className="nav-item has-submenu">
+                  <button
+                    type="button"
+                    className={`nav-link submenu-toggle ${openSubMenus[section.key] ? 'open' : ''}`}
+                    onClick={() => toggleSubMenu(section.key)}
+                    aria-expanded={Boolean(openSubMenus[section.key])}
                   >
-                    <span className="nav-icon" aria-hidden="true"><StudentDashIcon name={menuIconName(item)} /></span>
-                    <span className="nav-text">
-                      {item.label}
-                    </span>
-                    {item.badge > 0 && (
-                      <span className="notification-badge" aria-label={`${item.badge} ta yangi bildirishnoma`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
+                    <span className="nav-icon" aria-hidden="true"><StudentDashIcon name={section.icon} /></span>
+                    <span className="nav-text">{section.label}</span>
+                    <span className="submenu-arrow">▼</span>
+                  </button>
+
+                  <ul className={`submenu-list ${openSubMenus[section.key] ? 'expanded' : ''}`}>
+                    {section.items.map((item) => (
+                      <li key={item.path} className="submenu-item">
+                        <NavLink
+                          to={item.path}
+                          end={item.end}
+                          className={({ isActive }) => `submenu-link ${isActive ? 'active' : ''}`}
+                          onClick={handleMenuItemClick}
+                        >
+                          <span className="nav-icon" aria-hidden="true"><StudentDashIcon name={item.iconKey} size={18} /></span>
+                          <span className="nav-text">{item.label}</span>
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>

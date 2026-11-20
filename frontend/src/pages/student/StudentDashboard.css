@@ -952,3 +952,171 @@ body.test-fullscreen-mode .main-content {
 body.test-fullscreen-mode {
   overflow: hidden;
 }
+
+/* ============================================================
+   Direktor paneli bilan bir xil shell (o'quvchi paneli)
+   Bu blok eng oxirida turadi — eski student stillarini bosib o'tadi.
+   ============================================================ */
+.student-shell {
+  background: #f8fafc;
+}
+
+.student-shell .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.student-shell .header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.student-shell .header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.student-shell .page-info {
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (min-width: 1024px) {
+  .student-shell .page-info {
+    display: flex;
+  }
+}
+
+.student-shell .dashboard-container {
+  display: flex;
+  position: relative;
+}
+
+.student-shell .sidebar {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+}
+
+.student-shell .sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.student-shell .sidebar-brand .brand-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #fff;
+  background: #1e3a8a;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.student-shell .sidebar-brand .brand-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-shell .sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.student-shell .nav-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+}
+
+.student-shell .nav-link {
+  display: flex;
+  align-items: center;
+  position: relative;
+  text-decoration: none;
+}
+
+.student-shell .submenu-toggle {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.student-shell .submenu-arrow {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 9px;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.student-shell .submenu-toggle.open .submenu-arrow {
+  transform: rotate(180deg);
+}
+
+.student-shell .submenu-list {
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.student-shell .submenu-list.expanded {
+  max-height: 640px;
+}
+
+.student-shell .submenu-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.student-shell .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.student-shell .notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.student-shell .main-content {
+  flex: 1;
+}
+
+@media (max-width: 1023px) {
+  .student-shell .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: var(--director-topbar-height) 0 0;
+    z-index: 40;
+    border: 0;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+  }
+}

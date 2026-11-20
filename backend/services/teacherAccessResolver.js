@@ -219,7 +219,7 @@ async function resolveTeacherLessonAccess({ teacherId, classId, subjectId, date 
   const dayStart = normalizeDay(date);
   const dayEnd = endOfDay(date);
   if (!dayStart) return { allowed: false, reason: 'invalid_date', schedule: null };
-  const today = normalizeDay(new Date());
+  const today = normalizeDay(new Date(Date.now() + 5 * 3600000));
   if (dayStart > today) return { allowed: false, reason: 'future_date', schedule: null };
 
   const schedules = await Schedule.find({

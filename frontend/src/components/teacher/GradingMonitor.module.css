@@ -1,0 +1,13 @@
+﻿.panel { margin: 16px 0; padding: 18px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; color: #172554; }
+.header { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 12px; }
+.header h2 { margin: 0; font-size: 1.125rem; }
+.header p, .summary { margin: 6px 0 12px; color: #475569; }
+.header a { color: #1e40af; font-weight: 700; }
+.header input { margin-left: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.scroll { overflow-x: auto; }
+.scroll table { width: 100%; border-collapse: collapse; text-align: left; }
+.scroll th, .scroll td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+.scroll th { font-size: .85rem; background: #f8fafc; }
+.pending, .complete { padding: 4px 8px; border-radius: 6px; font-weight: 600; }
+.pending { color: #92400e; background: #fef3c7; }
+.complete { color: #065f46; background: #d1fae5; }

@@ -14,6 +14,7 @@ const Schedule = require('../models/scheduling/Schedule');
 const Payment = require('../models/financial/Payment');
 const StudentFee = require('../models/financial/StudentFee');
 const scheduleValidator = require('../utils/scheduleValidator');
+const { schoolNow, teacherGradingStatus, targetCount, activeOnDate, absence, dayKey, rosterForClass } = require('../services/dailyGrading');
 
 // @route   GET /api/stats/admin
 // @desc    Get admin dashboard statistics
@@ -1290,102 +1291,32 @@ function getRelativeTime(date) {
 // @route   GET /api/stats/teacher/ungraded-lessons
 // @desc    Get today's lessons without grades for teacher (with localStorage key for frontend)
 // @access  Private/Teacher
+router.get('/teacher/grading-monitor', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const date = req.query.date || schoolNow().today;
+    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date || date > schoolNow().today) {
+      return res.status(400).json({ message: "Sana noto'g'ri" });
+    }
+    const lessons = await teacherGradingStatus(req.user, date);
+    return res.json({ date, lessons });
+  } catch (error) {
+    console.error('Teacher grading monitoring failed:', error);
+    return res.status(500).json({ message: "Baholash holatini yuklab bo'lmadi" });
+  }
+});
+
 router.get('/teacher/ungraded-lessons', auth, authorize('teacher', 'admin', 'director', 'supervisor', 'accountant'), async (req, res) => {
   try {
-    const teacherId = req.query.teacherId || req.user._id;
-
-    // Bugungi sana va vaqt
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    const todayStr = now.toISOString().split('T')[0]; // "YYYY-MM-DD" format
-    const currentTime = now.toTimeString().slice(0, 5); // "HH:MM" format
-
-    // Hafta kunini olish (inglizcha nom)
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = dayNames[now.getDay()];
-
-    // O'qituvchi dars beradigan sinflarni olish
-    const teacherClasses = await Class.find({
-      'subjects.teacher': teacherId
-    }).populate('subjects.subject', 'name code').lean();
-
-    if (teacherClasses.length === 0) {
-      return res.json({
-        todayKey: todayStr,
-        ungradedLessons: [],
-        totalUngraded: 0
-      });
-    }
-
-    const ungradedLessons = [];
-
-    // Har bir sinf uchun bugungi jadvalini tekshirish
-    for (const cls of teacherClasses) {
-      // Sinf jadvalini o'qish
-      if (!cls.schedule || cls.schedule.length === 0) continue;
-
-      // Bugungi kun jadvalini topish
-      const todaySchedule = cls.schedule.find(s => s.day === dayName);
-      if (!todaySchedule || !todaySchedule.periods || todaySchedule.periods.length === 0) continue;
-
-      // Bu o'qituvchi o'qitadigan fanlarni aniqlash
-      const teacherSubjectIds = cls.subjects
-        .filter(s => s.teacher && s.teacher.toString() === teacherId.toString())
-        .map(s => s.subject._id.toString());
-
-      // Bugungi o'tgan darslarni tekshirish
-      for (const period of todaySchedule.periods) {
-        // Faqat bu o'qituvchining darslari va vaqti o'tgan darslar
-        if (!period.subject || !period.teacher) continue;
-        if (period.teacher.toString() !== teacherId.toString()) continue;
-        if (period.endTime >= currentTime) continue; // Dars hali tugamagan
-
-        // Bu dars uchun bugungi baholar borligini tekshirish
-        const subjectId = period.subject.toString();
-        const classId = cls._id;
-
-        // Shu sinf va fan uchun bugungi baholar soni
-        const todayGradesCount = await Grade.countDocuments({
-          class: classId,
-          subject: subjectId,
-          date: {
-            $gte: todayStart,
-            $lte: todayEnd
-          }
-        });
-
-        // Agar baholar yo'q bo'lsa, ro'yxatga qo'shish
-        if (todayGradesCount === 0) {
-          // Fan nomini topish
-          const subjectData = cls.subjects.find(s =>
-            s.subject._id.toString() === subjectId
-          );
-
-          ungradedLessons.push({
-            classId: cls._id,
-            className: cls.name,
-            subjectId: subjectId,
-            subjectName: subjectData?.subject?.name || 'Noma\'lum fan',
-            time: `${period.startTime} - ${period.endTime}`,
-            startTime: period.startTime,
-            endTime: period.endTime,
-            date: todayStr
-          });
-        }
-      }
-    }
-
-    // Vaqt bo'yicha saralash (ertalabroq o'tgan darslar birinchi)
-    ungradedLessons.sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    res.json({
-      todayKey: todayStr, // Frontend localStorage uchun kalit
-      ungradedLessons,
-      totalUngraded: ungradedLessons.length
-    });
+    const todayKey = schoolNow().today;
+    const teacher = req.user.role === 'teacher' || !req.query.teacherId
+      ? req.user : await User.findById(req.query.teacherId).select('classes');
+    const lessons = teacher ? await teacherGradingStatus(teacher, todayKey) : [];
+    const ungradedLessons = lessons.filter((lesson) => !lesson.completed && String(lesson.teacherId) === String(teacher?._id));
+    return res.json({ todayKey, ungradedLessons, totalUngraded: ungradedLessons.length });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Teacher pending grades failed:', error);
+    return res.status(500).json({ message: "Baholanmagan darslarni yuklab bo'lmadi" });
   }
 });
 
@@ -1449,6 +1380,16 @@ async function getScheduledLessonsForDate(targetDate) {
 // @route   GET /api/stats/reports/daily
 // @desc    Bugungi hisobot: bahosiz darslar, kelmaganlar, progress
 // @access  Private/Admin
+function reportGradingCounts(cls, date, absent = new Set(), graded = new Set()) {
+  const key = dayKey(date);
+  const eligible = (cls.students || []).filter((student) => activeOnDate(student, key) && !absent.has(String(student._id)));
+  return {
+    eligible,
+    expected: targetCount(eligible.length),
+    actual: eligible.filter((student) => graded.has(String(student._id))).length
+  };
+}
+
 router.get('/reports/daily', auth, authorize('admin', 'accountant'), async (req, res) => {
   try {
     // Accept optional date query param: ?date=YYYY-MM-DD
@@ -1460,9 +1401,8 @@ router.get('/reports/daily', auth, authorize('admin', 'accountant'), async (req,
     const scheduledLessons = await getScheduledLessonsForDate(now);
 
     // 2. Get all classes with students
-    const classes = await Class.find({ isActive: true })
-      .populate('students', 'firstName lastName studentId')
-      .lean();
+    const classes = await Class.find({ isActive: true }).lean();
+    await Promise.all(classes.map(async (cls) => { cls.students = await rosterForClass(cls); }));
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
 
     // 3. Get today's grades
@@ -1474,6 +1414,7 @@ router.get('/reports/daily', auth, authorize('admin', 'accountant'), async (req,
     const gradeKey = (classId, subjectId) => `${classId}_${subjectId}`;
     const gradedSet = new Map();
     todayGrades.forEach(g => {
+      if (g.type !== 'daily' || g.isExam) return;
       const key = gradeKey(g.class.toString(), g.subject.toString());
       if (!gradedSet.has(key)) gradedSet.set(key, new Set());
       gradedSet.get(key).add(g.student.toString());
@@ -1494,7 +1435,9 @@ router.get('/reports/daily', auth, authorize('admin', 'accountant'), async (req,
         if (!absentByClass.has(cid)) absentByClass.set(cid, new Set());
         absentByClass.get(cid).add(a.student.toString());
 
-        const key = `${cid}_${(a.subject || '').toString()}`;
+      }
+      if (absence.includes(status)) {
+        const key = `${a.class}_${a.subject || ''}`;
         if (!absentStudentsByClassSubject.has(key)) absentStudentsByClassSubject.set(key, new Set());
         absentStudentsByClassSubject.get(key).add(a.student.toString());
       }
@@ -1513,18 +1456,14 @@ router.get('/reports/daily', auth, authorize('admin', 'accountant'), async (req,
       const gradedStudents = gradedSet.get(key) || new Set();
       const absentStudents = absentStudentsByClassSubject.get(key) || new Set();
 
-      // Expected = total students - absent students
-      const totalStudents = cls.students.length;
-      const absentCount = absentStudents.size;
-      const expectedGrades = totalStudents - absentCount;
-      const actualGrades = gradedStudents.size;
+      const { eligible, expected: expectedGrades, actual: actualGrades } = reportGradingCounts(cls, now, absentStudents, gradedStudents);
 
       totalExpected += expectedGrades;
       totalCompleted += Math.min(actualGrades, expectedGrades);
 
       if (actualGrades < expectedGrades) {
         // Find ungraded students
-        const ungradedStudents = cls.students
+        const ungradedStudents = eligible
           .filter(s => {
             const sid = s._id.toString();
             return !gradedStudents.has(sid) && !absentStudents.has(sid);
@@ -1592,9 +1531,8 @@ router.get('/reports/weekly', auth, authorize('admin', 'accountant'), async (req
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset, 0, 0, 0, 0);
     const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    const classes = await Class.find({ isActive: true })
-      .populate('students', 'firstName lastName')
-      .lean();
+    const classes = await Class.find({ isActive: true }).lean();
+    await Promise.all(classes.map(async (cls) => { cls.students = await rosterForClass(cls); }));
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
 
     // Get all attendance this week
@@ -1648,6 +1586,7 @@ router.get('/reports/weekly', auth, authorize('admin', 'accountant'), async (req
 
       const gradedByClassSubject = new Map();
       dayGrades.forEach(g => {
+        if (g.type !== 'daily' || g.isExam) return;
         const key = `${g.class}_${g.subject}`;
         if (!gradedByClassSubject.has(key)) gradedByClassSubject.set(key, new Set());
         gradedByClassSubject.get(key).add(g.student.toString());
@@ -1656,7 +1595,7 @@ router.get('/reports/weekly', auth, authorize('admin', 'accountant'), async (req
       const absentByClassSubject = new Map();
       dayAtt.forEach(a => {
         const st = (a.status || '').toLowerCase();
-        if (st === 'absent' || st === 'kelmadi') {
+        if (absence.includes(st)) {
           const key = `${a.class}_${a.subject}`;
           if (!absentByClassSubject.has(key)) absentByClassSubject.set(key, new Set());
           absentByClassSubject.get(key).add(a.student.toString());
@@ -1667,9 +1606,7 @@ router.get('/reports/weekly', auth, authorize('admin', 'accountant'), async (req
         const cls = classMap.get(lesson.classId.toString());
         if (!cls) continue;
         const key = `${lesson.classId}_${lesson.subjectId}`;
-        const absent = absentByClassSubject.get(key)?.size || 0;
-        const expected = cls.students.length - absent;
-        const actual = gradedByClassSubject.get(key)?.size || 0;
+        const { expected, actual } = reportGradingCounts(cls, tempDate, absentByClassSubject.get(key), gradedByClassSubject.get(key));
         totalExpected += expected;
         totalCompleted += Math.min(actual, expected);
       }
@@ -1730,9 +1667,8 @@ router.get('/reports/monthly', auth, authorize('admin', 'accountant'), async (re
     const today = new Date();
     const effectiveEnd = monthEnd < today ? monthEnd : today;
 
-    const classes = await Class.find({ isActive: true })
-      .populate('students', 'firstName lastName studentId')
-      .lean();
+    const classes = await Class.find({ isActive: true }).lean();
+    await Promise.all(classes.map(async (cls) => { cls.students = await rosterForClass(cls); }));
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
     const allStudentIds = classes.flatMap(c => c.students.map(s => s._id));
 
@@ -1782,6 +1718,7 @@ router.get('/reports/monthly', auth, authorize('admin', 'accountant'), async (re
       date: { $gte: monthStart, $lte: monthEnd }
     }).lean();
 
+    const ungradedByTeacher = new Map();
     // Calculate grading progress for the month (day by day up to effectiveEnd)
     let totalExpected = 0, totalCompleted = 0;
     const tempDate = new Date(monthStart);
@@ -1802,6 +1739,7 @@ router.get('/reports/monthly', auth, authorize('admin', 'accountant'), async (re
 
         const gradedMap = new Map();
         dayGrades.forEach(g => {
+          if (g.type !== 'daily' || g.isExam) return;
           const key = `${g.class}_${g.subject}`;
           if (!gradedMap.has(key)) gradedMap.set(key, new Set());
           gradedMap.get(key).add(g.student.toString());
@@ -1810,7 +1748,7 @@ router.get('/reports/monthly', auth, authorize('admin', 'accountant'), async (re
         const absentMap = new Map();
         dayAtt.forEach(a => {
           const st = (a.status || '').toLowerCase();
-          if (st === 'absent' || st === 'kelmadi') {
+          if (absence.includes(st)) {
             const key = `${a.class}_${a.subject}`;
             if (!absentMap.has(key)) absentMap.set(key, new Set());
             absentMap.get(key).add(a.student.toString());
@@ -1821,66 +1759,26 @@ router.get('/reports/monthly', auth, authorize('admin', 'accountant'), async (re
           const cls = classMap.get(lesson.classId.toString());
           if (!cls) continue;
           const key = `${lesson.classId}_${lesson.subjectId}`;
-          const absent = absentMap.get(key)?.size || 0;
-          const expected = cls.students.length - absent;
-          const actual = gradedMap.get(key)?.size || 0;
+          const { expected, actual } = reportGradingCounts(cls, tempDate, absentMap.get(key), gradedMap.get(key));
           totalExpected += expected;
           totalCompleted += Math.min(actual, expected);
+          if (actual < expected) {
+            const id = String(lesson.teacherId);
+            if (!ungradedByTeacher.has(id)) {
+              ungradedByTeacher.set(id, { teacherName: lesson.teacherName, ungradedCount: 0, details: [] });
+            }
+            const entry = ungradedByTeacher.get(id);
+            entry.ungradedCount += 1;
+            if (entry.details.length < 5) {
+              entry.details.push({ className: cls.name, subjectName: lesson.subjectName, date: dayKey(tempDate) });
+            }
+          }
         }
       }
       tempDate.setDate(tempDate.getDate() + 1);
     }
 
     const gradingProgress = totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 100;
-
-    // Ungraded lessons summary (which teachers have ungraded lessons)
-    const ungradedByTeacher = new Map();
-    // We need to recalculate for ungraded specifics
-    const tempDate2 = new Date(monthStart);
-    while (tempDate2 <= effectiveEnd) {
-      if (tempDate2.getDay() !== 0) {
-        const dayLessons = await getScheduledLessonsForDate(new Date(tempDate2));
-        const dayStart = new Date(tempDate2.getFullYear(), tempDate2.getMonth(), tempDate2.getDate(), 0, 0, 0, 0);
-        const dayEnd = new Date(tempDate2.getFullYear(), tempDate2.getMonth(), tempDate2.getDate(), 23, 59, 59, 999);
-        const dayGrades = monthGrades.filter(g => {
-          const gd = new Date(g.date);
-          return gd >= dayStart && gd <= dayEnd;
-        });
-        const gradedMap2 = new Map();
-        dayGrades.forEach(g => {
-          const key = `${g.class}_${g.subject}`;
-          if (!gradedMap2.has(key)) gradedMap2.set(key, new Set());
-          gradedMap2.get(key).add(g.student.toString());
-        });
-
-        for (const lesson of dayLessons) {
-          const cls = classMap.get(lesson.classId.toString());
-          if (!cls) continue;
-          const key = `${lesson.classId}_${lesson.subjectId}`;
-          const graded = gradedMap2.get(key)?.size || 0;
-          if (graded < cls.students.length) {
-            const tid = lesson.teacherId.toString();
-            if (!ungradedByTeacher.has(tid)) {
-              ungradedByTeacher.set(tid, {
-                teacherName: lesson.teacherName,
-                ungradedCount: 0,
-                details: []
-              });
-            }
-            const t = ungradedByTeacher.get(tid);
-            t.ungradedCount++;
-            if (t.details.length < 5) { // limit details
-              t.details.push({
-                className: cls.name || `${cls.grade}-${cls.section}`,
-                subjectName: lesson.subjectName,
-                date: tempDate2.toISOString().split('T')[0]
-              });
-            }
-          }
-        }
-      }
-      tempDate2.setDate(tempDate2.getDate() + 1);
-    }
 
     const ungradedTeachers = Array.from(ungradedByTeacher.values())
       .sort((a, b) => b.ungradedCount - a.ungradedCount);
@@ -1975,9 +1873,8 @@ router.get('/reports/yearly', auth, authorize('admin', 'accountant'), async (req
     const yearEnd = new Date(academicStartYear + 1, 5, 30, 23, 59, 59, 999); // Jun 30
     const effectiveEnd = yearEnd < now ? yearEnd : now;
 
-    const classes = await Class.find({ isActive: true })
-      .populate('students', 'firstName lastName studentId')
-      .lean();
+    const classes = await Class.find({ isActive: true }).lean();
+    await Promise.all(classes.map(async (cls) => { cls.students = await rosterForClass(cls); }));
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
 
     // Academic months: Aug(8), Sep(9), Oct(10), Nov(11), Dec(12), Jan(1), Feb(2), Mar(3), Apr(4), May(5), Jun(6)
@@ -2072,6 +1969,7 @@ router.get('/reports/yearly', auth, authorize('admin', 'accountant'), async (req
 
           const gMap = new Map();
           dGrades.forEach(g => {
+            if (g.type !== 'daily' || g.isExam) return;
             const key = `${g.class}_${g.subject}`;
             if (!gMap.has(key)) gMap.set(key, new Set());
             gMap.get(key).add(g.student.toString());
@@ -2079,7 +1977,7 @@ router.get('/reports/yearly', auth, authorize('admin', 'accountant'), async (req
           const aMap = new Map();
           dAtt.forEach(a => {
             const st = (a.status || '').toLowerCase();
-            if (st === 'absent' || st === 'kelmadi') {
+            if (absence.includes(st)) {
               const key = `${a.class}_${a.subject}`;
               if (!aMap.has(key)) aMap.set(key, new Set());
               aMap.get(key).add(a.student.toString());
@@ -2090,9 +1988,7 @@ router.get('/reports/yearly', auth, authorize('admin', 'accountant'), async (req
             const cls = classMap.get(lesson.classId.toString());
             if (!cls) continue;
             const key = `${lesson.classId}_${lesson.subjectId}`;
-            const absent = aMap.get(key)?.size || 0;
-            const expected = cls.students.length - absent;
-            const actual = gMap.get(key)?.size || 0;
+            const { expected, actual } = reportGradingCounts(cls, tmpDate, aMap.get(key), gMap.get(key));
             mExpected += expected;
             mCompleted += Math.min(actual, expected);
           }

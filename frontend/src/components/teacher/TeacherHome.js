@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/apiService';
 import { formatUzShortDate, formatUzWeekdayDate } from '../../utils/uzDate';
+import GradingMonitor from './GradingMonitor';
 import TeacherUiIcon from './TeacherUiIcon';
 import styles from './TeacherHome.module.css';
 
@@ -305,6 +306,8 @@ const TeacherHome = ({ greeting }) => {
           </button>
         </div>
       </header>
+
+      <GradingMonitor compact />
 
       {error && <div className="td-alert td-alert--error"><TeacherUiIcon name="warning" size={15} /> {error}</div>}
 

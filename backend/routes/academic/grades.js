@@ -9,6 +9,10 @@ const { resolveTeacherLessonAccess, getTeacherJournalScope } = require('../../se
 const salaryController = require('../../controllers/salaryController');
 const Attendance = require('../../models/academic/Attendance');
 
+const Class = require('../../models/academic/Class');
+const Holiday = require('../../models/scheduling/Holiday');
+const dailyGrading = require('../../services/dailyGrading');
+
 const router = express.Router();
 
 // Sanitize and validate MongoDB ObjectId
@@ -114,6 +118,91 @@ router.get('/',
 // @route   POST /api/grades
 // @desc    Create or update grade (upsert)
 // @access  Private/Teacher
+router.post('/teacher-daily', auth, authorize('teacher'), requirePermission('grade.create'), [
+  body('classId').isMongoId(),
+  body('subjectId').isMongoId(),
+  body('date').matches(/^\d{4}-\d{2}-\d{2}$/).bail().isISO8601({ strict: true }),
+  body('changes').isArray({ min: 1, max: 500 }),
+  body('changes.*.student').isMongoId(),
+  body('changes.*.score').custom((score) => score === null || (typeof score === 'number' && Number.isFinite(score) && score >= 0 && score <= 5))
+], async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ message: "Sinf, fan, sana yoki baholar noto'g'ri" });
+  const { classId, subjectId, date, changes } = req.body;
+  const reject = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
+  const session = await mongoose.startSession();
+  let savedCount;
+  try {
+    if (date > dailyGrading.schoolNow().today) reject("Kelajakdagi sanaga baho qo'yib bo'lmaydi");
+    const access = await resolveTeacherLessonAccess({ teacherId: req.user.id, classId, subjectId, date });
+    if (!access.allowed) reject("Bu sana uchun ushbu sinf va fanga baho qo'yish huquqingiz yo'q", 403);
+    if (await Holiday.isHoliday(dailyGrading.dayStart(date))) reject("Bayram kuni baho qo'yib bo'lmaydi");
+
+    await session.withTransaction(async () => {
+      // Serialize grade batches for the class, including changes to adjacent lesson dates.
+      const cls = await Class.findOneAndUpdate(
+        { _id: classId, isActive: true }, { $inc: { __v: 1 } },
+        { session, timestamps: false, projection: { students: 1 } }
+      ).lean();
+      if (!cls) reject('Faol sinf topilmadi', 404);
+
+      const { eligible, grades, required } = await dailyGrading.gradingContext(cls, subjectId, date, session);
+      const byStudent = new Map();
+      for (const grade of grades) {
+        const student = String(grade.student);
+        if (!byStudent.has(student)) byStudent.set(student, []);
+        byStudent.get(student).push(grade);
+      }
+      const selected = new Set([...byStudent.keys()].filter((student) => eligible.has(student)));
+      const pending = new Map();
+      for (const { student, score } of changes) {
+        if (pending.has(student)) reject("Bitta o'quvchi ikki marta yuborilgan");
+        pending.set(student, score);
+        if (score === null) selected.delete(student);
+        else {
+          if (!eligible.has(student)) reject("Darsga kelmagan yoki sinfga biriktirilmagan o'quvchiga baho qo'yib bo'lmaydi");
+          selected.add(student);
+        }
+      }
+      if (selected.size !== required) {
+        reject(`Bu sana uchun ${eligible.size} nafar baholanishi mumkin bo'lgan o'quvchidan ${required} nafariga baho qo'ying. Hozir ${selected.size} ta.`);
+      }
+      const streak = await dailyGrading.previousStreak(cls._id, subjectId, date, session);
+      if (dailyGrading.rotationExceeded(eligible, selected, streak, required)) {
+        reject("Oldingi ikki darsda ketma-ket baholangan o'quvchilar o'rniga boshqalarni tanlang");
+      }
+      for (const [student, score] of pending) {
+        const existing = byStudent.get(student) || [];
+        if (score === null) {
+          if (existing.length) await Grade.deleteMany({ _id: { $in: existing.map((grade) => grade._id) } }).session(session);
+        } else if (existing.length) {
+          existing[0].score = score;
+          await existing[0].save({ session });
+        } else {
+          await new Grade({
+            student, subject: subjectId, class: cls._id, teacher: req.user._id,
+            schedule: access.schedule?._id || access.substitution?.scheduleId || null,
+            score, maxScore: 5, type: 'daily', date: dailyGrading.dayStart(date), description: 'Kundalik baho'
+          }).save({ session });
+        }
+      }
+      savedCount = selected.size;
+    });
+    if (savedCount > 0) {
+      try {
+        await salaryController.recordLessonTaught(req.user._id, { date, classId, subjectId, description: "Baho qo'yildi" });
+      } catch (error) {
+        console.error('Daily grading salary record failed:', error.message);
+      }
+    }
+    return res.json({ graded: savedCount });
+  } catch (error) {
+    if (!error.status) console.error('Teacher daily grading failed:', error);
+    return res.status(error.status || 500).json({ message: error.status ? error.message : 'Baholarni saqlashda xatolik' });
+  } finally {
+    await session.endSession();
+  }
+});
+
 router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermission('grade.create'), [
   body('student').isMongoId(),
   body('subject').isMongoId(),
@@ -129,6 +218,9 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
       return res.status(400).json({ errors: errors.array() });
     }
 
+    if (req.user.role === 'teacher' && req.body.type === 'daily') {
+      return res.status(400).json({ message: 'Kundalik baholarni jurnal orqali birga saqlang' });
+    }
     // Check if student is active
     const User = require('../../models/users/User');
     const student = await User.findById(req.body.student);
@@ -212,7 +304,8 @@ router.post('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePermi
       student: gradeData.student,
       subject: gradeData.subject,
       class: gradeData.class,
-      date: { $gte: dateOnly, $lt: nextDay }
+      date: { $gte: dateOnly, $lt: nextDay },
+      ...(req.user.role === 'teacher' ? { type: req.body.type } : {})
     });
 
     let savedGrade;
@@ -265,7 +358,7 @@ router.delete('/', auth, authorize('teacher', 'admin', 'supervisor'), requirePer
     }
     const start = new Date(date); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 1);
-    const result = await Grade.deleteMany({ student: studentId, class: classId, subject: subjectId, date: { $gte: start, $lt: end } });
+    const result = await Grade.deleteMany({ student: studentId, class: classId, subject: subjectId, date: { $gte: start, $lt: end }, ...(req.user.role === 'teacher' ? { type: { $ne: 'daily' } } : {}) });
     res.json({ deletedCount: result.deletedCount || 0 });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

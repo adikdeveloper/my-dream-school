@@ -9,6 +9,8 @@ const { ensureClassRoom } = require('../../controllers/chat/chatHelpers');
 const { requirePermission, hasPermission } = require('../../middleware/permissions');
 const { getTeacherJournalScope, getTeacherSchedules, getTeacherSubstitutions, getTeacherLessons } = require('../../services/teacherAccessResolver');
 
+const { rosterForClass } = require('../../services/dailyGrading');
+
 const router = express.Router();
 
 // @route   GET /api/classes
@@ -307,13 +309,14 @@ router.get('/teacher/journal-context', auth, authorize('teacher'), async (req, r
     const classScope = scope.find(item => String(item._id) === String(classId));
     if (!classScope) return res.status(403).json({ message: 'Bu sana oralig\'ida jurnalga kirish huquqi yo\'q' });
     const [classData, schedules, substitutions, teacherLessons] = await Promise.all([
-      Class.findById(classId).select('name grade section group students').populate('students', 'firstName lastName studentId registrationDate').lean(),
+      Class.findById(classId).select('name grade section group students').lean(),
       getTeacherSchedules(req.user.id, { classId, startDate, endDate }),
       getTeacherSubstitutions(req.user.id, { classId, startDate, endDate }),
       getTeacherLessons(req.user.id, { classId })
     ]);
     if (!classData) return res.status(404).json({ message: 'Sinf topilmadi' });
-    res.json({ class: classData, subjects: classScope.subjects, schedules, substitutions, teacherLessons });
+    const students = await rosterForClass(classData);
+    res.json({ class: { ...classData, students }, subjects: classScope.subjects, schedules, substitutions, teacherLessons });
   } catch (error) {
     logger.error('Error fetching journal context', { error: error.message, teacherId: req.user?.id });
     res.status(500).json({ message: 'Jurnal kontekstini yuklashda xatolik yuz berdi' });

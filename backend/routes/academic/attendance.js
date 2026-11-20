@@ -10,7 +10,7 @@ const { resolveTeacherLessonAccess, getTeacherJournalScope } = require('../../se
 
 const router = express.Router();
 
-async function validateAttendanceAccess(req, record) {
+async function validateAttendanceAccess(req, record, lessonAccess = new Map()) {
   const student = await User.findOne({ _id: record.student, role: 'student', isActive: true }).select('registrationDate classId').lean();
   if (!student) throw new Error("O'quvchi topilmadi yoki faol emas");
   const belongsToClass = String(student.classId || '') === String(record.class) || await Class.exists({ _id: record.class, students: student._id });
@@ -22,7 +22,11 @@ async function validateAttendanceAccess(req, record) {
     if (lessonDate < registrationDate) throw new Error("O'quvchi kelgan sanadan oldin davomat qo'yib bo'lmaydi");
   }
   if (req.user.role === 'teacher') {
-    const access = await resolveTeacherLessonAccess({ teacherId: req.user._id, classId: record.class, subjectId: record.subject, date: record.date });
+    const key = `${record.class}|${record.subject}|${record.date}`;
+    if (!lessonAccess.has(key)) {
+      lessonAccess.set(key, resolveTeacherLessonAccess({ teacherId: req.user._id, classId: record.class, subjectId: record.subject, date: record.date }));
+    }
+    const access = await lessonAccess.get(key);
     if (!access.allowed) throw new Error("Bu sana uchun ushbu sinf/fanga davomat qo'yish huquqi yo'q");
   }
 }
@@ -148,9 +152,17 @@ router.post('/bulk', auth, authorize('teacher', 'admin', 'supervisor'), requireP
     const savedRecords = [];
     const errors = [];
 
-    for (const record of records) {
+    const lessonAccess = new Map();
+    const uniqueRecords = new Map(records.map((record) => [
+      `${record?.student}|${record?.class}|${record?.subject}|${record?.date}|${record?.period}`, record
+    ]));
+    const saveRecord = async (record) => {
       try {
-        await validateAttendanceAccess(req, record);
+        if (!record || !Attendance.schema.path('status').enumValues.includes(record.status) ||
+            !Number.isInteger(Number(record.period)) || Number(record.period) < 1 || Number(record.period) > 10) {
+          throw new Error("Davomat holati yoki dars raqami noto'g'ri");
+        }
+        await validateAttendanceAccess(req, record, lessonAccess);
         const dateOnly = new Date(record.date);
         dateOnly.setHours(0, 0, 0, 0);
         const nextDay = new Date(dateOnly);
@@ -191,7 +203,7 @@ router.post('/bulk', auth, authorize('teacher', 'admin', 'supervisor'), requireP
           const updated = await Attendance.findByIdAndUpdate(
             existingAttendance._id,
             attendanceData,
-            { new: true }
+            { new: true, runValidators: true }
           );
           savedRecords.push(updated);
         } else {
@@ -202,12 +214,16 @@ router.post('/bulk', auth, authorize('teacher', 'admin', 'supervisor'), requireP
         }
       } catch (err) {
         errors.push({
-          student: record.student,
-          date: record.date,
-          period: record.period,
+          student: record?.student,
+          date: record?.date,
+          period: record?.period,
           error: err.message
         });
       }
+    };
+    const pending = [...uniqueRecords.values()];
+    for (let index = 0; index < pending.length; index += 12) {
+      await Promise.all(pending.slice(index, index + 12).map(saveRecord));
     }
 
     // Maosh faqat baho qo'yilganda hisoblanadi (grades routes da)

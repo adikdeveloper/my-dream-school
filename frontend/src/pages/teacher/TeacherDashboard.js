@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import TeacherHome from '../../components/teacher/TeacherHome';
+import GradingMonitor from '../../components/teacher/GradingMonitor';
 import ClassJournal from '../../components/teacher/ClassJournal';
 import Schedule from '../../components/teacher/Schedule';
 import TeacherLessonList from '../../components/teacher/TeacherLessonList';
@@ -27,6 +28,7 @@ const NAV_SECTIONS = [
     label: 'Kundalik',
     items: [
       { path: '/teacher', label: 'Bosh sahifa', icon: 'home', end: true },
+      { path: '/teacher/grading-monitor', label: 'Baholash nazorati', icon: 'report' },
       { path: '/teacher/journal', label: 'Sinf jurnali', icon: 'book' },
       { path: '/teacher/schedule', label: 'Dars jadvali', icon: 'calendar' }
     ]
@@ -404,6 +406,7 @@ const TeacherDashboard = () => {
         <div className={`td-content ${isFlushPage ? 'is-flush' : ''}`}>
           <Routes>
             <Route path="/" element={<TeacherHome greeting={greeting} />} />
+            <Route path="/grading-monitor" element={<GradingMonitor />} />
             <Route path="/journal" element={<ClassJournal />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/lesson-list" element={<TeacherLessonList />} />

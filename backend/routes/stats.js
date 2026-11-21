@@ -15,6 +15,7 @@ const Payment = require('../models/financial/Payment');
 const StudentFee = require('../models/financial/StudentFee');
 const scheduleValidator = require('../utils/scheduleValidator');
 const { schoolNow, teacherGradingStatus, targetCount, activeOnDate, absence, dayKey, rosterForClass } = require('../services/dailyGrading');
+const gradingMonitorService = require('../services/gradingMonitorService');
 
 // @route   GET /api/stats/admin
 // @desc    Get admin dashboard statistics
@@ -1303,6 +1304,69 @@ router.get('/teacher/grading-monitor', auth, authorize('teacher'), async (req, r
   } catch (error) {
     console.error('Teacher grading monitoring failed:', error);
     return res.status(500).json({ message: "Baholash holatini yuklab bo'lmadi" });
+  }
+});
+
+function sendGradingMonitorError(res, error, fallback) {
+  if (error?.status) {
+    return res.status(error.status).json({ message: error.message });
+  }
+  console.error(fallback, error);
+  return res.status(500).json({ message: fallback });
+}
+
+// @route   GET /api/stats/teacher/grading-monitor/subjects
+// @desc    Biriktirilgan sinf bo'yicha fanlar va baholash foizlari
+// @access  Private/Teacher (sinf rahbari)
+router.get('/teacher/grading-monitor/subjects', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const data = await gradingMonitorService.getSubjectsOverview({
+      teacherId: req.user._id,
+      classId: req.query.classId,
+      academicYear: req.query.academicYear,
+      quarter: req.query.quarter
+    });
+    return res.json(data);
+  } catch (error) {
+    return sendGradingMonitorError(res, error, "Fanlar bo'yicha baholash nazoratini yuklab bo'lmadi");
+  }
+});
+
+// @route   GET /api/stats/teacher/grading-monitor/subject/:subjectId
+// @desc    Fan bo'yicha baholanmagan/baholangan kunlar va o'quvchilar chorak baholari
+// @access  Private/Teacher (sinf rahbari)
+router.get('/teacher/grading-monitor/subject/:subjectId', auth, authorize('teacher'), async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.subjectId)) {
+      return res.status(400).json({ message: "Noto'g'ri fan ID" });
+    }
+    const data = await gradingMonitorService.getSubjectDetail({
+      teacherId: req.user._id,
+      classId: req.query.classId,
+      subjectId: req.params.subjectId,
+      academicYear: req.query.academicYear,
+      quarter: req.query.quarter
+    });
+    return res.json(data);
+  } catch (error) {
+    return sendGradingMonitorError(res, error, "Fan bo'yicha baholash nazoratini yuklab bo'lmadi");
+  }
+});
+
+// @route   GET /api/stats/teacher/grading-monitor/quarter-grades
+// @desc    Biriktirilgan sinf o'quvchilarining barcha fanlar bo'yicha chorak baholari
+// @access  Private/Teacher (sinf rahbari)
+router.get('/teacher/grading-monitor/quarter-grades', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const data = await gradingMonitorService.getQuarterGrades({
+      teacherId: req.user._id,
+      classId: req.query.classId,
+      academicYear: req.query.academicYear,
+      quarter: req.query.quarter
+    });
+    return res.json(data);
+  } catch (error) {
+    return sendGradingMonitorError(res, error, "Chorak baholarini yuklab bo'lmadi");
   }
 });
 

@@ -2,6 +2,7 @@ const Grade = require('../models/academic/Grade');
 const Subject = require('../models/academic/Subject');
 const Class = require('../models/academic/Class');
 const User = require('../models/users/User');
+const { buildClassCoverage, applyCoverageGate } = require('./lessonCoverage');
 
 // Kunlik baholar ikki xil shkalada uchraydi:
 // - admin jurnalida 0..0.5
@@ -200,17 +201,17 @@ async function calculateClassQuarter({ classId, quarter, calendar, subjectIds = 
   const [classData, directStudents, grades] = await Promise.all([
     Class.findById(classId)
       .select('name grade section group students subjects')
-      .populate('students', 'firstName lastName studentId')
+      .populate('students', 'firstName lastName studentId registrationDate leftDate')
       .populate('subjects.subject', 'name code color')
       .lean(),
     User.find({ role: 'student', classId, isActive: { $ne: false } })
-      .select('firstName lastName studentId')
+      .select('firstName lastName studentId registrationDate leftDate')
       .lean(),
     Grade.find({
       class: classId,
       date: { $gte: range.startDate, $lte: range.endDate }
     })
-      .select('student subject score isExam examMaxScore maxScore type date')
+      .select('student subject score isExam examMaxScore maxScore type date periodNumber')
       .lean()
   ]);
 
@@ -262,24 +263,36 @@ async function calculateClassQuarter({ classId, quarter, calendar, subjectIds = 
     gradesByStudentSubject.get(key).push(grade);
   }
 
+  const coverage = await buildClassCoverage({
+    classId,
+    students: [...studentMap.values()],
+    subjectIds: subjects.map(subject => subject._id),
+    startDate: range.startDate,
+    endDate: range.endDate,
+    grades
+  });
+
   const students = [...studentMap.values()]
     .map(student => {
       const studentSubjects = {};
       const subjectPercents = [];
+      const studentCoverage = coverage.students.get(String(student._id));
 
       for (const subject of subjects) {
         const key = `${student._id}:${subject._id}`;
         const summary = summarizeGrades(gradesByStudentSubject.get(key) || []);
+        const coverageInfo = studentCoverage?.get(String(subject._id));
+        const gated = applyCoverageGate(summary, coverageInfo);
 
         studentSubjects[String(subject._id)] = {
           _id: subject._id,
           name: subject.name || '',
           code: subject.code || '',
           color: subject.color || '',
-          ...summary
+          ...gated
         };
 
-        if (summary.percent !== null) subjectPercents.push(summary.percent);
+        if (gated.issued) subjectPercents.push(gated.percent);
       }
 
       const overallPercentRaw = average(subjectPercents);
@@ -329,19 +342,44 @@ async function calculateStudentQuarter({ studentId, quarter, calendar }) {
   const range = getQuarterRange(calendar, quarter);
   if (!range) throw new Error("Chorak topilmadi");
 
-  const grades = await Grade.find({
-    student: studentId,
-    date: { $gte: range.startDate, $lte: range.endDate }
-  })
-    .select('student subject score isExam examMaxScore maxScore type date class')
-    .lean();
+  const [student, grades] = await Promise.all([
+    User.findById(studentId)
+      .select('firstName lastName classId registrationDate leftDate')
+      .lean(),
+    Grade.find({
+      student: studentId,
+      date: { $gte: range.startDate, $lte: range.endDate }
+    })
+      .select('student subject score isExam examMaxScore maxScore type date class periodNumber')
+      .lean()
+  ]);
 
-  const subjectIds = [...new Set(grades.map(grade => String(grade.subject)).filter(Boolean))];
+  let classSubjectPairs = [];
+  if (student?.classId) {
+    const classData = await Class.findById(student.classId)
+      .select('subjects')
+      .populate('subjects.subject', 'name code color')
+      .lean();
+    classSubjectPairs = classData?.subjects || [];
+  }
+
+  const subjectIdSet = new Set(grades.map(grade => String(grade.subject)).filter(Boolean));
+  for (const pair of classSubjectPairs) {
+    if (pair?.subject?._id) subjectIdSet.add(String(pair.subject._id));
+  }
+  const subjectIds = [...subjectIdSet];
+
   const subjectDocs = subjectIds.length
     ? await Subject.find({ _id: { $in: subjectIds } }).select('name code color').lean()
     : [];
 
   const subjectMap = new Map(subjectDocs.map(subject => [String(subject._id), subject]));
+  for (const pair of classSubjectPairs) {
+    if (pair?.subject?._id && !subjectMap.has(String(pair.subject._id))) {
+      subjectMap.set(String(pair.subject._id), pair.subject);
+    }
+  }
+
   const gradesBySubject = new Map();
 
   for (const grade of grades) {
@@ -351,21 +389,40 @@ async function calculateStudentQuarter({ studentId, quarter, calendar }) {
     gradesBySubject.get(key).push(grade);
   }
 
-  const subjects = [...gradesBySubject.entries()]
-    .map(([subjectId, subjectGrades]) => {
+  const coverage = student?.classId && subjectIds.length
+    ? await buildClassCoverage({
+      classId: student.classId,
+      students: [student],
+      subjectIds,
+      startDate: range.startDate,
+      endDate: range.endDate,
+      grades
+    })
+    : { students: new Map() };
+
+  const studentCoverage = coverage.students.get(String(studentId));
+
+  const subjects = subjectIds
+    .map(subjectId => {
       const subject = subjectMap.get(subjectId) || { _id: subjectId, name: '', code: '', color: '' };
+      const gated = applyCoverageGate(
+        summarizeGrades(gradesBySubject.get(subjectId) || []),
+        studentCoverage?.get(subjectId)
+      );
+
       return {
         _id: subject._id,
         name: subject.name || '',
         code: subject.code || '',
         color: subject.color || '',
-        ...summarizeGrades(subjectGrades)
+        ...gated
       };
     })
-    .filter(subject => subject.percent !== null)
+    .filter(subject => subject.gradeCount > 0 || subject.totalLessons > 0)
     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'uz'));
 
-  const overallPercentRaw = average(subjects.map(subject => subject.percent));
+  const issuedSubjects = subjects.filter(subject => subject.issued);
+  const overallPercentRaw = average(issuedSubjects.map(subject => subject.percent));
 
   return {
     quarter: range.quarter,
@@ -377,7 +434,8 @@ async function calculateStudentQuarter({ studentId, quarter, calendar }) {
     overallGrade: percentToQuarterGrade(overallPercentRaw),
     gradeCount: subjects.reduce((sum, subject) => sum + subject.gradeCount, 0),
     dailyCount: subjects.reduce((sum, subject) => sum + subject.dailyCount, 0),
-    examCount: subjects.reduce((sum, subject) => sum + subject.examCount, 0)
+    examCount: subjects.reduce((sum, subject) => sum + subject.examCount, 0),
+    blockedSubjectCount: subjects.filter(subject => subject.blocked).length
   };
 }
 

@@ -47,7 +47,16 @@ const QUARTER_OPTIONS = [
 
 const GradeCell = ({ subject, compact = false }) => {
   if (!subject || subject.grade === null || subject.grade === undefined) {
-    return <span className="qg-empty" title="Bu chorakda baho yo'q">—</span>;
+    const blocked = Boolean(subject?.blocked);
+    const title = blocked
+      ? `${subject.name || 'Fan'}: dars soatlarining ${subject.missingLessons || 0} tasi (${subject.coveragePercent ?? 0}% qamrov) baholanmagan — 20% qoidasi bo'yicha chorak bahosi chiqarilmagan`
+      : "Bu chorakda baho yo'q";
+
+    return (
+      <span className={`qg-empty ${blocked ? 'qg-blocked' : ''}`} title={title}>
+        —
+      </span>
+    );
   }
 
   const title = [
@@ -55,7 +64,10 @@ const GradeCell = ({ subject, compact = false }) => {
     `${subject.percent}%`,
     subject.gradeCount ? `${subject.gradeCount} ta baho` : null,
     subject.dailyCount ? `Kunlik: ${subject.dailyPercent}%` : null,
-    subject.examCount ? `Imtihon: ${subject.examPercent}%` : null
+    subject.examCount ? `Imtihon: ${subject.examPercent}%` : null,
+    subject.coveragePercent !== null && subject.coveragePercent !== undefined
+      ? `Qamrov: ${subject.coveragePercent}%`
+      : null
   ].filter(Boolean).join(' • ');
 
   return (
@@ -360,7 +372,8 @@ const QuarterGrades = () => {
               Chorak bahosi kunlik va imtihon baholarini foizga aylantirib, ularning
               o'rtachasidan hisoblanadi. Kunlik baho 0.5 yoki 5 ballik shkalada, imtihon
               esa <b>examMaxScore</b> bo'yicha hisobga olinadi. Natija 10 ballik tizimga
-              yaxlitlanadi.
+              yaxlitlanadi. O'quvchining fan bo'yicha dars soatlarining <b>20% dan ko'prog'iga</b>
+              baho qo'yilmagan bo'lsa, ushbu fan bo'yicha chorak bahosi chiqarilmaydi.
             </p>
           </div>
         </>
@@ -857,6 +870,20 @@ const styles = `
   .qg-grade.average { color: #92400e; background: #fef3c7; }
   .qg-grade.low { color: #991b1b; background: #fee2e2; }
   .qg-grade.empty { color: #cbd5e1; background: transparent; font-size: 1rem; }
+
+  .qg-empty.qg-blocked {
+    display: inline-grid;
+    min-width: 34px;
+    height: 30px;
+    place-items: center;
+    color: #b91c1c;
+    background: #fee2e2;
+    border: 1px dashed #fca5a5;
+    border-radius: 9px;
+    font-size: .95rem;
+    font-weight: 900;
+    cursor: help;
+  }
 
   .qg-overall-cell {
     min-width: 92px;

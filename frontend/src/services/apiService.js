@@ -234,6 +234,21 @@ const apiService = {
     return response.data;
   },
 
+  getTeacherGradingMonitorSubjects: async (params = {}) => {
+    const response = await api.get('/stats/teacher/grading-monitor/subjects', { params });
+    return response.data;
+  },
+
+  getTeacherGradingMonitorSubject: async (subjectId, params = {}) => {
+    const response = await api.get(`/stats/teacher/grading-monitor/subject/${subjectId}`, { params });
+    return response.data;
+  },
+
+  getTeacherGradingMonitorQuarterGrades: async (params = {}) => {
+    const response = await api.get('/stats/teacher/grading-monitor/quarter-grades', { params });
+    return response.data;
+  },
+
   updateGrade: async (id, gradeData) => {
     const response = await api.put(`/grades/${id}`, gradeData);
     return response.data;

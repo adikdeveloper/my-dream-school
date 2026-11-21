@@ -239,7 +239,18 @@ const StudentQuarterGrades = () => {
                           <strong>{subject.name}</strong>
                           {subject.code && <small>{subject.code}</small>}
                         </span>
-                        <span className="sq-percent">{subject.percent}%</span>
+                        <span
+                          className="sq-percent"
+                          title={
+                            subject.blocked
+                              ? `${subject.missingLessons || 0} soat baholanmagan (${subject.coveragePercent ?? 0}% qamrov)`
+                              : undefined
+                          }
+                        >
+                          {subject.percent !== null && subject.percent !== undefined
+                            ? `${subject.percent}%`
+                            : '—'}
+                        </span>
                         <span className="sq-muted">
                           {subject.dailyPercent !== null && subject.dailyPercent !== undefined
                             ? `${subject.dailyPercent}%`
@@ -251,8 +262,19 @@ const StudentQuarterGrades = () => {
                             : '—'}
                         </span>
                         <span className="sq-muted">{subject.gradeCount} ta</span>
-                        <span className={`sq-grade ${gradeTone(subject.grade)}`}>
-                          {subject.grade}
+                        <span
+                          className={`sq-grade ${subject.blocked ? 'blocked' : gradeTone(subject.issued ? subject.grade : null)}`}
+                          title={
+                            subject.blocked
+                              ? `${subject.name}: ${subject.missingLessons || 0} soat baholanmagan (${subject.coveragePercent ?? 0}% qamrov) — 20% qoidasi bo'yicha baho chiqarilmagan`
+                              : subject.issued
+                                ? subject.percent !== null && subject.percent !== undefined
+                                  ? `${subject.name}: ${subject.percent}%`
+                                  : subject.name
+                                : `${subject.name}: chorak bahosi hali chiqmagan`
+                          }
+                        >
+                          {subject.issued ? subject.grade : '—'}
                         </span>
                       </div>
                     ))}
@@ -660,6 +682,12 @@ const styles = `
   .sq-grade.average { color: #92400e; background: #fef3c7; }
   .sq-grade.low { color: #991b1b; background: #fee2e2; }
   .sq-grade.empty { color: #94a3b8; background: #f1f5f9; }
+  .sq-grade.blocked {
+    color: #b91c1c;
+    background: #fee2e2;
+    border: 1px dashed #fca5a5;
+    cursor: help;
+  }
 
   .sq-empty {
     display: flex;

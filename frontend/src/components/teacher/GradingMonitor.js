@@ -128,6 +128,7 @@ function TodayGradingWidget() {
 function SubjectGradingMonitor() {
   const [classes, setClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(true);
+  const [classesError, setClassesError] = useState('');
   const [classId, setClassId] = useState('');
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear);
   const [quarter, setQuarter] = useState('');
@@ -154,6 +155,7 @@ function SubjectGradingMonitor() {
   useEffect(() => {
     let cancelled = false;
     setClassesLoading(true);
+    setClassesError('');
     apiService.getTeacherAssignedClasses()
       .then((list) => {
         if (cancelled) return;
@@ -165,8 +167,11 @@ function SubjectGradingMonitor() {
             : (items[0]?._id || '')
         ));
       })
-      .catch(() => {
-        if (!cancelled) setClasses([]);
+      .catch((err) => {
+        if (!cancelled) {
+          setClasses([]);
+          setClassesError(getQuarterErrorMessage(err, "Biriktirilgan sinflarni yuklab bo'lmadi"));
+        }
       })
       .finally(() => {
         if (!cancelled) setClassesLoading(false);
@@ -330,8 +335,11 @@ function SubjectGradingMonitor() {
       <div className={styles.page}>
         <div className={styles.emptyCard}>
           <span className={styles.emptyIcon}><TeacherUiIcon name="report" size={30} /></span>
-          <h2>Sinf biriktirilmagan</h2>
-          <p>Baholash nazorati faqat sizga sinf rahbari sifatida biriktirilgan sinf uchun ochiladi.</p>
+          <h2>{classesError ? 'Sinflarni yuklab bo\'lmadi' : 'Sinf biriktirilmagan'}</h2>
+          <p>
+            {classesError
+              || 'Baholash nazorati faqat sizga sinf rahbari sifatida biriktirilgan sinf uchun ochiladi.'}
+          </p>
         </div>
       </div>
     );

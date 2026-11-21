@@ -1,5 +1,35 @@
 import { api } from './authService';
 
+// JWT ichidagi foydalanuvchi ID ni oladi. Faqat eski backend bilan
+// moslik uchun zaxira yo'l ishlatilganda kerak bo'ladi.
+function currentTokenUserId() {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return '';
+    const part = token.split('.')[1];
+    if (!part) return '';
+    const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(padded));
+    return payload.userId || payload.id || payload._id || '';
+  } catch {
+    return '';
+  }
+}
+
+function assignedClassPayload(classData) {
+  return {
+    _id: classData._id,
+    name: classData.name,
+    grade: classData.grade,
+    section: classData.section,
+    group: classData.group,
+    academicYear: classData.academicYear,
+    isActive: classData.isActive !== false,
+    studentsCount: Array.isArray(classData.students) ? classData.students.length : 0
+  };
+}
+
 const apiService = {
   // Users
   getUsers: async (role, page = 1, limit = 200, search = '', filters = {}) => {
@@ -230,8 +260,31 @@ const apiService = {
   },
 
   getTeacherAssignedClasses: async () => {
-    const response = await api.get('/classes/teacher/assigned-classes');
-    return response.data;
+    try {
+      const response = await api.get('/classes/teacher/assigned-classes');
+      return response.data;
+    } catch (error) {
+      // Eski backendlarda bu endpoint hali yo'q (404). Bunday holatda
+      // barcha sinflar ro'yxatidan o'qituvchining o'zi sinf rahbari
+      // bo'lgan sinflarni ajratib olamiz — panel bo'sh ko'rinmaydi.
+      if (error?.response?.status !== 404) throw error;
+
+      const response = await api.get('/classes', { params: { limit: 1000 } });
+      const payload = response.data;
+      const classes = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload?.classes) ? payload.classes : []);
+      const teacherId = currentTokenUserId();
+
+      if (!teacherId) return [];
+
+      return classes
+        .filter((classData) => {
+          const owner = classData.classTeacher?._id || classData.classTeacher;
+          return owner && String(owner) === String(teacherId);
+        })
+        .map(assignedClassPayload);
+    }
   },
 
   getTeacherGradingMonitorSubjects: async (params = {}) => {

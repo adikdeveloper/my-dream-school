@@ -194,6 +194,8 @@ router.get('/teacher/assigned-classes', auth, authorize('teacher'), async (req, 
       grade: classData.grade,
       section: classData.section,
       group: classData.group,
+      academicYear: classData.academicYear,
+      isActive: classData.isActive !== false,
       studentsCount: Array.isArray(classData.students) ? classData.students.length : 0
     })));
   } catch (error) {
@@ -217,7 +219,7 @@ router.get('/teacher/students', auth, authorize('teacher'), async (req, res) => 
     const fields = 'firstName lastName studentId email phone profileImage dateOfBirth address parentName parentPhone classId registrationDate' +
       (canEdit ? ' passportNumber jshshir parentJshshir leftDate' : '');
     const classes = classIds.length
-      ? await Class.find({ _id: { $in: classIds }, isActive: true })
+      ? await Class.find({ _id: { $in: classIds } })
         .select('name grade section students')
         .populate('students', fields)
         .lean()

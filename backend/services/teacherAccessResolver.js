@@ -31,9 +31,11 @@ const scheduleOverlapFilter = (startDate, endDate) => {
 // Faqat o'qituvchiga sinf rahbari sifatida biriktirilgan sinflar.
 // User.classes maydonidan farqli ravishda bu yerda dars beradigan barcha
 // sinflar emas, aynan biriktirilgan (classTeacher) sinflar qaytadi.
+// isActive: { $ne: false } — eski yozuvlarda maydon umuman bo'lmasligi mumkin,
+// bunday sinflar ham biriktirilgan hisoblanadi (butun loyihada shu mantiq).
 async function getTeacherAssignedClasses(teacherId) {
-  return Class.find({ classTeacher: teacherId, isActive: true })
-    .select('name grade section group students isActive classTeacher')
+  return Class.find({ classTeacher: teacherId, isActive: { $ne: false } })
+    .select('name grade section group students isActive classTeacher academicYear')
     .lean();
 }
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../services/authService';
+import apiService from '../../services/apiService';
 import { usePermissions } from '../../context/PermissionsContext';
 import { formatUzLongDate } from '../../utils/uzDate';
 import styles from './StudentLists.module.css';
@@ -55,8 +56,8 @@ const StudentLists = () => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get('/classes/teacher/assigned-classes');
-        if (!cancelled) setMyClasses(Array.isArray(res.data) ? res.data : []);
+        const classes = await apiService.getTeacherAssignedClasses();
+        if (!cancelled) setMyClasses(Array.isArray(classes) ? classes : []);
       } catch (_) { /* sinflar yuklanmadi — qo'shish formasi bo'sh bo'ladi */ }
     })();
     return () => { cancelled = true; };
